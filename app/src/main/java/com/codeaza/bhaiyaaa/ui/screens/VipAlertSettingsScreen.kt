@@ -89,7 +89,8 @@ fun VipAlertSettingsScreen(viewModel: BhaiyaaaViewModel) {
                     CallAlertManager.triggerAlert(
                         context = context,
                         rule = it,
-                        flashlightGloballyEnabled = settings.flashlightEnabled
+                        flashlightGloballyEnabled = settings.flashlightEnabled,
+                        ringMillis = CallAlertManager.TEST_RING_MILLIS
                     )
                     if (settings.notificationsEnabled && it.notificationsEnabled) {
                         Notifier.notifyTestAlert(context, level)
@@ -201,15 +202,16 @@ private fun RuleEditor(
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Ring through silent / Do Not Disturb", style = MaterialTheme.typography.bodyMedium)
+                Text("Ring through silent & Do Not Disturb", style = MaterialTheme.typography.bodyMedium)
                 Text(
                     when {
                         !hasDndAccess ->
                             "Needs Do Not Disturb access — tap Allow below"
                         bypassing ->
-                            "${level.label} calls break through silent mode"
+                            "${level.label} calls ring out loud even on silent, using the " +
+                                "alarm channel that silent mode can't mute"
                         else ->
-                            "${level.label} calls stay silent when Do Not Disturb is on"
+                            "${level.label} calls stay quiet on silent or Do Not Disturb"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

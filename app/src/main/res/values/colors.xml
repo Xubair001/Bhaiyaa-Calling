@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Only the window background and splash live here. Every other colour is a
+      Only the window background and splash live here. Everything else is a
       Compose token in ui/theme/Color.kt - these exist so the frame drawn before
       Compose composes is already the right colour rather than a white flash.
     -->
-    <color name="brand_saffron">#8A5000</color>
-    <color name="splash_background">#19120C</color>
-    <color name="window_background_light">#FFF8F4</color>
-    <color name="window_background_dark">#19120C</color>
-    <color name="ic_launcher_background">#19120C</color>
+    <color name="brand_violet">#6A3FBF</color>
+    <color name="splash_background">#121016</color>
+    <color name="window_background_light">#FDF7FF</color>
+    <color name="window_background_dark">#121016</color>
+    <color name="ic_launcher_background">#121016</color>
 </resources>

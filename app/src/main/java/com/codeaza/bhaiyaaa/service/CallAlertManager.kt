@@ -3,6 +3,9 @@ package com.codeaza.bhaiyaaa.service
 import android.content.Context
 import android.hardware.camera2.CameraAccessException
 import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.provider.Settings
 import android.os.VibrationAttributes
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -32,19 +35,102 @@ object CallAlertManager {
     @Volatile
     private var flashJob: Job? = null
 
+    /** The ring-through-silent player, held so the call being answered stops it. */
+    @Volatile
+    private var ringtonePlayer: MediaPlayer? = null
+
+    @Volatile
+    private var ringtoneStopJob: Job? = null
+
+    /** Safety net: never let a ringtone outlast a call that stopped ringing. */
+    const val MAX_RING_MILLIS = 45_000L
+
+    /** Long enough to hear it, short enough not to have to silence it. */
+    const val TEST_RING_MILLIS = 6_000L
+
+    /**
+     * @param ringMillis how long the ring-through-silent tone may last. A real
+     *   call gets the full window; a test from Settings gets a few seconds, so
+     *   trying it out never means hunting for a way to shut it up.
+     */
     fun triggerAlert(
         context: Context,
         rule: NotificationRuleEntity,
-        flashlightGloballyEnabled: Boolean
+        flashlightGloballyEnabled: Boolean,
+        ringMillis: Long = MAX_RING_MILLIS
     ) {
         if (rule.vibrationEnabled) vibrate(context, rule.vibrationPatternCsv)
         if (rule.flashEnabled && flashlightGloballyEnabled) flash(context, rule)
+        if (rule.bypassDnd) ringThroughSilent(context, ringMillis)
+    }
+
+    /**
+     * Plays the ringtone on the alarm stream so a VIP call is audible even with
+     * the ringer on silent.
+     *
+     * A notification channel's bypassDnd flag overrides Do Not Disturb, and only
+     * that. Silent mode is a separate mechanism - the ringer mute silences
+     * notification audio outright, and no channel setting beats it. The one
+     * stream silent mode leaves alone is the alarm stream, which is why an alarm
+     * clock still wakes you, so that is what this uses.
+     *
+     * This is deliberately loud behaviour, so it runs only for a tier the user
+     * explicitly switched "ring through silent" on for, and it stops the moment
+     * the call is answered or ends.
+     */
+    private fun ringThroughSilent(context: Context, ringMillis: Long) {
+        stopRingtone()
+        try {
+            val uri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE)
+                ?: Settings.System.DEFAULT_RINGTONE_URI
+                ?: return
+
+            val player = MediaPlayer().apply {
+                setDataSource(context, uri)
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                isLooping = true
+                setOnErrorListener { _, _, _ -> stopRingtone(); true }
+                prepare()
+                start()
+            }
+            ringtonePlayer = player
+
+            // A missed call never produces an "answered" or "idle" edge on some
+            // OEM builds, so the ringtone gets its own deadline rather than
+            // trusting the broadcast to arrive.
+            ringtoneStopJob = CoroutineScope(Dispatchers.IO).launch {
+                delay(ringMillis)
+                stopRingtone()
+            }
+        } catch (t: Throwable) {
+            // No ringtone configured, storage unavailable, or the codec refused
+            // it. Vibration and the flashlight have already fired.
+            stopRingtone()
+        }
+    }
+
+    private fun stopRingtone() {
+        ringtoneStopJob?.cancel()
+        ringtoneStopJob = null
+        val player = ringtonePlayer
+        ringtonePlayer = null
+        if (player != null) {
+            runCatching { if (player.isPlaying) player.stop() }
+            runCatching { player.reset() }
+            runCatching { player.release() }
+        }
     }
 
     /** Called when the call stops ringing so the torch never gets stranded on. */
     fun cancelAlerts(context: Context) {
         flashJob?.cancel()
         flashJob = null
+        stopRingtone()
         runCatching { torchOff(context) }
     }
 

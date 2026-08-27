@@ -18,18 +18,18 @@ import com.codeaza.bhaiyaaa.domain.model.ThemeMode
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 
 private val LightColors = lightColorScheme(
-    primary = SaffronPrimaryLight,
-    onPrimary = SaffronOnPrimaryLight,
-    primaryContainer = SaffronContainerLight,
-    onPrimaryContainer = SaffronOnContainerLight,
-    secondary = TerracottaSecondaryLight,
-    onSecondary = TerracottaOnSecondaryLight,
-    secondaryContainer = TerracottaContainerLight,
-    onSecondaryContainer = TerracottaOnContainerLight,
-    tertiary = PlumTertiaryLight,
-    onTertiary = PlumOnTertiaryLight,
-    tertiaryContainer = PlumContainerLight,
-    onTertiaryContainer = PlumOnTertiaryContainerLight,
+    primary = VioletPrimaryLight,
+    onPrimary = VioletOnPrimaryLight,
+    primaryContainer = VioletContainerLight,
+    onPrimaryContainer = VioletOnContainerLight,
+    secondary = RoseSecondaryLight,
+    onSecondary = RoseOnSecondaryLight,
+    secondaryContainer = RoseContainerLight,
+    onSecondaryContainer = RoseOnContainerLight,
+    tertiary = PeriwinkleTertiaryLight,
+    onTertiary = PeriwinkleOnTertiaryLight,
+    tertiaryContainer = PeriwinkleContainerLight,
+    onTertiaryContainer = PeriwinkleOnTertiaryContainerLight,
     background = BackgroundLight,
     onBackground = OnBackgroundLight,
     surface = BackgroundLight,
@@ -47,18 +47,18 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = SaffronPrimaryDark,
-    onPrimary = SaffronOnPrimaryDark,
-    primaryContainer = SaffronContainerDark,
-    onPrimaryContainer = SaffronOnContainerDark,
-    secondary = TerracottaSecondaryDark,
-    onSecondary = TerracottaOnSecondaryDark,
-    secondaryContainer = TerracottaContainerDark,
-    onSecondaryContainer = TerracottaOnContainerDark,
-    tertiary = PlumTertiaryDark,
-    onTertiary = PlumOnTertiaryDark,
-    tertiaryContainer = PlumContainerDark,
-    onTertiaryContainer = PlumOnTertiaryContainerDark,
+    primary = VioletPrimaryDark,
+    onPrimary = VioletOnPrimaryDark,
+    primaryContainer = VioletContainerDark,
+    onPrimaryContainer = VioletOnContainerDark,
+    secondary = RoseSecondaryDark,
+    onSecondary = RoseOnSecondaryDark,
+    secondaryContainer = RoseContainerDark,
+    onSecondaryContainer = RoseOnContainerDark,
+    tertiary = PeriwinkleTertiaryDark,
+    onTertiary = PeriwinkleOnTertiaryDark,
+    tertiaryContainer = PeriwinkleContainerDark,
+    onTertiaryContainer = PeriwinkleOnTertiaryContainerDark,
     background = BackgroundDark,
     onBackground = OnBackgroundDark,
     surface = BackgroundDark,
@@ -124,7 +124,7 @@ fun BhaiyaaaTheme(
 /**
  * The colour for a VIP tier, taken from the theme rather than hard-coded.
  *
- * Plum -> saffron -> vermilion is an escalation the eye reads as ranked, and
+ * Periwinkle -> saffron -> vermilion is an escalation the eye reads as ranked, and
  * because each is a semantic role it adapts to light, dark and wallpaper
  * theming instead of staying a fixed value that eventually clashes.
  */

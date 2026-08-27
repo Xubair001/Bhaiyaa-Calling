@@ -3,86 +3,86 @@ package com.codeaza.bhaiyaaa.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * BHAIYAAA's palette: deep saffron, terracotta and plum over warm neutrals.
+ * BHAIYAAA's palette: royal violet, with rose and periwinkle supporting it.
  *
- * Why this and not the obvious options. Blue is the default of every utility
- * app and says nothing; green is what phone apps already use for the call
- * button, so it would fight the content. Saffron carries warmth and a South
- * Asian register without resorting to flag colours, and it has a property no
- * other hue here has: gold already means "important" to everyone, so the VIP
- * tiers can escalate plum -> saffron -> vermilion and read as ranked without a
- * legend.
+ * Violet does something no other hue here could. This app's whole job is
+ * private: a VIP list you don't want on show, notes about people, a lock over
+ * the lot. Violet reads as after-dark and closed-doors rather than as a
+ * utility, which is the register the product is actually in - and it stays
+ * clear of blue, which is what every other phone tool defaults to.
  *
- * The neutrals are warm rather than grey - every surface is tinted toward the
- * primary's hue, so the dark theme reads like dim lamplight instead of the cold
- * slate that makes so many dark modes feel like a terminal.
+ * The three accents are far enough apart in hue that the VIP tiers escalate
+ * periwinkle -> lilac -> coral and read as ranked without a legend, but close
+ * enough to sit together without any one of them shouting.
+ *
+ * Neutrals are violet-tinted rather than grey, so dark mode reads like a dim
+ * room instead of the cold slate that makes most dark themes feel like a
+ * terminal.
  */
 
 // ---------------------------------------------------------------- light theme
 
-val SaffronPrimaryLight = Color(0xFF8A5000)
-val SaffronOnPrimaryLight = Color(0xFFFFFFFF)
-val SaffronContainerLight = Color(0xFFFFDCBB)
-val SaffronOnContainerLight = Color(0xFF2C1600)
+val VioletPrimaryLight = Color(0xFF6A3FBF)
+val VioletOnPrimaryLight = Color(0xFFFFFFFF)
+val VioletContainerLight = Color(0xFFEADDFF)
+val VioletOnContainerLight = Color(0xFF230A54)
 
-val TerracottaSecondaryLight = Color(0xFF8F4B36)
-val TerracottaOnSecondaryLight = Color(0xFFFFFFFF)
-val TerracottaContainerLight = Color(0xFFFFDBCF)
-val TerracottaOnContainerLight = Color(0xFF380D01)
+val RoseSecondaryLight = Color(0xFF8B4A72)
+val RoseOnSecondaryLight = Color(0xFFFFFFFF)
+val RoseContainerLight = Color(0xFFFFD8EC)
+val RoseOnContainerLight = Color(0xFF38072A)
 
-val PlumTertiaryLight = Color(0xFF7A4A72)
-val PlumOnTertiaryLight = Color(0xFFFFFFFF)
-val PlumContainerLight = Color(0xFFFFD6F4)
-val PlumOnTertiaryContainerLight = Color(0xFF30062C)
+val PeriwinkleTertiaryLight = Color(0xFF5546A8)
+val PeriwinkleOnTertiaryLight = Color(0xFFFFFFFF)
+val PeriwinkleContainerLight = Color(0xFFE4DFFF)
+val PeriwinkleOnTertiaryContainerLight = Color(0xFF160164)
 
-val BackgroundLight = Color(0xFFFFF8F4)
-val OnBackgroundLight = Color(0xFF211A15)
-val SurfaceVariantLight = Color(0xFFF2DFD1)
-val OnSurfaceVariantLight = Color(0xFF51443A)
-val OutlineLight = Color(0xFF847469)
+val BackgroundLight = Color(0xFFFDF7FF)
+val OnBackgroundLight = Color(0xFF1D1A22)
+val SurfaceVariantLight = Color(0xFFE7E0EB)
+val OnSurfaceVariantLight = Color(0xFF49454E)
+val OutlineLight = Color(0xFF7A757F)
 
 val ErrorLight = Color(0xFFB3261E)
 val OnErrorLight = Color(0xFFFFFFFF)
-val ErrorContainerLight = Color(0xFFFFDAD5)
-val OnErrorContainerLight = Color(0xFF410E06)
+val ErrorContainerLight = Color(0xFFFFDAD6)
+val OnErrorContainerLight = Color(0xFF410E0B)
 
 // ----------------------------------------------------------------- dark theme
 
-val SaffronPrimaryDark = Color(0xFFFFB865)
-val SaffronOnPrimaryDark = Color(0xFF492900)
-val SaffronContainerDark = Color(0xFF693C00)
-val SaffronOnContainerDark = Color(0xFFFFDCBB)
+val VioletPrimaryDark = Color(0xFFC9A7FF)
+val VioletOnPrimaryDark = Color(0xFF3A1D6E)
+val VioletContainerDark = Color(0xFF513492)
+val VioletOnContainerDark = Color(0xFFEADDFF)
 
-val TerracottaSecondaryDark = Color(0xFFFFB59D)
-val TerracottaOnSecondaryDark = Color(0xFF54200D)
-val TerracottaContainerDark = Color(0xFF723521)
-val TerracottaOnContainerDark = Color(0xFFFFDBCF)
+val RoseSecondaryDark = Color(0xFFF2B8D8)
+val RoseOnSecondaryDark = Color(0xFF4B2540)
+val RoseContainerDark = Color(0xFF653B57)
+val RoseOnContainerDark = Color(0xFFFFD8EC)
 
-val PlumTertiaryDark = Color(0xFFEAB1DE)
-val PlumOnTertiaryDark = Color(0xFF471D42)
-val PlumContainerDark = Color(0xFF603359)
-val PlumOnTertiaryContainerDark = Color(0xFFFFD6F4)
+val PeriwinkleTertiaryDark = Color(0xFF9D8DF1)
+val PeriwinkleOnTertiaryDark = Color(0xFF2E2168)
+val PeriwinkleContainerDark = Color(0xFF453880)
+val PeriwinkleOnTertiaryContainerDark = Color(0xFFE4DFFF)
 
-val BackgroundDark = Color(0xFF19120C)
-val OnBackgroundDark = Color(0xFFEFE0D6)
-val SurfaceVariantDark = Color(0xFF51443A)
-val OnSurfaceVariantDark = Color(0xFFD5C3B5)
-val OutlineDark = Color(0xFF9D8D81)
+val BackgroundDark = Color(0xFF121016)
+val OnBackgroundDark = Color(0xFFE7E0E8)
+val SurfaceVariantDark = Color(0xFF49454F)
+val OnSurfaceVariantDark = Color(0xFFCAC4CF)
+val OutlineDark = Color(0xFF948F99)
 
 val ErrorDark = Color(0xFFFFB4AB)
 val OnErrorDark = Color(0xFF690005)
 val ErrorContainerDark = Color(0xFF93000A)
-val OnErrorContainerDark = Color(0xFFFFDAD5)
+val OnErrorContainerDark = Color(0xFFFFDAD6)
 
 /**
- * Raised surfaces.
+ * Raised surfaces, tinted toward the primary by hand.
  *
- * Material tints elevated surfaces toward the primary. Doing it explicitly here
- * keeps cards legible against the warm background at the low elevations this
- * app uses, where the default tint is too subtle to separate a card from the
- * page behind it.
+ * Material's automatic elevation tint is too subtle at the low elevations this
+ * app uses - a card would barely separate from the page behind it.
  */
-val SurfaceContainerLight = Color(0xFFFBEDE2)
-val SurfaceContainerHighLight = Color(0xFFF6E7DC)
-val SurfaceContainerDark = Color(0xFF261D16)
-val SurfaceContainerHighDark = Color(0xFF32271F)
+val SurfaceContainerLight = Color(0xFFF4EDF9)
+val SurfaceContainerHighLight = Color(0xFFEEE6F4)
+val SurfaceContainerDark = Color(0xFF1D1A23)
+val SurfaceContainerHighDark = Color(0xFF282430)
