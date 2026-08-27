@@ -10,15 +10,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -37,14 +41,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.data.db.projection.ContactStats
 import com.codeaza.bhaiyaaa.domain.model.Importance
+import com.codeaza.bhaiyaaa.domain.model.Lookup
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
 import com.codeaza.bhaiyaaa.ui.components.CallRow
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
+import com.codeaza.bhaiyaaa.ui.components.LoadingState
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.StatTile
 import com.codeaza.bhaiyaaa.ui.components.VipBadge
+import androidx.compose.ui.platform.LocalContext
+import com.codeaza.bhaiyaaa.util.ContactActions
 import com.codeaza.bhaiyaaa.util.Formatting
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import kotlinx.coroutines.flow.map
@@ -59,29 +67,40 @@ fun ContactDetailScreen(
     viewModel: BhaiyaaaViewModel,
     onOpenCall: (Long) -> Unit
 ) {
-    val contact by remember(phoneNumber) { viewModel.observeContact(phoneNumber) }
-        .collectAsStateWithLifecycle(initialValue = null)
+    val context = LocalContext.current
+    val lookup by remember(phoneNumber) { viewModel.observeContactLookup(phoneNumber) }
+        .collectAsStateWithLifecycle(initialValue = Lookup.Loading)
     val tags by viewModel.tags.collectAsStateWithLifecycle()
 
-    val current = contact
-    if (current == null) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Contact not found", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "It may have been removed from your phone since the last sync.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+    // Loading and missing are rendered differently. Treating them the same
+    // flashes a "not found" error on every open, before the query answers.
+    when (val state = lookup) {
+        is Lookup.Loading -> {
+            LoadingState(label = "Opening contact…")
+            return
         }
-        return
+        is Lookup.Missing -> {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Contact not found", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "It may have been removed from your phone since the last sync. " +
+                        "Pull a refresh on Home to re-sync.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            return
+        }
+        is Lookup.Found -> Unit
     }
+    val current = (lookup as Lookup.Found<com.codeaza.bhaiyaaa.data.db.entity.ContactEntity>).value
 
     val calls by remember(current.matchKey) { viewModel.callsForContact(current.matchKey) }
         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -120,6 +139,38 @@ fun ContactDetailScreen(
                     )
                     Spacer(Modifier.height(4.dp))
                     VipBadge(VipLevel.from(current.vipLevel))
+                }
+            }
+        }
+
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (!ContactActions.dial(context, current.phoneNumber)) {
+                            viewModel.showMessage("No dialer app on this device.")
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Filled.Call, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Call")
+                }
+                OutlinedButton(
+                    onClick = {
+                        if (!ContactActions.message(context, current.phoneNumber)) {
+                            viewModel.showMessage("No messaging app on this device.")
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Message")
                 }
             }
         }
@@ -326,7 +377,8 @@ fun ContactDetailScreen(
         if (calls.isEmpty()) {
             item {
                 Text(
-                    "No calls logged with this contact yet.",
+                    "No calls logged with this contact yet — use Call or Message above to " +
+                        "start one.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

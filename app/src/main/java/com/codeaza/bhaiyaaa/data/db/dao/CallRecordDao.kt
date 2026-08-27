@@ -56,7 +56,15 @@ interface CallRecordDao {
     @Query("SELECT MAX(timestamp) FROM call_records")
     suspend fun latestTimestamp(): Long?
 
-    /** Per-contact aggregates. Duration is summed over answered calls only. */
+    /**
+     * Per-contact aggregates. Duration is summed over answered calls only.
+     *
+     * The GROUP BY is load-bearing, not decoration: without it SQL returns a
+     * single all-NULL row for a contact that has no calls, and Room cannot map
+     * NULL into ContactStats.matchKey - it throws a NullPointerException that
+     * crashes the app the moment such a contact is opened. With it, no rows come
+     * back and the caller gets a clean null.
+     */
     @Query(
         """
         SELECT matchKey AS matchKey,
@@ -69,6 +77,7 @@ interface CallRecordDao {
                MAX(timestamp) AS lastCallAt
         FROM call_records
         WHERE matchKey = :matchKey
+        GROUP BY matchKey
         """
     )
     suspend fun statsForContact(matchKey: String): ContactStats?
@@ -86,6 +95,7 @@ interface CallRecordDao {
                MAX(timestamp) AS lastCallAt
         FROM call_records
         WHERE matchKey = :matchKey
+        GROUP BY matchKey
         """
     )
     fun observeStatsForContact(matchKey: String): Flow<ContactStats?>

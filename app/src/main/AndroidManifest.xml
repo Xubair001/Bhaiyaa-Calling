@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Android 13+ runtime permission for any notification at all. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      Lets a VIP tier's channel ring through Do Not Disturb / silent mode.
+      This is NOT granted by a normal permission prompt: the user must allow
+      it explicitly in system settings, and BHAIYAAA sends them there rather
+      than trying to work around it.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- Requested only when the user taps the mic in Assistant, never at launch. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Re-arm reminder alarms after a reboot. -->
@@ -31,10 +38,22 @@
         android:name="android.hardware.telephony"
         android:required="false" />
 
-    <!-- Speech recognition is provided by the device's own recognizer service. -->
+    <!--
+      Package visibility (Android 11+). BHAIYAAA hands numbers off to the phone's
+      own dialer and messaging app rather than dialling itself, so those intents
+      must be declared to be resolvable.
+    -->
     <queries>
         <intent>
             <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
         </intent>
     </queries>
 

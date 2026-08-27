@@ -17,6 +17,7 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import com.codeaza.bhaiyaaa.util.TimeRanges
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 
 /**
@@ -57,6 +58,23 @@ class BhaiyaaaRepository(
 
     fun memoriesForContact(phoneNumber: String): Flow<List<MemoryEntity>> =
         memoryDao.observeForContact(phoneNumber)
+
+    /**
+     * Resolves a contact for a detail screen.
+     *
+     * Tries the exact primary key first, then falls back to the suffix match
+     * key. The fallback matters because the number reaching this function has
+     * been through navigation-route encoding and may not be byte-identical to
+     * the stored key - without it, opening a contact shows "not found" for a
+     * number the database actually holds.
+     */
+    fun observeContactResolved(rawNumber: String): Flow<ContactEntity?> {
+        val exact = contactDao.observeByPhoneNumber(rawNumber)
+        val normalized = PhoneNumbers.normalize(rawNumber)
+        val byKey = contactDao.observeByMatchKey(PhoneNumbers.matchKey(rawNumber))
+        val byNormalized = contactDao.observeByPhoneNumber(normalized)
+        return combine(exact, byNormalized, byKey) { a, b, c -> a ?: b ?: c }
+    }
 
     fun observeContact(phoneNumber: String): Flow<ContactEntity?> =
         contactDao.observeByPhoneNumber(phoneNumber)
@@ -107,7 +125,11 @@ class BhaiyaaaRepository(
             contactsAdded = contactsAdded,
             callsAdded = callsAdded,
             contactsPermission = deviceContacts.hasPermission(),
-            callLogPermission = deviceCallLog.hasPermission()
+            callLogPermission = deviceCallLog.hasPermission(),
+            contactsError = deviceContacts.lastError,
+            callLogError = deviceCallLog.lastError,
+            storedContacts = contactDao.count(),
+            storedCalls = callDao.allOnce().size
         )
     }
 
@@ -115,8 +137,22 @@ class BhaiyaaaRepository(
         val contactsAdded: Int,
         val callsAdded: Int,
         val contactsPermission: Boolean,
-        val callLogPermission: Boolean
-    )
+        val callLogPermission: Boolean,
+        /** Non-null when the provider itself refused or failed the read. */
+        val contactsError: String? = null,
+        val callLogError: String? = null,
+        val storedContacts: Int = 0,
+        val storedCalls: Int = 0
+    ) {
+        /**
+         * True when BHAIYAAA holds the permission but still ended up with
+         * nothing - the case worth telling the user about, because it means
+         * something other than a missing permission went wrong.
+         */
+        val readFailedDespitePermission: Boolean
+            get() = (contactsPermission && contactsError != null) ||
+                (callLogPermission && callLogError != null)
+    }
 
     /** Seeds built-in tags and default alert rules. Idempotent - safe every launch. */
     suspend fun seedDefaults() = withContext(Dispatchers.IO) {

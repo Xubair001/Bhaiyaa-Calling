@@ -17,6 +17,7 @@ import com.codeaza.bhaiyaaa.data.export.TransferResult
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
 import com.codeaza.bhaiyaaa.domain.model.AppSettings
+import com.codeaza.bhaiyaaa.domain.model.Lookup
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 import com.codeaza.bhaiyaaa.domain.model.ThemeMode
@@ -29,6 +30,8 @@ import com.codeaza.bhaiyaaa.service.ReminderScheduler
 import com.codeaza.bhaiyaaa.util.Permissions
 import com.codeaza.bhaiyaaa.util.SecurePrefs
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -151,8 +154,30 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
                 val result = repository.syncFromDevice()
                 settingsRepo.setLastSyncAt(System.currentTimeMillis())
                 refreshDerived()
-                if (!result.contactsPermission && !result.callLogPermission) {
-                    showMessage("Grant Contacts and Call log so BHAIYAAA has something to work with.")
+                when {
+                    !result.contactsPermission && !result.callLogPermission ->
+                        showMessage("Grant Contacts and Call log so BHAIYAAA has something to work with.")
+
+                    // A granted permission that still reads nothing means the
+                    // provider refused - say so rather than showing an empty
+                    // screen that looks like "you have no calls".
+                    result.readFailedDespitePermission ->
+                        showMessage(
+                            "Couldn't read your " +
+                                listOfNotNull(
+                                    "contacts".takeIf { result.contactsError != null },
+                                    "call log".takeIf { result.callLogError != null }
+                                ).joinToString(" and ") +
+                                ". Check BHAIYAAA's permissions in system settings."
+                        )
+
+                    result.storedContacts == 0 && result.callLogPermission && result.storedCalls == 0 ->
+                        showMessage("Synced, but your phone returned no contacts or calls.")
+
+                    result.contactsAdded > 0 || result.callsAdded > 0 ->
+                        showMessage(
+                            "Synced ${result.storedContacts} contacts and ${result.storedCalls} calls."
+                        )
                 }
             } catch (e: Exception) {
                 showMessage("Couldn't sync from your phone just now.")
@@ -212,6 +237,15 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun observeContact(phoneNumber: String) = repository.observeContact(phoneNumber)
+
+    /** Lookup-shaped so the screen can tell "still loading" from "no such contact". */
+    fun observeContactLookup(phoneNumber: String): Flow<Lookup<ContactEntity>> =
+        repository.observeContactResolved(phoneNumber)
+            .map { if (it == null) Lookup.Missing else Lookup.Found(it) }
+
+    fun observeCallLookup(id: Long): Flow<Lookup<CallRecordEntity>> =
+        repository.observeCall(id)
+            .map { if (it == null) Lookup.Missing else Lookup.Found(it) }
 
     fun callsForContact(matchKey: String) = repository.callsForContact(matchKey)
 

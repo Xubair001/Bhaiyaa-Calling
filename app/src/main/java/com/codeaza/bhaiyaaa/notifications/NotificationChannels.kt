@@ -3,6 +3,8 @@ package com.codeaza.bhaiyaaa.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.codeaza.bhaiyaaa.R
@@ -23,6 +25,71 @@ object NotificationChannels {
     const val EMERGENCY = "emergency_calls"
     const val REMINDERS = "reminders"
     const val MISSED = "missed_important"
+
+    /**
+     * Whether the user has given BHAIYAAA permission to override Do Not Disturb.
+     *
+     * This is not a runtime permission and cannot be requested with a dialog -
+     * the user grants it in a dedicated system settings screen, so the UI links
+     * them there instead of pretending the toggle works on its own.
+     */
+    fun hasDndAccess(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        return runCatching { manager.isNotificationPolicyAccessGranted }.getOrDefault(false)
+    }
+
+    fun dndAccessIntent(): Intent =
+        Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    /** Opens the system page for one channel, where sound and DND are user-owned. */
+    fun channelSettingsIntent(context: Context, channelId: String): Intent =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        } else {
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(android.net.Uri.fromParts("package", context.packageName, null))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+    /**
+     * Actually applies "ring through Do Not Disturb" to a tier's channel.
+     *
+     * Android only honours this on the channel, never on an individual
+     * notification, and only when the app holds notification-policy access.
+     *
+     * @return true if it was applied; false means the user still needs to grant
+     *   DND access, and the caller must say so rather than silently no-op.
+     */
+    fun setBypassDnd(context: Context, level: VipLevel, enabled: Boolean): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
+        if (enabled && !hasDndAccess(context)) return false
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        val id = channelFor(level)
+        return runCatching {
+            val existing = manager.getNotificationChannel(id) ?: return@runCatching false
+            val updated = NotificationChannel(id, existing.name, existing.importance).apply {
+                description = existing.description
+                enableVibration(existing.shouldVibrate())
+                setShowBadge(existing.canShowBadge())
+                setBypassDnd(enabled)
+            }
+            manager.createNotificationChannel(updated)
+            manager.getNotificationChannel(id)?.canBypassDnd() == enabled
+        }.getOrDefault(false)
+    }
+
+    fun canBypassDnd(context: Context, level: VipLevel): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        return runCatching {
+            manager.getNotificationChannel(channelFor(level))?.canBypassDnd() == true
+        }.getOrDefault(false)
+    }
 
     fun channelFor(level: VipLevel): String = when (level) {
         VipLevel.EMERGENCY -> EMERGENCY

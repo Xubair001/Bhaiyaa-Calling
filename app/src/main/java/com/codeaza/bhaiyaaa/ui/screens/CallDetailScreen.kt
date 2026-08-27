@@ -8,10 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -29,11 +34,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.unit.dp
 import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
 import com.codeaza.bhaiyaaa.domain.model.CallType
+import com.codeaza.bhaiyaaa.domain.model.Lookup
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
 import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
 import com.codeaza.bhaiyaaa.ui.components.CallTypeIcon
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
+import com.codeaza.bhaiyaaa.ui.components.LoadingState
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
+import androidx.compose.ui.platform.LocalContext
+import com.codeaza.bhaiyaaa.util.ContactActions
 import com.codeaza.bhaiyaaa.util.Formatting
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 
@@ -51,24 +60,32 @@ fun CallDetailScreen(
     viewModel: BhaiyaaaViewModel,
     onOpenContact: (String) -> Unit
 ) {
+    val context = LocalContext.current
     // Observed rather than fetched once, so ticking "important" or saving a
     // note re-renders from the database instead of from a mirrored local copy.
-    val call by remember(callId) { viewModel.observeCall(callId) }
-        .collectAsStateWithLifecycle(initialValue = null)
+    val lookup by remember(callId) { viewModel.observeCallLookup(callId) }
+        .collectAsStateWithLifecycle(initialValue = Lookup.Loading)
 
-    val current = call
-    if (current == null) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Call not found", style = MaterialTheme.typography.titleMedium)
+    when (lookup) {
+        is Lookup.Loading -> {
+            LoadingState(label = "Opening call…")
+            return
         }
-        return
+        is Lookup.Missing -> {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Call not found", style = MaterialTheme.typography.titleMedium)
+            }
+            return
+        }
+        is Lookup.Found -> Unit
     }
+    val current = (lookup as Lookup.Found<CallRecordEntity>).value
 
     var noteDraft by remember(current.id) { mutableStateOf(current.note.orEmpty()) }
     var memoryDraft by remember(current.id) { mutableStateOf("") }
@@ -99,6 +116,36 @@ fun CallDetailScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Button(
+                onClick = {
+                    if (!ContactActions.dial(context, current.phoneNumber)) {
+                        viewModel.showMessage("No dialer app on this device.")
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Filled.Call, contentDescription = null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Call back")
+            }
+            OutlinedButton(
+                onClick = {
+                    if (!ContactActions.message(context, current.phoneNumber)) {
+                        viewModel.showMessage("No messaging app on this device.")
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Message")
             }
         }
 

@@ -187,6 +187,45 @@ class AppDatabaseTest {
     }
 
     @Test
+    fun `stats for a contact with no calls returns null instead of crashing`() = runTest {
+        val dao = db.callRecordDao()
+        dao.insertIfAbsent(listOf(call(1, "+923001111111", "INCOMING", now - 1000)))
+
+        // A bare aggregate with no GROUP BY returns one all-NULL row for an
+        // empty match, which Room cannot map into ContactStats.matchKey - it
+        // threw a NullPointerException and killed the app the instant a contact
+        // with no call history was opened.
+        val stats = dao.statsForContact(PhoneNumbers.matchKey("+923009999999"))
+        assertThat(stats).isNull()
+    }
+
+    @Test
+    fun `observable stats for a contact with no calls emits null`() = runTest {
+        val dao = db.callRecordDao()
+        dao.insertIfAbsent(listOf(call(1, "+923001111111", "INCOMING", now - 1000)))
+
+        val stats = dao.observeStatsForContact(PhoneNumbers.matchKey("+923009999999")).first()
+        assertThat(stats).isNull()
+    }
+
+    @Test
+    fun `stats are still correct for a contact that does have calls`() = runTest {
+        val dao = db.callRecordDao()
+        val key = PhoneNumbers.matchKey("+923001111111")
+        dao.insertIfAbsent(
+            listOf(
+                call(1, "+923001111111", "INCOMING", now - 1000, duration = 60),
+                call(2, "+923001111111", "MISSED", now - 2000)
+            )
+        )
+        // The GROUP BY must not change the answer for the non-empty case.
+        val stats = dao.observeStatsForContact(key).first()
+        assertThat(stats?.totalCalls).isEqualTo(2)
+        assertThat(stats?.missedCalls).isEqualTo(1)
+        assertThat(stats?.matchKey).isEqualTo(key)
+    }
+
+    @Test
     fun `vip call counting joins calls to contacts`() = runTest {
         db.contactDao().insertIfAbsent(listOf(contact("Ahmed", "+923001234567", VipLevel.VIP)))
         db.callRecordDao().insertIfAbsent(

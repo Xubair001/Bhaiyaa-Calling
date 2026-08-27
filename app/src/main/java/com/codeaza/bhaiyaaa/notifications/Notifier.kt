@@ -39,8 +39,7 @@ object Notifier {
         contactName: String,
         rawNumber: String,
         level: VipLevel,
-        message: String,
-        bypassDnd: Boolean
+        message: String
     ) {
         if (!canPost(context)) return
 
@@ -59,13 +58,10 @@ object Notifier {
             .setAutoCancel(true)
             .setContentIntent(openApp(context))
             .setOnlyAlertOnce(false)
-
-        if (bypassDnd) {
-            // Only honoured if the user granted the DND override in system
-            // settings; Android ignores it otherwise. No attempt is made to
-            // work around that.
-            builder.setCategory(NotificationCompat.CATEGORY_CALL)
-        }
+            // Whether this rings through Do Not Disturb is decided by the
+            // channel (see NotificationChannels.setBypassDnd), not here - a
+            // notification cannot override DND on its own.
+            .setCategory(NotificationCompat.CATEGORY_CALL)
 
         post(context, VIP_NOTIFICATION_BASE + (rawNumber.hashCode() and 0xFFF), builder.build())
     }

@@ -11,12 +11,21 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
 /** Reads the device address book. Returns an empty list rather than throwing when denied. */
 class DeviceContactsRepository(private val context: Context) {
 
+    /** Set when a read fails, so a provider refusal isn't reported as "no contacts". */
+    @Volatile
+    var lastError: String? = null
+        private set
+
     fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(
         context, Manifest.permission.READ_CONTACTS
     ) == PackageManager.PERMISSION_GRANTED
 
     fun readDeviceContacts(now: Long): List<ContactEntity> {
-        if (!hasPermission()) return emptyList()
+        lastError = null
+        if (!hasPermission()) {
+            lastError = "READ_CONTACTS not granted"
+            return emptyList()
+        }
 
         val results = mutableListOf<ContactEntity>()
         val projection = arrayOf(
@@ -35,7 +44,14 @@ class DeviceContactsRepository(private val context: Context) {
                 "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} ASC"
             )
         } catch (e: Exception) {
+            // Class name only - never the row data, which is personal.
+            lastError = "${e.javaClass.simpleName}: ${e.message}"
+            android.util.Log.w("BhaiyaaaContacts", "Contacts query failed: ${e.javaClass.simpleName}")
             null
+        }
+
+        if (cursor == null && lastError == null) {
+            lastError = "Contacts query returned no cursor"
         }
 
         cursor?.use {

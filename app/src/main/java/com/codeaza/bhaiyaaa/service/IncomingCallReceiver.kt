@@ -82,8 +82,7 @@ class IncomingCallReceiver : BroadcastReceiver() {
                             contactName = contact.name,
                             rawNumber = contact.phoneNumber,
                             level = level,
-                            message = DefaultPhrasebook(settings.personality).vipCalling(contact.name),
-                            bypassDnd = rule.bypassDnd
+                            message = DefaultPhrasebook(settings.personality).vipCalling(contact.name)
                         )
                     }
                 }
