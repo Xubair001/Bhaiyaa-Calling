@@ -14,6 +14,7 @@ import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -39,8 +40,13 @@ class ProfileSaveTest {
     private val now = 1_756_000_000_000L
     private val number = "+923001234567"
 
+    // runBlocking, not runTest. runTest builds a TestScope with its own
+    // scheduler and uncaught-exception handling, and doing that outside a test
+    // body leaves state behind that surfaces as UncaughtExceptionsBeforeTest in
+    // whichever test happens to run next in the same JVM - which made the
+    // failure look flaky and land on an unrelated class.
     @Before
-    fun setUp() = runTest {
+    fun setUp() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
