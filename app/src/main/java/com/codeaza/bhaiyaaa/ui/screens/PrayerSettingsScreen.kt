@@ -56,6 +56,7 @@ import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
 import com.codeaza.bhaiyaaa.prayer.SilenceController
 import com.codeaza.bhaiyaaa.ui.components.InfoBanner
+import com.codeaza.bhaiyaaa.ui.components.ReliabilityCard
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.SettingsSwitchRow
 import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
@@ -113,6 +114,10 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                 checked = settings.enabled,
                 onCheckedChange = { viewModel.setEnabled(it) }
             )
+        }
+
+        if (settings.enabled) {
+            item { ReliabilityCard(refreshKey = grantVersion) }
         }
 
         if (settings.enabled && !hasDnd) {

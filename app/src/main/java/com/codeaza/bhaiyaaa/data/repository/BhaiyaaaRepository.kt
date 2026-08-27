@@ -162,31 +162,9 @@ class BhaiyaaaRepository(
                 TagEntity(name = name, colorArgb = TAG_COLORS[index % TAG_COLORS.size], isBuiltIn = true, sortOrder = index)
             }
         )
-        ruleDao.insertIfAbsent(defaultRules())
+        ruleDao.insertIfAbsent(NotificationRuleEntity.allDefaults())
         db.prayerDao().insertIfAbsent(PrayerTimeCalculator.defaultPrayerRows())
     }
-
-    private fun defaultRules() = listOf(
-        NotificationRuleEntity(
-            vipLevel = VipLevel.VIP.storageValue,
-            vibrationPatternCsv = "0,400,200,400",
-            flashCount = 3
-        ),
-        NotificationRuleEntity(
-            vipLevel = VipLevel.SUPER_VIP.storageValue,
-            vibrationPatternCsv = "0,500,150,500,150,500",
-            flashCount = 5
-        ),
-        NotificationRuleEntity(
-            vipLevel = VipLevel.EMERGENCY.storageValue,
-            vibrationPatternCsv = "0,400,150,400,150,400,150,400,150,400",
-            flashCount = 8,
-            flashOnMillis = 140,
-            flashOffMillis = 140,
-            // Prayer outranks the other tiers, but not a genuine emergency.
-            ringsDuringPrayer = true
-        )
-    )
 
     // -------------------------------------------------------------- contacts
 
@@ -363,6 +341,22 @@ class BhaiyaaaRepository(
     suspend fun ruleFor(level: VipLevel): NotificationRuleEntity? = withContext(Dispatchers.IO) {
         ruleDao.findForLevel(level.storageValue)
     }
+
+    /**
+     * The rule for a tier, creating it from the defaults if it is missing.
+     *
+     * Callers that write a setting must never silently no-op because a row was
+     * absent - that turns a seeding failure into a toggle that appears to work
+     * and then forgets.
+     */
+    suspend fun ruleForOrCreate(level: VipLevel): NotificationRuleEntity =
+        withContext(Dispatchers.IO) {
+            ruleDao.findForLevel(level.storageValue) ?: run {
+                val created = NotificationRuleEntity.defaultFor(level.storageValue)
+                ruleDao.upsert(created)
+                created
+            }
+        }
 
     suspend fun saveRule(rule: NotificationRuleEntity) = withContext(Dispatchers.IO) {
         ruleDao.upsert(rule)

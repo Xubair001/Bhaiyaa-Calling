@@ -37,6 +37,21 @@
       by hand works just as well and skips this entirely.
     -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!--
+      A VIP alert has to keep running after the broadcast receiver returns,
+      otherwise a backgrounded process is killed mid-ring. The wake lock is
+      because the screen being off is exactly the case this must work in.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!--
+      Requested from Settings, never silently. Turning off battery optimisation
+      is also what makes BHAIYAAA eligible to start that service from the
+      background at all: PHONE_STATE is not on Android's exemption list, but
+      "battery optimisations disabled" is.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Model downloads in the Model Manager are user-initiated only. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -116,6 +131,11 @@
         <receiver
             android:name=".service.PrayerAlarmReceiver"
             android:exported="false" />
+
+        <service
+            android:name=".service.VipAlertService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
 
         <!--
           BhaiyaaaApplication implements Configuration.Provider, i.e. WorkManager

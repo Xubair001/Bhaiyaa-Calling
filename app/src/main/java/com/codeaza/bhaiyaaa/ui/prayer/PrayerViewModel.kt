@@ -8,6 +8,7 @@ import android.location.LocationManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
+import com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity
 import com.codeaza.bhaiyaaa.data.db.entity.PrayerEntity
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.domain.model.Prayer
@@ -100,9 +101,10 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setRingsDuringPrayer(level: VipLevel, rings: Boolean) = update {
-        db.notificationRuleDao().findForLevel(level.storageValue)?.let { rule ->
-            db.notificationRuleDao().upsert(rule.copy(ringsDuringPrayer = rings))
-        }
+        // Create the row if it is missing, rather than dropping the setting.
+        val rule = db.notificationRuleDao().findForLevel(level.storageValue)
+            ?: NotificationRuleEntity.defaultFor(level.storageValue)
+        db.notificationRuleDao().upsert(rule.copy(ringsDuringPrayer = rings))
     }
 
     /**

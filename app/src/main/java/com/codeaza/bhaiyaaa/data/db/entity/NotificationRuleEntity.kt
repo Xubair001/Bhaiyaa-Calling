@@ -31,4 +31,39 @@ data class NotificationRuleEntity(
      */
     @ColumnInfo(defaultValue = "0")
     val ringsDuringPrayer: Boolean = false
-)
+) {
+    companion object {
+        /**
+         * The shipped defaults for a tier.
+         *
+         * Single source of truth, used for seeding, for repairing a missing row,
+         * and as the fallback when a rule cannot be read. A tier with no row is
+         * a seeding failure, not a user switching alerts off, and treating the
+         * two the same silently kills that tier - which is exactly what happened.
+         */
+        fun defaultFor(vipLevel: String): NotificationRuleEntity = when (vipLevel) {
+            "SUPER_VIP" -> NotificationRuleEntity(
+                vipLevel = vipLevel,
+                vibrationPatternCsv = "0,500,150,500,150,500",
+                flashCount = 5
+            )
+            "EMERGENCY" -> NotificationRuleEntity(
+                vipLevel = vipLevel,
+                vibrationPatternCsv = "0,400,150,400,150,400,150,400,150,400",
+                flashCount = 8,
+                flashOnMillis = 140,
+                flashOffMillis = 140,
+                // Prayer outranks the other tiers, but not a genuine emergency.
+                ringsDuringPrayer = true
+            )
+            else -> NotificationRuleEntity(
+                vipLevel = vipLevel,
+                vibrationPatternCsv = "0,400,200,400",
+                flashCount = 3
+            )
+        }
+
+        fun allDefaults(): List<NotificationRuleEntity> =
+            listOf("VIP", "SUPER_VIP", "EMERGENCY").map { defaultFor(it) }
+    }
+}

@@ -41,7 +41,10 @@ object AlertDecision {
         if (!contact.notificationsEnabled) return AlertOutcome.CONTACT_MUTED
         if (!alertsGloballyEnabled) return AlertOutcome.ALERTS_OFF
 
-        val effective = rule ?: return AlertOutcome.TIER_ALERTS_OFF
+        // A missing row means seeding failed, not that the user switched this
+        // tier off - so fall back to the tier's shipped defaults. Treating the
+        // two as the same silently killed every tier whose row was absent.
+        val effective = rule ?: NotificationRuleEntity.defaultFor(level.storageValue)
 
         // Prayer outranks the tier, and outranks bypassDnd. Checked before the
         // per-tier enable so the reason reported is the true one.

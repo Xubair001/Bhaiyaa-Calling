@@ -146,11 +146,53 @@ class AlertDecisionTest {
     }
 
     @Test
-    fun `a missing rule is treated as off rather than as permission`() {
-        val outcome = AlertDecision.evaluate(
-            contact(), rule = null,
-            alertsGloballyEnabled = true, prayerSilenceActive = false
-        )
-        assertThat(outcome).isEqualTo(AlertOutcome.TIER_ALERTS_OFF)
+    fun `a missing rule falls back to the tier defaults instead of going silent`() {
+        // A tier with no stored row is a seeding failure, not the user turning
+        // alerts off. Treating them the same silently killed Super VIP and
+        // Emergency while VIP kept working.
+        VipLevel.assignable.forEach { level ->
+            val outcome = AlertDecision.evaluate(
+                contact(level), rule = null,
+                alertsGloballyEnabled = true, prayerSilenceActive = false
+            )
+            assertThat(outcome).isEqualTo(AlertOutcome.ALERT)
+        }
+    }
+
+    @Test
+    fun `every tier alerts, not just VIP`() {
+        VipLevel.assignable.forEach { level ->
+            val outcome = AlertDecision.evaluate(
+                contact(level), rule(level),
+                alertsGloballyEnabled = true, prayerSilenceActive = false
+            )
+            assertThat(outcome).isEqualTo(AlertOutcome.ALERT)
+        }
+    }
+
+    @Test
+    fun `tier defaults carry distinct alert patterns`() {
+        val vip = NotificationRuleEntity.defaultFor(VipLevel.VIP.storageValue)
+        val superVip = NotificationRuleEntity.defaultFor(VipLevel.SUPER_VIP.storageValue)
+        val emergency = NotificationRuleEntity.defaultFor(VipLevel.EMERGENCY.storageValue)
+
+        // Escalating flash counts, so the tiers are distinguishable in the dark.
+        assertThat(vip.flashCount).isLessThan(superVip.flashCount)
+        assertThat(superVip.flashCount).isLessThan(emergency.flashCount)
+        assertThat(setOf(vip.vibrationPatternCsv, superVip.vibrationPatternCsv, emergency.vibrationPatternCsv))
+            .hasSize(3)
+        // Only Emergency gets through a prayer by default.
+        assertThat(vip.ringsDuringPrayer).isFalse()
+        assertThat(superVip.ringsDuringPrayer).isFalse()
+        assertThat(emergency.ringsDuringPrayer).isTrue()
+    }
+
+    @Test
+    fun `defaults exist for all three assignable tiers`() {
+        val all = NotificationRuleEntity.allDefaults()
+        assertThat(all.map { it.vipLevel })
+            .containsExactly("VIP", "SUPER_VIP", "EMERGENCY")
+        assertThat(all.all { it.vibrationEnabled && it.flashEnabled && it.notificationsEnabled })
+            .isTrue()
     }
 }

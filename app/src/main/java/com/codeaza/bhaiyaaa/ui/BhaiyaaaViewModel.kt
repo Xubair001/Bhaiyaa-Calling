@@ -340,9 +340,9 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
     fun setBypassDnd(level: VipLevel, enabled: Boolean, onResult: (Boolean) -> Unit = {}) =
         viewModelScope.launch {
             val applied = NotificationChannels.setBypassDnd(getApplication(), level, enabled)
-            repository.ruleFor(level)?.let { rule ->
-                repository.saveRule(rule.copy(bypassDnd = applied))
-            }
+            // OrCreate: a tier with no row must not swallow the setting.
+            val rule = repository.ruleForOrCreate(level)
+            repository.saveRule(rule.copy(bypassDnd = applied))
             if (enabled && !applied) {
                 showMessage("This device wouldn't allow BHAIYAAA past Do Not Disturb.")
             }

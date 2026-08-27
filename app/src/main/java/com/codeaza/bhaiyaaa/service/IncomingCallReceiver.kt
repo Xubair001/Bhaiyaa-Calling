@@ -3,6 +3,7 @@ package com.codeaza.bhaiyaaa.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.telephony.TelephonyManager
 import com.codeaza.bhaiyaaa.ai.DefaultPhrasebook
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
@@ -47,7 +48,10 @@ class IncomingCallReceiver : BroadcastReceiver() {
             // Answered or ended: stop any flashing immediately so the torch is
             // never left on after the call is dealt with.
             TelephonyManager.EXTRA_STATE_OFFHOOK,
-            TelephonyManager.EXTRA_STATE_IDLE -> CallAlertManager.cancelAlerts(appContext)
+            TelephonyManager.EXTRA_STATE_IDLE -> {
+                CallAlertManager.cancelAlerts(appContext)
+                runCatching { appContext.startService(VipAlertService.stopIntent(appContext)) }
+            }
         }
     }
 
@@ -77,20 +81,35 @@ class IncomingCallReceiver : BroadcastReceiver() {
                     )
                     if (outcome != AlertOutcome.ALERT || rule == null) return@withTimeoutOrNull
 
-                    CallAlertManager.triggerAlert(
-                        context = context,
-                        rule = rule,
-                        flashlightGloballyEnabled = settings.flashlightEnabled
+                    val message = DefaultPhrasebook(settings.personality).vipCalling(contact.name)
+
+                    // Hand off to a foreground service, which keeps the process
+                    // alive for the whole ring. Doing this work here would stop
+                    // the moment goAsync() finished and the process was reaped.
+                    val started = startAlertService(
+                        context, level, contact.name, contact.phoneNumber, message,
+                        settings.flashlightEnabled
                     )
 
-                    if (rule.notificationsEnabled) {
-                        Notifier.notifyVipCall(
+                    if (!started) {
+                        // The service was refused - almost always because
+                        // battery optimisation is on, which Android requires off
+                        // to allow a background service start. Run inline so the
+                        // user still gets something, even if it may be cut short.
+                        CallAlertManager.triggerAlert(
                             context = context,
-                            contactName = contact.name,
-                            rawNumber = contact.phoneNumber,
-                            level = level,
-                            message = DefaultPhrasebook(settings.personality).vipCalling(contact.name)
+                            rule = rule,
+                            flashlightGloballyEnabled = settings.flashlightEnabled
                         )
+                        if (rule.notificationsEnabled) {
+                            Notifier.notifyVipCall(
+                                context = context,
+                                contactName = contact.name,
+                                rawNumber = contact.phoneNumber,
+                                level = level,
+                                message = message
+                            )
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -100,6 +119,34 @@ class IncomingCallReceiver : BroadcastReceiver() {
                 pendingResult.finish()
             }
         }
+    }
+
+    /**
+     * @return false when the platform refused the start, so the caller can fall
+     *   back rather than the alert silently not happening.
+     */
+    private fun startAlertService(
+        context: Context,
+        level: VipLevel,
+        name: String,
+        number: String,
+        message: String,
+        flashlightEnabled: Boolean
+    ): Boolean = try {
+        val intent = VipAlertService.alertIntent(
+            context, level, name, number, message, flashlightEnabled
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+        true
+    } catch (t: Throwable) {
+        // ForegroundServiceStartNotAllowedException on Android 12+, or an OEM
+        // refusing outright. Throwable because that exception type only exists
+        // on newer API levels.
+        false
     }
 
     private companion object {

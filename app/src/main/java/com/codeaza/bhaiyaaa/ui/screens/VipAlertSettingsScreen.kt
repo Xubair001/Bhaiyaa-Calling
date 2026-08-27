@@ -37,6 +37,7 @@ import com.codeaza.bhaiyaaa.notifications.NotificationChannels
 import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.service.CallAlertManager
 import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.components.ReliabilityCard
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import kotlin.math.roundToInt
 
@@ -69,6 +70,8 @@ fun VipAlertSettingsScreen(viewModel: BhaiyaaaViewModel) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        item { ReliabilityCard(refreshKey = dndVersion) }
+
         items(VipLevel.assignable.size) { index ->
             val level = VipLevel.assignable[index]
             val rule = byLevel[level.storageValue] ?: NotificationRuleEntity(level.storageValue)
