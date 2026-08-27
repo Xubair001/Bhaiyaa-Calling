@@ -165,6 +165,38 @@ class PrayerEditPersistenceTest {
     }
 
     @Test
+    fun `only Fajr defaults to a morning time`() {
+        // Where the editor opens when nothing is set. Everything after Fajr is
+        // an afternoon or evening prayer, and opening those at 12 AM invites a
+        // time set twelve hours out.
+        assertThat(Prayer.FAJR.defaultsToMorning).isTrue()
+        listOf(Prayer.DHUHR, Prayer.ASR, Prayer.MAGHRIB, Prayer.ISHA).forEach {
+            assertThat(it.defaultsToMorning).isFalse()
+        }
+    }
+
+    @Test
+    fun `picker defaults are real times in the right order`() {
+        val defaults = Prayer.entries.map { it.defaultClockMinutes }
+        // Each within a day, and ascending like the prayers themselves.
+        assertThat(defaults.all { it in 0..1439 }).isTrue()
+        assertThat(defaults).isInOrder()
+    }
+
+    @Test
+    fun `defaults are only a starting position and are never stored`() = runTest {
+        // A freshly seeded prayer must still read as "no time set", so the
+        // calculated time keeps winning until the user actually picks one.
+        val row = db.prayerDao().find(Prayer.MAGHRIB.storageValue)
+        assertThat(row?.manualMinutesFromMidnight).isNull()
+
+        val maghrib = PrayerTimeCalculator.windowsForDay(
+            automatic, db.prayerDao().allOnce(), day, zone
+        ).first { it.prayer == Prayer.MAGHRIB }
+        assertThat(maghrib.isOverridden).isFalse()
+    }
+
+    @Test
     fun `a time typed at midnight is stored, not treated as unset`() = runTest {
         // 00:00 is minute zero, which must not be confused with "no override".
         db.prayerDao().setManualTime(Prayer.FAJR.storageValue, 0)

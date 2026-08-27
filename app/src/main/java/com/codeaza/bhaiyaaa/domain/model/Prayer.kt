@@ -1,12 +1,29 @@
 package com.codeaza.bhaiyaaa.domain.model
 
-/** The five daily prayers, in order. */
-enum class Prayer(val storageValue: String, val label: String, val order: Int) {
-    FAJR("FAJR", "Fajr", 0),
-    DHUHR("DHUHR", "Dhuhr", 1),
-    ASR("ASR", "Asr", 2),
-    MAGHRIB("MAGHRIB", "Maghrib", 3),
-    ISHA("ISHA", "Isha", 4);
+/**
+ * The five daily prayers, in order.
+ *
+ * [defaultClockMinutes] is where the time picker opens when no time has been
+ * set yet - minutes past midnight. It is only a starting position, never a
+ * stored value, but it matters: an editor that opens at 12 AM for every prayer
+ * means Dhuhr, Asr, Maghrib and Isha all need the meridiem flipped before
+ * anything else, which is a step it is easy to miss and produces a prayer
+ * scheduled twelve hours out. Fajr opens in the morning, the rest after noon.
+ */
+enum class Prayer(
+    val storageValue: String,
+    val label: String,
+    val order: Int,
+    val defaultClockMinutes: Int
+) {
+    FAJR("FAJR", "Fajr", 0, 5 * 60),
+    DHUHR("DHUHR", "Dhuhr", 1, 12 * 60 + 30),
+    ASR("ASR", "Asr", 2, 16 * 60),
+    MAGHRIB("MAGHRIB", "Maghrib", 3, 18 * 60 + 30),
+    ISHA("ISHA", "Isha", 4, 20 * 60);
+
+    /** True when this prayer's default sits before noon. Fajr only. */
+    val defaultsToMorning: Boolean get() = defaultClockMinutes < 12 * 60
 
     companion object {
         fun from(value: String?): Prayer =

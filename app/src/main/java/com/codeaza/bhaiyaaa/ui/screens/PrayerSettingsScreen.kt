@@ -402,6 +402,9 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
         EditPrayerDialog(
             prayerLabel = prayer.label,
             currentMinutes = row?.manualMinutesFromMidnight,
+            // Where the picker opens when nothing is set: morning for Fajr,
+            // afternoon or evening for the rest.
+            defaultMinutes = prayer.defaultClockMinutes,
             currentSilence = row?.silenceMinutes ?: 15,
             currentOffset = row?.startOffsetMinutes ?: -3,
             canClearOverride = settings.mode == PrayerMode.AUTOMATIC,
@@ -434,6 +437,7 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
 private fun EditPrayerDialog(
     prayerLabel: String,
     currentMinutes: Int?,
+    defaultMinutes: Int,
     currentSilence: Int,
     currentOffset: Int,
     canClearOverride: Boolean,
@@ -441,9 +445,10 @@ private fun EditPrayerDialog(
     onDismiss: () -> Unit,
     onSave: (Int?, Int, Int) -> Unit
 ) {
+    val opensAt = currentMinutes ?: defaultMinutes
     val state = rememberTimePickerState(
-        initialHour = (currentMinutes ?: 0) / 60,
-        initialMinute = (currentMinutes ?: 0) % 60,
+        initialHour = opensAt / 60,
+        initialMinute = opensAt % 60,
         is24Hour = false
     )
     var silence by remember { mutableIntStateOf(currentSilence) }
