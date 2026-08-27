@@ -9,6 +9,7 @@ import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.notifications.Notifier
+import com.codeaza.bhaiyaaa.prayer.PrayerSilence
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,6 +70,14 @@ class IncomingCallReceiver : BroadcastReceiver() {
 
                     val rule = db.notificationRuleDao().findForLevel(level.storageValue)
                         ?: return@withTimeoutOrNull
+
+                    // A prayer silence window outranks a VIP tier unless that
+                    // tier was explicitly allowed through. Returning here means
+                    // no vibration, no torch and no notification - the phone
+                    // stays as quiet as the user asked it to be.
+                    if (!rule.ringsDuringPrayer && PrayerSilence.isActiveNow(context)) {
+                        return@withTimeoutOrNull
+                    }
 
                     CallAlertManager.triggerAlert(
                         context = context,

@@ -176,6 +176,36 @@ class MigrationTest {
     }
 
     @Test
+    fun `the prayer table and per-tier flag exist after migrating`() = runTest {
+        createV3Database()
+
+        val db = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            AppDatabase::class.java,
+            dbName
+        ).addMigrations(*migrationsForTest()).allowMainThreadQueries().build()
+
+        // v5 arrives via the 3 -> 4 -> 5 chain, so this also proves the chain runs.
+        db.prayerDao().insertIfAbsent(
+            com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator.defaultPrayerRows()
+        )
+        assertThat(db.prayerDao().allOnce()).hasSize(5)
+
+        db.notificationRuleDao().insertIfAbsent(
+            listOf(
+                com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity(vipLevel = "EMERGENCY")
+            )
+        )
+        val rule = requireNotNull(db.notificationRuleDao().findForLevel("EMERGENCY"))
+        // The column added by ALTER TABLE must default to 0, not be missing.
+        assertThat(rule.ringsDuringPrayer).isFalse()
+        db.notificationRuleDao().upsert(rule.copy(ringsDuringPrayer = true))
+        assertThat(db.notificationRuleDao().findForLevel("EMERGENCY")?.ringsDuringPrayer).isTrue()
+
+        db.close()
+    }
+
+    @Test
     fun `the new tables exist and work after migrating`() = runTest {
         createV3Database()
 

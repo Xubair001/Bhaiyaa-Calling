@@ -34,5 +34,6 @@ data class AppSettings(
     val missedCallNudgeEnabled: Boolean = true,
     val autoSyncEnabled: Boolean = true,
     val privateMemoriesHidden: Boolean = true,
-    val lastSyncAt: Long = 0L
+    val lastSyncAt: Long = 0L,
+    val prayer: PrayerSettings = PrayerSettings()
 )

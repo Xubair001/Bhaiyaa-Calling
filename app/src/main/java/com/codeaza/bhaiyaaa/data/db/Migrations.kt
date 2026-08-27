@@ -211,7 +211,36 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
-internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4)
+/**
+ * v5 adds the prayer-silence feature: a row per prayer, and a per-tier flag for
+ * whether a VIP still reaches the user during a silence window.
+ *
+ * The ALTER TABLE carries a DEFAULT because SQLite requires one when adding a
+ * NOT NULL column to a table that already has rows. The entity therefore
+ * declares the same default via @ColumnInfo, so Room's expected schema and the
+ * migrated database agree - they are compared on the next open, and a mismatch
+ * is a hard failure.
+ */
+internal val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS prayers (
+                name TEXT NOT NULL PRIMARY KEY,
+                enabled INTEGER NOT NULL,
+                silenceMinutes INTEGER NOT NULL,
+                manualMinutesFromMidnight INTEGER,
+                sortOrder INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            "ALTER TABLE notification_rules ADD COLUMN ringsDuringPrayer INTEGER NOT NULL DEFAULT 0"
+        )
+    }
+}
+
+internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4, MIGRATION_4_5)
 
 /**
  * Test seam. The migration is the one piece of this app that can destroy data

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
@@ -29,6 +30,7 @@ fun SettingsScreen(
     viewModel: BhaiyaaaViewModel,
     onOpenNotifications: () -> Unit,
     onOpenVipAlerts: () -> Unit,
+    onOpenPrayer: () -> Unit,
     onOpenAppearance: () -> Unit,
     onOpenPersonality: () -> Unit,
     onOpenSecurity: () -> Unit,
@@ -56,6 +58,23 @@ fun SettingsScreen(
             subtitle = "Vibration, flashlight and sound per tier",
             icon = Icons.Filled.Star,
             onClick = onOpenVipAlerts
+        )
+
+        SettingsLinkRow(
+            title = "Prayer silence",
+            subtitle = if (settings.prayer.enabled) {
+                if (settings.prayer.mode.name == "AUTOMATIC" && settings.prayer.hasLocation) {
+                    "On · ${settings.prayer.locationLabel}"
+                } else if (settings.prayer.mode.name == "AUTOMATIC") {
+                    "On · location not set"
+                } else {
+                    "On · your own times"
+                }
+            } else {
+                "Off"
+            },
+            icon = Icons.Filled.Schedule,
+            onClick = onOpenPrayer
         )
 
         SettingsSectionHeader("Experience")

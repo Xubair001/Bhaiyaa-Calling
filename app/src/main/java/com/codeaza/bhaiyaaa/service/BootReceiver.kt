@@ -40,6 +40,9 @@ class BootReceiver : BroadcastReceiver() {
                             dao.markNotified(reminder.id)
                         }
                     }
+                    // Alarms do not survive a reboot; without this a prayer
+                    // window set before the restart would never fire.
+                    com.codeaza.bhaiyaaa.prayer.PrayerScheduler.reschedule(appContext)
                     CallSyncWorker.enqueuePeriodic(appContext)
                 }
             } catch (e: Exception) {

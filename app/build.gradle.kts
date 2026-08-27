@@ -124,6 +124,11 @@ dependencies {
     implementation("com.alphacephei:vosk-android:0.3.47@aar")
     implementation("net.java.dev.jna:jna:5.13.0@aar")
 
+    // Adhan: prayer times computed on-device from coordinates (MIT). Pure
+    // Java, no network - the times are astronomy, not an API call, which is the
+    // only reason this fits an offline-first app.
+    implementation("com.batoulapps.adhan:adhan:1.2.1")
+
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")

@@ -23,6 +23,20 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Re-arm reminder alarms after a reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--
+      Prayer silence has to start on time - a window that opens five minutes
+      late has missed the jamaat. This is the one feature in BHAIYAAA that
+      justifies an exact alarm; the user grants it in system settings, and the
+      app falls back to inexact scheduling (and says so) if they don't.
+    -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!--
+      Coarse location only, and only to compute prayer times for where you are.
+      Requested at the point you tap "Use my location" and never otherwise; the
+      coordinates stay on the device and are never sent anywhere. Typing them in
+      by hand works just as well and skips this entirely.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Model downloads in the Model Manager are user-initiated only. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -97,6 +111,10 @@
 
         <receiver
             android:name=".service.ReminderAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".service.PrayerAlarmReceiver"
             android:exported="false" />
 
         <!--

@@ -7,6 +7,7 @@ import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.notifications.NotificationChannels
+import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
 import com.codeaza.bhaiyaaa.service.work.CallSyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,6 +59,10 @@ class BhaiyaaaApplication : Application(), Configuration.Provider {
                         )
                     }
                 }
+
+                // Re-arms today's and tomorrow's prayer windows, and hands the
+                // phone back if the process died mid-window.
+                PrayerScheduler.reschedule(applicationContext)
 
                 CallSyncWorker.enqueuePeriodic(applicationContext)
             }

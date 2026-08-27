@@ -54,6 +54,8 @@ import com.codeaza.bhaiyaaa.ui.screens.ModelManagerScreen
 import com.codeaza.bhaiyaaa.ui.screens.MoreScreen
 import com.codeaza.bhaiyaaa.ui.screens.NotificationSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.PersonalitySettingsScreen
+import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
+import com.codeaza.bhaiyaaa.ui.screens.PrayerSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.PrivacyCenterScreen
 import com.codeaza.bhaiyaaa.ui.screens.PrivacyLockScreen
 import com.codeaza.bhaiyaaa.ui.screens.RemindersScreen
@@ -73,7 +75,8 @@ import com.codeaza.bhaiyaaa.ui.screens.VipScreen
 fun BhaiyaaaApp(
     viewModel: BhaiyaaaViewModel = viewModel(),
     assistantViewModel: AssistantViewModel = viewModel(),
-    modelViewModel: ModelManagerViewModel = viewModel()
+    modelViewModel: ModelManagerViewModel = viewModel(),
+    prayerViewModel: PrayerViewModel = viewModel()
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val lockState by viewModel.lockState.collectAsStateWithLifecycle()
@@ -94,7 +97,7 @@ fun BhaiyaaaApp(
         return
     }
 
-    MainScaffold(viewModel, assistantViewModel, modelViewModel)
+    MainScaffold(viewModel, assistantViewModel, modelViewModel, prayerViewModel)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,7 +105,8 @@ fun BhaiyaaaApp(
 private fun MainScaffold(
     viewModel: BhaiyaaaViewModel,
     assistantViewModel: AssistantViewModel,
-    modelViewModel: ModelManagerViewModel
+    modelViewModel: ModelManagerViewModel,
+    prayerViewModel: PrayerViewModel
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -114,6 +118,13 @@ private fun MainScaffold(
         message?.let {
             snackbarHostState.showSnackbar(it.text)
             viewModel.consumeMessage()
+        }
+    }
+    val prayerMessage by prayerViewModel.message.collectAsStateWithLifecycle()
+    LaunchedEffect(prayerMessage) {
+        prayerMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            prayerViewModel.consumeMessage()
         }
     }
     val modelMessage by modelViewModel.message.collectAsStateWithLifecycle()
@@ -193,7 +204,7 @@ private fun MainScaffold(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            BhaiyaaaNavHost(navController, viewModel, assistantViewModel, modelViewModel)
+            BhaiyaaaNavHost(navController, viewModel, assistantViewModel, modelViewModel, prayerViewModel)
         }
     }
 }
@@ -203,7 +214,8 @@ private fun BhaiyaaaNavHost(
     navController: NavHostController,
     viewModel: BhaiyaaaViewModel,
     assistantViewModel: AssistantViewModel,
-    modelViewModel: ModelManagerViewModel
+    modelViewModel: ModelManagerViewModel,
+    prayerViewModel: PrayerViewModel
 ) {
     fun openContact(phoneNumber: String) =
         navController.navigate(Routes.contactDetail(phoneNumber))
@@ -284,6 +296,7 @@ private fun BhaiyaaaNavHost(
                 viewModel = viewModel,
                 onOpenNotifications = { navController.navigate(Routes.SETTINGS_NOTIFICATIONS) },
                 onOpenVipAlerts = { navController.navigate(Routes.SETTINGS_VIP_ALERTS) },
+                onOpenPrayer = { navController.navigate(Routes.SETTINGS_PRAYER) },
                 onOpenAppearance = { navController.navigate(Routes.SETTINGS_APPEARANCE) },
                 onOpenPersonality = { navController.navigate(Routes.SETTINGS_PERSONALITY) },
                 onOpenSecurity = { navController.navigate(Routes.SETTINGS_SECURITY) },
@@ -299,6 +312,7 @@ private fun BhaiyaaaNavHost(
         composable(Routes.SETTINGS_PERSONALITY) { PersonalitySettingsScreen(viewModel) }
         composable(Routes.SETTINGS_SECURITY) { SecuritySettingsScreen(viewModel) }
         composable(Routes.SETTINGS_DATA) { DataSettingsScreen(viewModel) }
+        composable(Routes.SETTINGS_PRAYER) { PrayerSettingsScreen(prayerViewModel) }
         composable(Routes.SETTINGS_MODELS) { ModelManagerScreen(modelViewModel) }
         composable(Routes.SETTINGS_ABOUT) { AboutScreen() }
 
@@ -349,6 +363,7 @@ private fun titleFor(route: String?): String = when {
     route == Routes.SETTINGS_PERSONALITY -> "Personality"
     route == Routes.SETTINGS_SECURITY -> "Security"
     route == Routes.SETTINGS_DATA -> "Data"
+    route == Routes.SETTINGS_PRAYER -> "Prayer silence"
     route == Routes.SETTINGS_MODELS -> "AI models"
     route == Routes.SETTINGS_ABOUT -> "About"
     route.startsWith("contact/") -> "Contact"

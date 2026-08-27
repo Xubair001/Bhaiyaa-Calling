@@ -11,6 +11,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.codeaza.bhaiyaaa.domain.model.AppSettings
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
+import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
+import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
+import com.codeaza.bhaiyaaa.domain.model.PrayerMode
+import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
 import com.codeaza.bhaiyaaa.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -36,6 +40,14 @@ class SettingsRepository(private val context: Context) {
         val AUTO_SYNC = booleanPreferencesKey("auto_sync_enabled")
         val PRIVATE_HIDDEN = booleanPreferencesKey("private_memories_hidden")
         val LAST_SYNC_AT = longPreferencesKey("last_sync_at")
+
+        val PRAYER_ENABLED = booleanPreferencesKey("prayer_enabled")
+        val PRAYER_MODE = stringPreferencesKey("prayer_mode")
+        val PRAYER_METHOD = stringPreferencesKey("prayer_method")
+        val PRAYER_MADHAB = stringPreferencesKey("prayer_madhab")
+        val PRAYER_LAT = stringPreferencesKey("prayer_latitude")
+        val PRAYER_LNG = stringPreferencesKey("prayer_longitude")
+        val PRAYER_LOCATION_LABEL = stringPreferencesKey("prayer_location_label")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data
@@ -53,7 +65,18 @@ class SettingsRepository(private val context: Context) {
                 missedCallNudgeEnabled = p[Keys.MISSED_NUDGE] ?: true,
                 autoSyncEnabled = p[Keys.AUTO_SYNC] ?: true,
                 privateMemoriesHidden = p[Keys.PRIVATE_HIDDEN] ?: true,
-                lastSyncAt = p[Keys.LAST_SYNC_AT] ?: 0L
+                lastSyncAt = p[Keys.LAST_SYNC_AT] ?: 0L,
+                prayer = PrayerSettings(
+                    enabled = p[Keys.PRAYER_ENABLED] ?: false,
+                    mode = PrayerMode.from(p[Keys.PRAYER_MODE]),
+                    method = PrayerMethod.from(p[Keys.PRAYER_METHOD]),
+                    madhab = PrayerMadhab.from(p[Keys.PRAYER_MADHAB]),
+                    // Stored as strings: DataStore has no double key, and a
+                    // coordinate is exact data that must not be rounded.
+                    latitude = p[Keys.PRAYER_LAT]?.toDoubleOrNull(),
+                    longitude = p[Keys.PRAYER_LNG]?.toDoubleOrNull(),
+                    locationLabel = p[Keys.PRAYER_LOCATION_LABEL].orEmpty()
+                )
             )
         }
 
@@ -67,6 +90,19 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAutoSync(value: Boolean) = put(Keys.AUTO_SYNC, value)
     suspend fun setPrivateMemoriesHidden(value: Boolean) = put(Keys.PRIVATE_HIDDEN, value)
     suspend fun setLastSyncAt(value: Long) = put(Keys.LAST_SYNC_AT, value)
+
+    suspend fun setPrayerEnabled(value: Boolean) = put(Keys.PRAYER_ENABLED, value)
+    suspend fun setPrayerMode(mode: PrayerMode) = put(Keys.PRAYER_MODE, mode.storageValue)
+    suspend fun setPrayerMethod(method: PrayerMethod) = put(Keys.PRAYER_METHOD, method.storageValue)
+    suspend fun setPrayerMadhab(madhab: PrayerMadhab) = put(Keys.PRAYER_MADHAB, madhab.storageValue)
+
+    suspend fun setPrayerLocation(latitude: Double, longitude: Double, label: String) {
+        context.dataStore.edit {
+            it[Keys.PRAYER_LAT] = latitude.toString()
+            it[Keys.PRAYER_LNG] = longitude.toString()
+            it[Keys.PRAYER_LOCATION_LABEL] = label
+        }
+    }
 
     suspend fun clearAll() {
         context.dataStore.edit { it.clear() }

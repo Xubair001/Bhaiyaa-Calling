@@ -44,6 +44,7 @@ object Routes {
     const val SETTINGS_PERSONALITY = "settings/personality"
     const val SETTINGS_SECURITY = "settings/security"
     const val SETTINGS_DATA = "settings/data"
+    const val SETTINGS_PRAYER = "settings/prayer"
     const val SETTINGS_MODELS = "settings/models"
     const val SETTINGS_ABOUT = "settings/about"
     const val PRIVACY_CENTER = "privacy-center"

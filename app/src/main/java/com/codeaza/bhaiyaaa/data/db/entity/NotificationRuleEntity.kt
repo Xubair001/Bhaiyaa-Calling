@@ -1,5 +1,6 @@
 package com.codeaza.bhaiyaaa.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -23,5 +24,11 @@ data class NotificationRuleEntity(
     val flashOffMillis: Long = 180,
     val customSoundUri: String? = null,
     /** Only takes effect if the user has granted DND override in system settings. */
-    val bypassDnd: Boolean = false
+    val bypassDnd: Boolean = false,
+    /**
+     * Whether this tier still reaches the user during a prayer silence window.
+     * Off for VIP and Super VIP, on for Emergency, and changeable per tier.
+     */
+    @ColumnInfo(defaultValue = "0")
+    val ringsDuringPrayer: Boolean = false
 )

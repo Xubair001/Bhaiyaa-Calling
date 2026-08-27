@@ -13,6 +13,7 @@ import com.codeaza.bhaiyaaa.data.db.projection.ContactStats
 import com.codeaza.bhaiyaaa.domain.model.ContactTag
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
+import com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import com.codeaza.bhaiyaaa.util.TimeRanges
 import kotlinx.coroutines.Dispatchers
@@ -162,6 +163,7 @@ class BhaiyaaaRepository(
             }
         )
         ruleDao.insertIfAbsent(defaultRules())
+        db.prayerDao().insertIfAbsent(PrayerTimeCalculator.defaultPrayerRows())
     }
 
     private fun defaultRules() = listOf(
@@ -180,7 +182,9 @@ class BhaiyaaaRepository(
             vibrationPatternCsv = "0,400,150,400,150,400,150,400,150,400",
             flashCount = 8,
             flashOnMillis = 140,
-            flashOffMillis = 140
+            flashOffMillis = 140,
+            // Prayer outranks the other tiers, but not a genuine emergency.
+            ringsDuringPrayer = true
         )
     )
 
