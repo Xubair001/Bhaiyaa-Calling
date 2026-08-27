@@ -10,31 +10,36 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.codeaza.bhaiyaaa.domain.model.ThemeMode
+import com.codeaza.bhaiyaaa.domain.model.VipLevel
 
 private val LightColors = lightColorScheme(
-    primary = GreenPrimaryLight,
-    onPrimary = GreenOnPrimaryLight,
-    primaryContainer = GreenContainerLight,
-    onPrimaryContainer = GreenOnContainerLight,
-    secondary = BrassSecondaryLight,
-    onSecondary = BrassOnSecondaryLight,
-    secondaryContainer = BrassContainerLight,
-    onSecondaryContainer = BrassOnContainerLight,
-    tertiary = GoldTertiaryLight,
-    onTertiary = GoldOnTertiaryLight,
-    tertiaryContainer = GoldContainerLight,
-    onTertiaryContainer = GoldOnTertiaryContainerLight,
+    primary = SaffronPrimaryLight,
+    onPrimary = SaffronOnPrimaryLight,
+    primaryContainer = SaffronContainerLight,
+    onPrimaryContainer = SaffronOnContainerLight,
+    secondary = TerracottaSecondaryLight,
+    onSecondary = TerracottaOnSecondaryLight,
+    secondaryContainer = TerracottaContainerLight,
+    onSecondaryContainer = TerracottaOnContainerLight,
+    tertiary = PlumTertiaryLight,
+    onTertiary = PlumOnTertiaryLight,
+    tertiaryContainer = PlumContainerLight,
+    onTertiaryContainer = PlumOnTertiaryContainerLight,
     background = BackgroundLight,
     onBackground = OnBackgroundLight,
     surface = BackgroundLight,
     onSurface = OnBackgroundLight,
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = OnSurfaceVariantLight,
+    surfaceContainer = SurfaceContainerLight,
+    surfaceContainerHigh = SurfaceContainerHighLight,
     outline = OutlineLight,
+    outlineVariant = SurfaceVariantLight,
     error = ErrorLight,
     onError = OnErrorLight,
     errorContainer = ErrorContainerLight,
@@ -42,25 +47,28 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = GreenPrimaryDark,
-    onPrimary = GreenOnPrimaryDark,
-    primaryContainer = GreenContainerDark,
-    onPrimaryContainer = GreenOnContainerDark,
-    secondary = BrassSecondaryDark,
-    onSecondary = BrassOnSecondaryDark,
-    secondaryContainer = BrassContainerDark,
-    onSecondaryContainer = BrassOnContainerDark,
-    tertiary = GoldTertiaryDark,
-    onTertiary = GoldOnTertiaryDark,
-    tertiaryContainer = GoldContainerDark,
-    onTertiaryContainer = GoldOnTertiaryContainerDark,
+    primary = SaffronPrimaryDark,
+    onPrimary = SaffronOnPrimaryDark,
+    primaryContainer = SaffronContainerDark,
+    onPrimaryContainer = SaffronOnContainerDark,
+    secondary = TerracottaSecondaryDark,
+    onSecondary = TerracottaOnSecondaryDark,
+    secondaryContainer = TerracottaContainerDark,
+    onSecondaryContainer = TerracottaOnContainerDark,
+    tertiary = PlumTertiaryDark,
+    onTertiary = PlumOnTertiaryDark,
+    tertiaryContainer = PlumContainerDark,
+    onTertiaryContainer = PlumOnTertiaryContainerDark,
     background = BackgroundDark,
     onBackground = OnBackgroundDark,
     surface = BackgroundDark,
     onSurface = OnBackgroundDark,
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = OnSurfaceVariantDark,
+    surfaceContainer = SurfaceContainerDark,
+    surfaceContainerHigh = SurfaceContainerHighDark,
     outline = OutlineDark,
+    outlineVariant = SurfaceVariantDark,
     error = ErrorDark,
     onError = OnErrorDark,
     errorContainer = ErrorContainerDark,
@@ -68,14 +76,15 @@ private val DarkColors = darkColorScheme(
 )
 
 /**
- * @param themeMode the user's explicit choice; SYSTEM defers to the OS setting.
- * @param dynamicColor use Android 12+ wallpaper colours when available. Off by
- *   default on older devices, where the API simply doesn't exist.
+ * @param themeMode the user's explicit choice; SYSTEM defers to the OS.
+ * @param dynamicColor use Android 12+ wallpaper colours. When on, the wallpaper
+ *   wins over the palette above - that is the user's call to make, and the
+ *   setting says as much.
  */
 @Composable
 fun BhaiyaaaTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -95,9 +104,8 @@ fun BhaiyaaaTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            // Drive the status/navigation bar icon contrast from the in-app
-            // theme, so choosing Dark in Settings while the system is Light
-            // still gets readable system-bar icons.
+            // Driven from the in-app theme, not the system one, so choosing Dark
+            // while the phone is in Light still gets readable status-bar icons.
             val window = (view.context as? Activity)?.window ?: return@SideEffect
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !darkTheme
@@ -108,6 +116,22 @@ fun BhaiyaaaTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = BhaiyaaaTypography,
+        shapes = BhaiyaaaShapes,
         content = content
     )
+}
+
+/**
+ * The colour for a VIP tier, taken from the theme rather than hard-coded.
+ *
+ * Plum -> saffron -> vermilion is an escalation the eye reads as ranked, and
+ * because each is a semantic role it adapts to light, dark and wallpaper
+ * theming instead of staying a fixed value that eventually clashes.
+ */
+@Composable
+fun accentFor(level: VipLevel): Color = when (level) {
+    VipLevel.EMERGENCY -> MaterialTheme.colorScheme.error
+    VipLevel.SUPER_VIP -> MaterialTheme.colorScheme.primary
+    VipLevel.VIP -> MaterialTheme.colorScheme.tertiary
+    VipLevel.NONE -> MaterialTheme.colorScheme.onSurfaceVariant
 }

@@ -30,9 +30,6 @@ import com.codeaza.bhaiyaaa.R
 import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
 import com.codeaza.bhaiyaaa.domain.model.CallType
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.theme.IncomingAccent
-import com.codeaza.bhaiyaaa.ui.theme.MissedAccent
-import com.codeaza.bhaiyaaa.ui.theme.OutgoingAccent
 import com.codeaza.bhaiyaaa.util.Formatting
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 
@@ -45,32 +42,32 @@ fun CallTypeIcon(type: CallType, modifier: Modifier = Modifier) {
     val (icon, tint, description) = when (type) {
         CallType.INCOMING -> Triple(
             Icons.AutoMirrored.Filled.CallReceived,
-            IncomingAccent,
+            MaterialTheme.colorScheme.primary,
             stringResource(R.string.cd_call_direction_incoming)
         )
         CallType.OUTGOING -> Triple(
             Icons.AutoMirrored.Filled.CallMade,
-            OutgoingAccent,
+            MaterialTheme.colorScheme.tertiary,
             stringResource(R.string.cd_call_direction_outgoing)
         )
         CallType.MISSED -> Triple(
             Icons.AutoMirrored.Filled.CallMissed,
-            MissedAccent,
+            MaterialTheme.colorScheme.error,
             stringResource(R.string.cd_call_direction_missed)
         )
         CallType.REJECTED, CallType.BLOCKED -> Triple(
             Icons.Filled.Block,
-            MissedAccent,
+            MaterialTheme.colorScheme.error,
             "Rejected call"
         )
         CallType.VOICEMAIL -> Triple(
             Icons.Filled.Voicemail,
-            OutgoingAccent,
+            MaterialTheme.colorScheme.tertiary,
             "Voicemail"
         )
         CallType.OTHER -> Triple(
             Icons.AutoMirrored.Filled.CallReceived,
-            Color.Gray,
+            MaterialTheme.colorScheme.onSurfaceVariant,
             "Call"
         )
     }

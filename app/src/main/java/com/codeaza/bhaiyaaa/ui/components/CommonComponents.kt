@@ -38,9 +38,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.theme.EmergencyAccent
-import com.codeaza.bhaiyaaa.ui.theme.SuperVipAccent
-import com.codeaza.bhaiyaaa.ui.theme.VipAccent
+import com.codeaza.bhaiyaaa.ui.theme.CardShape
+import com.codeaza.bhaiyaaa.ui.theme.NumericTextStyle
+import com.codeaza.bhaiyaaa.ui.theme.PillShape
+import com.codeaza.bhaiyaaa.ui.theme.accentFor
 
 /** A titled card - the standard container for a block of dashboard content. */
 @Composable
@@ -52,23 +53,31 @@ fun SectionCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+        shape = CardShape,
+        // Flat and tinted rather than elevated with a shadow. Shadows under
+        // every card is the look that dates an Android app fastest; a raised
+        // surface colour separates the card from the page without the grey haze.
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
-        Column(Modifier.padding(18.dp)) {
+        Column(Modifier.padding(20.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Set as a tracked overline: it reads as a label for the block
+                // rather than competing with the content inside it.
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 action?.invoke()
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
             content()
         }
     }
@@ -143,7 +152,8 @@ fun InfoBanner(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = CardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer
         )
@@ -183,26 +193,19 @@ fun VipBadge(level: VipLevel, modifier: Modifier = Modifier) {
     val accent = accentFor(level)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(accent.copy(alpha = 0.16f))
-            .border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 3.dp)
+            .clip(PillShape)
+            .background(accent.copy(alpha = 0.18f))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
             .semantics { contentDescription = "${level.label} contact" }
     ) {
+        // No border: the tinted pill carries it, and a stroke at this size just
+        // muddies the label. Text stays full-strength for contrast.
         Text(
             text = level.label.uppercase(),
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
             color = accent
         )
     }
-}
-
-fun accentFor(level: VipLevel): Color = when (level) {
-    VipLevel.EMERGENCY -> EmergencyAccent
-    VipLevel.SUPER_VIP -> SuperVipAccent
-    VipLevel.VIP -> VipAccent
-    VipLevel.NONE -> VipAccent
 }
 
 /** Circular initials avatar. Deterministic colour so a person looks the same everywhere. */
@@ -220,7 +223,17 @@ fun ContactAvatar(
         .joinToString("")
         .ifBlank { "?" }
 
-    val palette = listOf(VipAccent, SuperVipAccent, EmergencyAccent, Color(0xFF2E7D57), Color(0xFF6A4C93))
+    // Drawn from the theme's own roles, so avatars stay in the app's palette
+    // under light, dark and wallpaper theming rather than being a fixed set of
+    // hues that eventually clashes with everything around them.
+    val scheme = MaterialTheme.colorScheme
+    val palette = listOf(
+        scheme.primary,
+        scheme.tertiary,
+        scheme.secondary,
+        scheme.error,
+        scheme.onSurfaceVariant
+    )
     val color = palette[(name.hashCode().let { if (it < 0) -it else it }) % palette.size]
 
     Box(
@@ -251,28 +264,30 @@ fun StatTile(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = CardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 18.dp)
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                // Tabular figures: without them a column of tiles visibly
+                // shifts as the digits change, because 1 is narrower than 7.
+                style = MaterialTheme.typography.displaySmall.merge(NumericTextStyle),
                 color = accent ?: MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(6.dp))
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2
             )

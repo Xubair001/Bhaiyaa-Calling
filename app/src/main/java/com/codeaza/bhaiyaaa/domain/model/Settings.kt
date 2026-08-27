@@ -27,7 +27,7 @@ enum class ThemeMode(val storageValue: String, val label: String) {
 data class AppSettings(
     val onboardingComplete: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,
     val personality: PersonalityMode = PersonalityMode.FRIENDLY,
     val notificationsEnabled: Boolean = true,
     val flashlightEnabled: Boolean = true,

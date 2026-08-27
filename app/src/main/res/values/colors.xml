@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand: a deep emerald that reads premium in both themes. Cultural
-         personality is carried by BHAIYAAA's language, not by flag colours. -->
-    <color name="brand_green">#0B6B57</color>
-    <color name="brand_green_dark">#04241E</color>
-    <color name="splash_background">#0B6B57</color>
-    <color name="window_background_light">#FBFDF9</color>
-    <color name="window_background_dark">#0F1512</color>
-    <color name="ic_launcher_background">#0B6B57</color>
+    <!--
+      Only the window background and splash live here. Every other colour is a
+      Compose token in ui/theme/Color.kt - these exist so the frame drawn before
+      Compose composes is already the right colour rather than a white flash.
+    -->
+    <color name="brand_saffron">#8A5000</color>
+    <color name="splash_background">#19120C</color>
+    <color name="window_background_light">#FFF8F4</color>
+    <color name="window_background_dark">#19120C</color>
+    <color name="ic_launcher_background">#19120C</color>
 </resources>

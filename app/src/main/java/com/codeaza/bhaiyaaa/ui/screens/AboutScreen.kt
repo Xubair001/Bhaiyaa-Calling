@@ -79,6 +79,7 @@ fun AboutScreen() {
         }
 
         SettingsSectionHeader("Open-source components")
+        SettingsInfoRow("Manrope typeface", "SIL Open Font License 1.1")
         SettingsInfoRow("Vosk speech recognition", "Apache-2.0")
         SettingsInfoRow("AndroidX / Jetpack Compose", "Apache-2.0")
         SettingsInfoRow("Room, WorkManager, DataStore", "Apache-2.0")

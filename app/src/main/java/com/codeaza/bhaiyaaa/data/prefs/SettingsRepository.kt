@@ -46,7 +46,7 @@ class SettingsRepository(private val context: Context) {
             AppSettings(
                 onboardingComplete = p[Keys.ONBOARDING_COMPLETE] ?: false,
                 themeMode = ThemeMode.from(p[Keys.THEME_MODE]),
-                dynamicColor = p[Keys.DYNAMIC_COLOR] ?: true,
+                dynamicColor = p[Keys.DYNAMIC_COLOR] ?: false,
                 personality = PersonalityMode.from(p[Keys.PERSONALITY]),
                 notificationsEnabled = p[Keys.NOTIFICATIONS_ENABLED] ?: true,
                 flashlightEnabled = p[Keys.FLASHLIGHT_ENABLED] ?: true,

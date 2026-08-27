@@ -3,75 +3,86 @@ package com.codeaza.bhaiyaaa.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * BHAIYAAA's palette: a deep emerald primary with a warm brass accent.
+ * BHAIYAAA's palette: deep saffron, terracotta and plum over warm neutrals.
  *
- * The cultural personality of this app is carried by how it talks, not by
- * painting flag colours on every surface - so the greens are muted and the
- * whole thing reads as a premium utility rather than a novelty.
+ * Why this and not the obvious options. Blue is the default of every utility
+ * app and says nothing; green is what phone apps already use for the call
+ * button, so it would fight the content. Saffron carries warmth and a South
+ * Asian register without resorting to flag colours, and it has a property no
+ * other hue here has: gold already means "important" to everyone, so the VIP
+ * tiers can escalate plum -> saffron -> vermilion and read as ranked without a
+ * legend.
+ *
+ * The neutrals are warm rather than grey - every surface is tinted toward the
+ * primary's hue, so the dark theme reads like dim lamplight instead of the cold
+ * slate that makes so many dark modes feel like a terminal.
  */
 
-// Light scheme
-val GreenPrimaryLight = Color(0xFF0B6B57)
-val GreenOnPrimaryLight = Color(0xFFFFFFFF)
-val GreenContainerLight = Color(0xFFA7F2DA)
-val GreenOnContainerLight = Color(0xFF002019)
+// ---------------------------------------------------------------- light theme
 
-val BrassSecondaryLight = Color(0xFF4B635B)
-val BrassOnSecondaryLight = Color(0xFFFFFFFF)
-val BrassContainerLight = Color(0xFFCDE9DE)
-val BrassOnContainerLight = Color(0xFF072019)
+val SaffronPrimaryLight = Color(0xFF8A5000)
+val SaffronOnPrimaryLight = Color(0xFFFFFFFF)
+val SaffronContainerLight = Color(0xFFFFDCBB)
+val SaffronOnContainerLight = Color(0xFF2C1600)
 
-val GoldTertiaryLight = Color(0xFF7C5800)
-val GoldOnTertiaryLight = Color(0xFFFFFFFF)
-val GoldContainerLight = Color(0xFFFFDEA6)
-val GoldOnTertiaryContainerLight = Color(0xFF271900)
+val TerracottaSecondaryLight = Color(0xFF8F4B36)
+val TerracottaOnSecondaryLight = Color(0xFFFFFFFF)
+val TerracottaContainerLight = Color(0xFFFFDBCF)
+val TerracottaOnContainerLight = Color(0xFF380D01)
 
-val BackgroundLight = Color(0xFFFBFDF9)
-val OnBackgroundLight = Color(0xFF191C1B)
-val SurfaceVariantLight = Color(0xFFDBE5DF)
-val OnSurfaceVariantLight = Color(0xFF3F4945)
-val OutlineLight = Color(0xFF6F7975)
-val ErrorLight = Color(0xFFBA1A1A)
+val PlumTertiaryLight = Color(0xFF7A4A72)
+val PlumOnTertiaryLight = Color(0xFFFFFFFF)
+val PlumContainerLight = Color(0xFFFFD6F4)
+val PlumOnTertiaryContainerLight = Color(0xFF30062C)
+
+val BackgroundLight = Color(0xFFFFF8F4)
+val OnBackgroundLight = Color(0xFF211A15)
+val SurfaceVariantLight = Color(0xFFF2DFD1)
+val OnSurfaceVariantLight = Color(0xFF51443A)
+val OutlineLight = Color(0xFF847469)
+
+val ErrorLight = Color(0xFFB3261E)
 val OnErrorLight = Color(0xFFFFFFFF)
-val ErrorContainerLight = Color(0xFFFFDAD6)
-val OnErrorContainerLight = Color(0xFF410002)
+val ErrorContainerLight = Color(0xFFFFDAD5)
+val OnErrorContainerLight = Color(0xFF410E06)
 
-// Dark scheme
-val GreenPrimaryDark = Color(0xFF8BD5BF)
-val GreenOnPrimaryDark = Color(0xFF00382C)
-val GreenContainerDark = Color(0xFF005141)
-val GreenOnContainerDark = Color(0xFFA7F2DA)
+// ----------------------------------------------------------------- dark theme
 
-val BrassSecondaryDark = Color(0xFFB1CCC2)
-val BrassOnSecondaryDark = Color(0xFF1D352E)
-val BrassContainerDark = Color(0xFF334B44)
-val BrassOnContainerDark = Color(0xFFCDE9DE)
+val SaffronPrimaryDark = Color(0xFFFFB865)
+val SaffronOnPrimaryDark = Color(0xFF492900)
+val SaffronContainerDark = Color(0xFF693C00)
+val SaffronOnContainerDark = Color(0xFFFFDCBB)
 
-val GoldTertiaryDark = Color(0xFFF5BD48)
-val GoldOnTertiaryDark = Color(0xFF422C00)
-val GoldContainerDark = Color(0xFF5E4200)
-val GoldOnTertiaryContainerDark = Color(0xFFFFDEA6)
+val TerracottaSecondaryDark = Color(0xFFFFB59D)
+val TerracottaOnSecondaryDark = Color(0xFF54200D)
+val TerracottaContainerDark = Color(0xFF723521)
+val TerracottaOnContainerDark = Color(0xFFFFDBCF)
 
-val BackgroundDark = Color(0xFF0F1512)
-val OnBackgroundDark = Color(0xFFE1E3E0)
-val SurfaceVariantDark = Color(0xFF3F4945)
-val OnSurfaceVariantDark = Color(0xFFBFC9C3)
-val OutlineDark = Color(0xFF89938E)
+val PlumTertiaryDark = Color(0xFFEAB1DE)
+val PlumOnTertiaryDark = Color(0xFF471D42)
+val PlumContainerDark = Color(0xFF603359)
+val PlumOnTertiaryContainerDark = Color(0xFFFFD6F4)
+
+val BackgroundDark = Color(0xFF19120C)
+val OnBackgroundDark = Color(0xFFEFE0D6)
+val SurfaceVariantDark = Color(0xFF51443A)
+val OnSurfaceVariantDark = Color(0xFFD5C3B5)
+val OutlineDark = Color(0xFF9D8D81)
+
 val ErrorDark = Color(0xFFFFB4AB)
 val OnErrorDark = Color(0xFF690005)
 val ErrorContainerDark = Color(0xFF93000A)
-val OnErrorContainerDark = Color(0xFFFFDAD6)
+val OnErrorContainerDark = Color(0xFFFFDAD5)
 
 /**
- * VIP tier accents. Distinct in hue as well as lightness, so the tiers stay
- * distinguishable for colour-blind users and are never the only signal - every
- * badge carries its label text too.
+ * Raised surfaces.
+ *
+ * Material tints elevated surfaces toward the primary. Doing it explicitly here
+ * keeps cards legible against the warm background at the low elevations this
+ * app uses, where the default tint is too subtle to separate a card from the
+ * page behind it.
  */
-val VipAccent = Color(0xFF2F6FB0)
-val SuperVipAccent = Color(0xFF7C5800)
-val EmergencyAccent = Color(0xFFBA1A1A)
-
-/** Call direction accents used in the call list and insights chart. */
-val IncomingAccent = Color(0xFF2E7D57)
-val OutgoingAccent = Color(0xFF2F6FB0)
-val MissedAccent = Color(0xFFBA1A1A)
+val SurfaceContainerLight = Color(0xFFFBEDE2)
+val SurfaceContainerHighLight = Color(0xFFF6E7DC)
+val SurfaceContainerDark = Color(0xFF261D16)
+val SurfaceContainerHighDark = Color(0xFF32271F)

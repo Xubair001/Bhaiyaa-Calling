@@ -31,8 +31,6 @@ import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.SplitBar
 import com.codeaza.bhaiyaaa.ui.components.StatTile
-import com.codeaza.bhaiyaaa.ui.theme.IncomingAccent
-import com.codeaza.bhaiyaaa.ui.theme.OutgoingAccent
 import com.codeaza.bhaiyaaa.util.Formatting
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 
@@ -93,8 +91,8 @@ fun InsightsScreen(viewModel: BhaiyaaaViewModel) {
                 SplitBar(
                     leftValue = insights.incomingThisWeek,
                     rightValue = insights.outgoingThisWeek,
-                    leftColor = IncomingAccent,
-                    rightColor = OutgoingAccent
+                    leftColor = MaterialTheme.colorScheme.primary,
+                    rightColor = MaterialTheme.colorScheme.tertiary
                 )
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

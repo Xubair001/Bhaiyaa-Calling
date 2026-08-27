@@ -58,7 +58,7 @@ fun AppearanceSettingsScreen(viewModel: BhaiyaaaViewModel) {
         SettingsSwitchRow(
             title = "Use wallpaper colours",
             subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                "Match BHAIYAAA to your Android theme"
+                "Replaces BHAIYAAA's saffron palette with colours from your wallpaper"
             } else {
                 "Needs Android 12 or newer — this device uses BHAIYAAA's own palette"
             },
