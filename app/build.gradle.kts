@@ -18,6 +18,13 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+
+        // The Vosk AAR carries native libraries for long-dead ABIs (32-bit x86,
+        // mips, legacy armeabi). Excluding them trims the universal APK without
+        // dropping any architecture a real device or current emulator uses.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -53,6 +60,19 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
+        }
+    }
+
+    // Vosk ships a native library per ABI, and a universal APK carrying all of
+    // them is ~56 MB. Splitting produces a small APK per architecture (arm64-v8a
+    // covers essentially every modern phone) while still emitting a universal
+    // one for anyone who doesn't want to think about it.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 

@@ -3,11 +3,19 @@ name: Build APK
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -18,19 +26,59 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version 8.7
+      # The Gradle wrapper is committed, so the build uses a pinned Gradle
+      # version rather than whatever happens to be on the runner image.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
-        env:
-          GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Upload APK
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: ignore
+
+      # Instrumented tests need a device, which this workflow doesn't provision.
+      # Compiling them still catches breakage in the UI test sources.
+      - name: Compile instrumented tests
+        run: ./gradlew assembleDebugAndroidTest --stacktrace
+
+      - name: Build debug APKs
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
           name: bhaiyaaa-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          # ABI splits plus a universal APK. Most phones want arm64-v8a;
+          # app-universal-debug.apk works everywhere at roughly twice the size.
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew
+      - name: Android Lint
+        run: ./gradlew lintDebug --stacktrace
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore

@@ -229,6 +229,8 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
         repository.setCallNote(id, note)
     }
 
+    suspend fun findCallForDetail(id: Long) = repository.findCall(id)
+
     // -------------------------------------------------------------- memories
 
     fun addMemory(
@@ -247,6 +249,9 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
     fun updateMemory(memory: MemoryEntity) = viewModelScope.launch {
         repository.updateMemory(memory)
     }
+
+    /** Direct FTS lookup for the Memory screen's search field. */
+    suspend fun searchMemoriesNow(query: String) = repository.searchMemories(query)
 
     fun deleteMemory(id: Long) = viewModelScope.launch {
         repository.deleteMemory(id)

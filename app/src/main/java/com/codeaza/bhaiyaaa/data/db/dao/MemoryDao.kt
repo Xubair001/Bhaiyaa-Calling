@@ -43,6 +43,10 @@ interface MemoryDao {
      * Full-text search over the FTS4 index. `memories_fts` is an external-content
      * table over `memories`, so this hits the index rather than scanning rows.
      * The caller passes an already-sanitised FTS query (see MemorySearch).
+     *
+     * MATCH takes the FTS table's real name on its left, not the join alias -
+     * `f MATCH ?` is rejected by SQLite as "no such column: f", which Room
+     * catches at compile time.
      */
     @Query(
         """

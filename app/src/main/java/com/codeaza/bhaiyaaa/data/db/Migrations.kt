@@ -11,6 +11,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * annotations, memories with an FTS index, tags, AI models and notification
  * rules.
  *
+ * Note on DDL style: none of these CREATE TABLE statements carry SQL DEFAULT
+ * clauses. The entities express their defaults in Kotlin, not via
+ * @ColumnInfo(defaultValue=...), so Room's expected schema has no defaults -
+ * and Room validates the migrated database against that expectation on first
+ * open. A stray `DEFAULT 0` here fails the whole migration at runtime, which is
+ * exactly what MigrationTest pins down.
+ *
  * The migration is written out rather than falling back to a destructive one
  * because v3 already held real user data - VIP tiers, tags and notes that a
  * person typed in by hand. Those are carried across; call history is not,
@@ -26,16 +33,16 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
                 phoneNumber TEXT NOT NULL PRIMARY KEY,
                 matchKey TEXT NOT NULL,
                 name TEXT NOT NULL,
-                vipLevel TEXT NOT NULL DEFAULT 'NONE',
+                vipLevel TEXT NOT NULL,
                 tag TEXT,
                 relationship TEXT,
-                importance INTEGER NOT NULL DEFAULT 1,
+                importance INTEGER NOT NULL,
                 notes TEXT,
                 customRingtoneUri TEXT,
-                notificationsEnabled INTEGER NOT NULL DEFAULT 1,
-                isSpam INTEGER NOT NULL DEFAULT 0,
-                createdAt INTEGER NOT NULL DEFAULT 0,
-                updatedAt INTEGER NOT NULL DEFAULT 0
+                notificationsEnabled INTEGER NOT NULL,
+                isSpam INTEGER NOT NULL,
+                createdAt INTEGER NOT NULL,
+                updatedAt INTEGER NOT NULL
             )
             """.trimIndent()
         )
@@ -45,11 +52,12 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL(
             """
             INSERT OR IGNORE INTO contacts_new
-                (phoneNumber, matchKey, name, vipLevel, tag, notes, createdAt, updatedAt)
+                (phoneNumber, matchKey, name, vipLevel, tag, relationship, importance,
+                 notes, customRingtoneUri, notificationsEnabled, isSpam, createdAt, updatedAt)
             SELECT phoneNumber,
                    substr(replace(replace(replace(replace(replace(
                        phoneNumber, '+', ''), '-', ''), ' ', ''), '(', ''), ')', ''), -9),
-                   name, vipLevel, tag, notes, 0, 0
+                   name, vipLevel, tag, NULL, 1, notes, NULL, 1, 0, 0, 0
             FROM contacts
             """.trimIndent()
         )
@@ -73,7 +81,7 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
                 type TEXT NOT NULL,
                 timestamp INTEGER NOT NULL,
                 durationSeconds INTEGER NOT NULL,
-                isImportant INTEGER NOT NULL DEFAULT 0,
+                isImportant INTEGER NOT NULL,
                 note TEXT
             )
             """.trimIndent()
@@ -81,7 +89,6 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_call_records_phoneNumber ON call_records(phoneNumber)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_call_records_timestamp ON call_records(timestamp)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_call_records_type ON call_records(type)")
-        db.execSQL("CREATE INDEX IF NOT EXISTS index_call_records_phoneNumber_timestamp ON call_records(phoneNumber, timestamp)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_call_records_matchKey ON call_records(matchKey)")
         db.execSQL("CREATE INDEX IF NOT EXISTS index_call_records_matchKey_timestamp ON call_records(matchKey, timestamp)")
 
@@ -94,8 +101,8 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
                 contactPhoneNumber TEXT,
                 createdAt INTEGER NOT NULL,
                 dueAt INTEGER,
-                isDone INTEGER NOT NULL DEFAULT 0,
-                notified INTEGER NOT NULL DEFAULT 0,
+                isDone INTEGER NOT NULL,
+                notified INTEGER NOT NULL,
                 FOREIGN KEY(contactPhoneNumber) REFERENCES contacts(phoneNumber) ON UPDATE NO ACTION ON DELETE SET NULL
             )
             """.trimIndent()
@@ -122,7 +129,7 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
                 body TEXT NOT NULL,
                 source TEXT NOT NULL,
                 callRecordId INTEGER,
-                isPrivate INTEGER NOT NULL DEFAULT 0,
+                isPrivate INTEGER NOT NULL,
                 createdAt INTEGER NOT NULL,
                 updatedAt INTEGER NOT NULL,
                 FOREIGN KEY(contactPhoneNumber) REFERENCES contacts(phoneNumber) ON UPDATE NO ACTION ON DELETE SET NULL
@@ -162,8 +169,8 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
             CREATE TABLE IF NOT EXISTS tags (
                 name TEXT NOT NULL PRIMARY KEY,
                 colorArgb INTEGER NOT NULL,
-                isBuiltIn INTEGER NOT NULL DEFAULT 0,
-                sortOrder INTEGER NOT NULL DEFAULT 0
+                isBuiltIn INTEGER NOT NULL,
+                sortOrder INTEGER NOT NULL
             )
             """.trimIndent()
         )
@@ -178,10 +185,10 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
                 sourceUrl TEXT NOT NULL,
                 status TEXT NOT NULL,
                 installedPath TEXT,
-                enabled INTEGER NOT NULL DEFAULT 0,
-                downloadedBytes INTEGER NOT NULL DEFAULT 0,
+                enabled INTEGER NOT NULL,
+                downloadedBytes INTEGER NOT NULL,
                 lastError TEXT,
-                updatedAt INTEGER NOT NULL DEFAULT 0
+                updatedAt INTEGER NOT NULL
             )
             """.trimIndent()
         )
@@ -189,15 +196,15 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
             """
             CREATE TABLE IF NOT EXISTS notification_rules (
                 vipLevel TEXT NOT NULL PRIMARY KEY,
-                notificationsEnabled INTEGER NOT NULL DEFAULT 1,
-                vibrationEnabled INTEGER NOT NULL DEFAULT 1,
-                vibrationPatternCsv TEXT NOT NULL DEFAULT '0,400,200,400',
-                flashEnabled INTEGER NOT NULL DEFAULT 1,
-                flashCount INTEGER NOT NULL DEFAULT 3,
-                flashOnMillis INTEGER NOT NULL DEFAULT 180,
-                flashOffMillis INTEGER NOT NULL DEFAULT 180,
+                notificationsEnabled INTEGER NOT NULL,
+                vibrationEnabled INTEGER NOT NULL,
+                vibrationPatternCsv TEXT NOT NULL,
+                flashEnabled INTEGER NOT NULL,
+                flashCount INTEGER NOT NULL,
+                flashOnMillis INTEGER NOT NULL,
+                flashOffMillis INTEGER NOT NULL,
                 customSoundUri TEXT,
-                bypassDnd INTEGER NOT NULL DEFAULT 0
+                bypassDnd INTEGER NOT NULL
             )
             """.trimIndent()
         )
@@ -205,3 +212,9 @@ internal val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4)
+
+/**
+ * Test seam. The migration is the one piece of this app that can destroy data
+ * a user typed in by hand, so it is exercised directly rather than trusted.
+ */
+fun migrationsForTest(): Array<Migration> = ALL_MIGRATIONS

@@ -9,6 +9,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import org.json.JSONObject
+import org.vosk.LibVosk
+import org.vosk.LogLevel
 import org.vosk.Model
 import org.vosk.Recognizer
 import org.vosk.android.RecognitionListener
@@ -26,7 +28,26 @@ class VoskSpeechRecognizer(private val context: Context) : SpeechRecognizerEngin
 
     override val kind: SpeechEngineKind = SpeechEngineKind.VOSK_OFFLINE
 
-    override suspend fun isAvailable(): Boolean = activeModelPath() != null
+    override suspend fun isAvailable(): Boolean = nativeLibraryLoads() && activeModelPath() != null
+
+    /**
+     * Probes that libvosk actually loaded for this device's ABI.
+     *
+     * A missing native library surfaces as UnsatisfiedLinkError - an Error, not
+     * an Exception - so it slips straight past an ordinary catch and would take
+     * the process down. Checked once here, and every call site below catches
+     * Throwable for the same reason.
+     */
+    private fun nativeLibraryLoads(): Boolean = nativeLoadResult
+
+    private val nativeLoadResult: Boolean by lazy {
+        try {
+            LibVosk.setLogLevel(LogLevel.WARNINGS)
+            true
+        } catch (t: Throwable) {
+            false
+        }
+    }
 
     private suspend fun activeModelPath(): String? {
         val row = AppDatabase.getInstance(context).aiModelDao()
@@ -81,14 +102,18 @@ class VoskSpeechRecognizer(private val context: Context) : SpeechRecognizerEngin
 
             trySend(SpeechEvent.Ready)
             service.startListening(listener)
-        } catch (e: Exception) {
-            // Missing RECORD_AUDIO, a corrupt model directory, or no native lib
-            // for this ABI all land here. None of them should crash the app.
-            trySend(SpeechEvent.Error(e.message ?: "Could not start offline recognition"))
+        } catch (t: Throwable) {
+            // Throwable, not Exception: a missing libvosk for this ABI raises
+            // UnsatisfiedLinkError, which an Exception catch would let through
+            // and crash the app. Missing RECORD_AUDIO and a corrupt model
+            // directory land here too.
+            trySend(SpeechEvent.Error(t.message ?: "Could not start offline recognition"))
             close()
         }
 
         awaitClose {
+            // runCatching swallows Throwable, which is what we want while
+            // tearing down native resources.
             runCatching { service?.stop() }
             runCatching { service?.shutdown() }
             runCatching { model?.close() }
