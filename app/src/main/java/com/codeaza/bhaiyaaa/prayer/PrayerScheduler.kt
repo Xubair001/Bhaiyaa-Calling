@@ -74,13 +74,32 @@ object PrayerScheduler {
             PrayerTimeCalculator.windowsForDay(settings, prayers, day, zone)
         }
 
+        val active = windows.firstOrNull { it.containsNow(now) }
+
         // If the process died mid-window, hand the phone back before re-arming.
-        val inside = windows.any { it.containsNow(now) }
-        SilenceController.recoverIfStale(context, stillInsideWindow = inside)
+        SilenceController.recoverIfStale(context, stillInsideWindow = active != null)
 
         windows.filter { it.enabled && it.endMillis > now }.forEach { window ->
+            // A window already under way gets no start alarm, because the start
+            // is in the past. Only the end is armed.
             if (window.startMillis > now) schedule(context, window, start = true)
             schedule(context, window, start = false)
+        }
+
+        // ...which is why an already-running window has to be applied here and
+        // now. Setting a prayer to the current time - or to a few minutes ago,
+        // which the default three-minute head start does on its own - lands
+        // inside the window immediately. Waiting for a start alarm that was
+        // never armed meant the app showed "phone is quiet" while the phone
+        // rang, because the display computes the window but only the alarm
+        // silences anything. This also recovers a start alarm dropped by an
+        // aggressive OEM, since the app rechecks on every launch.
+        if (active != null && !SilenceController.isSilenceActive(context)) {
+            SilenceController.enterSilence(
+                context,
+                active.prayer.storageValue,
+                settings.silenceMode
+            )
         }
     }
 
