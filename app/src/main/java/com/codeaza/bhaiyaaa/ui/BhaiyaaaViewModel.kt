@@ -26,6 +26,7 @@ import com.codeaza.bhaiyaaa.domain.usecase.CallInsights
 import com.codeaza.bhaiyaaa.domain.usecase.GlobalSearch
 import com.codeaza.bhaiyaaa.domain.usecase.InsightsCalculator
 import com.codeaza.bhaiyaaa.domain.usecase.SearchResults
+import com.codeaza.bhaiyaaa.notifications.NotificationChannels
 import com.codeaza.bhaiyaaa.service.ReminderScheduler
 import com.codeaza.bhaiyaaa.util.Permissions
 import com.codeaza.bhaiyaaa.util.SecurePrefs
@@ -325,6 +326,28 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
     fun setMissedCallNudge(v: Boolean) = viewModelScope.launch { settingsRepo.setMissedCallNudge(v) }
     fun setAutoSync(v: Boolean) = viewModelScope.launch { settingsRepo.setAutoSync(v) }
     fun setOnboardingComplete() = viewModelScope.launch { settingsRepo.setOnboardingComplete(true) }
+
+    /**
+     * Turns Do Not Disturb bypass on or off for a tier.
+     *
+     * Writes to the channel and to the database. The database copy is what
+     * survives: channels get rebuilt on every launch, and without a stored
+     * preference to restore from, the setting silently reverts.
+     *
+     * @param onResult receives what the platform actually did - an OEM build can
+     *   accept the call and ignore it, and the UI must not claim success then.
+     */
+    fun setBypassDnd(level: VipLevel, enabled: Boolean, onResult: (Boolean) -> Unit = {}) =
+        viewModelScope.launch {
+            val applied = NotificationChannels.setBypassDnd(getApplication(), level, enabled)
+            repository.ruleFor(level)?.let { rule ->
+                repository.saveRule(rule.copy(bypassDnd = applied))
+            }
+            if (enabled && !applied) {
+                showMessage("This device wouldn't allow BHAIYAAA past Do Not Disturb.")
+            }
+            onResult(applied)
+        }
 
     fun saveNotificationRule(rule: NotificationRuleEntity) = viewModelScope.launch {
         repository.saveRule(rule)

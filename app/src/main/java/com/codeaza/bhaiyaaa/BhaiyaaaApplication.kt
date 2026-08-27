@@ -5,6 +5,7 @@ import androidx.work.Configuration
 import com.codeaza.bhaiyaaa.ai.model.ModelCatalog
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.notifications.NotificationChannels
 import com.codeaza.bhaiyaaa.service.work.CallSyncWorker
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +26,9 @@ class BhaiyaaaApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
+        // Created immediately so a call arriving seconds after launch has a
+        // channel to post on. Passing no map means existing channels keep the
+        // Do Not Disturb setting they already have rather than being reset.
         NotificationChannels.createAll(this)
 
         // Seeding touches the database, so it stays off the main thread. None of
@@ -38,6 +42,23 @@ class BhaiyaaaApplication : Application(), Configuration.Provider {
                 // user taps download in Settings -> AI Models.
                 AppDatabase.getInstance(applicationContext).aiModelDao()
                     .insertIfAbsent(ModelCatalog.seedRows(System.currentTimeMillis()))
+                // Reconcile the channels against the stored preference. The
+                // database is the source of truth: channels can be reset by a
+                // reinstall or cleared data, and this puts the user's choice
+                // back without them having to notice it went missing.
+                val rules = AppDatabase.getInstance(applicationContext)
+                    .notificationRuleDao()
+                    .allOnce()
+                rules.forEach { rule ->
+                    if (rule.bypassDnd) {
+                        NotificationChannels.setBypassDnd(
+                            applicationContext,
+                            VipLevel.from(rule.vipLevel),
+                            true
+                        )
+                    }
+                }
+
                 CallSyncWorker.enqueuePeriodic(applicationContext)
             }
         }

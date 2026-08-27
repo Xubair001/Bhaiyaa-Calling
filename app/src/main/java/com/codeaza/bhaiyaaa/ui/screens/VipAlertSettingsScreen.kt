@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
@@ -77,7 +77,9 @@ fun VipAlertSettingsScreen(viewModel: BhaiyaaaViewModel) {
                 hasFlashlight = hasFlashlight,
                 flashlightGloballyOn = settings.flashlightEnabled,
                 dndVersion = dndVersion,
-                onDndChanged = { dndVersion++ },
+                onBypassDndChanged = { wanted ->
+                    viewModel.setBypassDnd(level, wanted) { dndVersion++ }
+                },
                 onSave = { viewModel.saveNotificationRule(it) },
                 onTest = {
                     CallAlertManager.triggerAlert(
@@ -108,7 +110,7 @@ private fun RuleEditor(
     hasFlashlight: Boolean,
     flashlightGloballyOn: Boolean,
     dndVersion: Int,
-    onDndChanged: () -> Unit,
+    onBypassDndChanged: (Boolean) -> Unit,
     onSave: (NotificationRuleEntity) -> Unit,
     onTest: (NotificationRuleEntity) -> Unit
 ) {
@@ -208,8 +210,9 @@ private fun RuleEditor(
                 checked = bypassing,
                 enabled = hasDndAccess,
                 onCheckedChange = { wanted ->
-                    NotificationChannels.setBypassDnd(context, level, wanted)
-                    onDndChanged()
+                    // Through the view model, so the choice is written to the
+                    // database and restored on the next launch.
+                    onBypassDndChanged(wanted)
                 }
             )
         }

@@ -238,6 +238,66 @@ class AppDatabaseTest {
         assertThat(db.callRecordDao().vipCallCountSince(now - 60_000)).isEqualTo(1)
     }
 
+    // --------------------------------------------------- notification rules
+
+    @Test
+    fun `the do not disturb choice persists and is readable at startup`() = runTest {
+        val dao = db.notificationRuleDao()
+        dao.insertIfAbsent(
+            listOf(
+                com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity(
+                    vipLevel = VipLevel.EMERGENCY.storageValue
+                )
+            )
+        )
+
+        val rule = requireNotNull(dao.findForLevel(VipLevel.EMERGENCY.storageValue))
+        dao.upsert(rule.copy(bypassDnd = true))
+
+        // Startup reads every rule back through allOnce() to restore the
+        // channels. Notification channels are rebuilt on each launch, so
+        // without this stored copy the setting silently reverts to off.
+        val atStartup = dao.allOnce().first { it.vipLevel == VipLevel.EMERGENCY.storageValue }
+        assertThat(atStartup.bypassDnd).isTrue()
+    }
+
+    @Test
+    fun `turning the do not disturb choice back off also persists`() = runTest {
+        val dao = db.notificationRuleDao()
+        dao.insertIfAbsent(
+            listOf(
+                com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity(
+                    vipLevel = VipLevel.VIP.storageValue
+                )
+            )
+        )
+        val rule = requireNotNull(dao.findForLevel(VipLevel.VIP.storageValue))
+        dao.upsert(rule.copy(bypassDnd = true))
+        dao.upsert(rule.copy(bypassDnd = false))
+
+        assertThat(dao.findForLevel(VipLevel.VIP.storageValue)?.bypassDnd).isFalse()
+    }
+
+    @Test
+    fun `seeding defaults never clobbers a saved rule`() = runTest {
+        val dao = db.notificationRuleDao()
+        val entity = com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity(
+            vipLevel = VipLevel.SUPER_VIP.storageValue
+        )
+        dao.insertIfAbsent(listOf(entity))
+        dao.upsert(
+            requireNotNull(dao.findForLevel(VipLevel.SUPER_VIP.storageValue))
+                .copy(bypassDnd = true, flashCount = 9)
+        )
+
+        // seedDefaults() runs on every launch and must be inert once rules exist.
+        dao.insertIfAbsent(listOf(entity))
+
+        val stored = requireNotNull(dao.findForLevel(VipLevel.SUPER_VIP.storageValue))
+        assertThat(stored.bypassDnd).isTrue()
+        assertThat(stored.flashCount).isEqualTo(9)
+    }
+
     // ------------------------------------------------------------- memories
 
     @Test

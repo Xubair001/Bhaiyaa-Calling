@@ -79,6 +79,8 @@ object NotificationChannels {
                 setBypassDnd(enabled)
             }
             manager.createNotificationChannel(updated)
+            // Report what the platform actually did, not what we asked for.
+            // Some OEM builds accept the call and ignore the value.
             manager.getNotificationChannel(id)?.canBypassDnd() == enabled
         }.getOrDefault(false)
     }
@@ -97,14 +99,28 @@ object NotificationChannels {
         else -> VIP
     }
 
-    fun createAll(context: Context) {
+    /**
+     * Creates the channels, carrying the user's Do Not Disturb choice forward.
+     *
+     * @param bypassByChannelId the stored preference per channel. Anything not
+     *   listed keeps whatever the channel already has.
+     *
+     * This runs on every launch, which is why [bypassByChannelId] matters. It is
+     * commonly believed that re-creating an existing channel is a harmless
+     * no-op - it is, for name, importance and sound. It is NOT for bypassDnd:
+     * when the app holds notification-policy access the platform applies the
+     * value from the supplied channel, so passing a freshly built channel with
+     * the default `false` silently switched the user's setting back off on every
+     * single app start.
+     */
+    fun createAll(context: Context, bypassByChannelId: Map<String, Boolean> = emptyMap()) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        create(context, manager, VIP, R.string.channel_vip_name, R.string.channel_vip_desc, NotificationManager.IMPORTANCE_HIGH)
-        create(context, manager, SUPER_VIP, R.string.channel_super_vip_name, R.string.channel_super_vip_desc, NotificationManager.IMPORTANCE_HIGH)
-        create(context, manager, EMERGENCY, R.string.channel_emergency_name, R.string.channel_emergency_desc, NotificationManager.IMPORTANCE_HIGH)
-        create(context, manager, REMINDERS, R.string.channel_reminders_name, R.string.channel_reminders_desc, NotificationManager.IMPORTANCE_DEFAULT)
-        create(context, manager, MISSED, R.string.channel_missed_name, R.string.channel_missed_desc, NotificationManager.IMPORTANCE_DEFAULT)
+        create(context, manager, VIP, R.string.channel_vip_name, R.string.channel_vip_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId)
+        create(context, manager, SUPER_VIP, R.string.channel_super_vip_name, R.string.channel_super_vip_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId)
+        create(context, manager, EMERGENCY, R.string.channel_emergency_name, R.string.channel_emergency_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId)
+        create(context, manager, REMINDERS, R.string.channel_reminders_name, R.string.channel_reminders_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
+        create(context, manager, MISSED, R.string.channel_missed_name, R.string.channel_missed_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -114,14 +130,19 @@ object NotificationChannels {
         id: String,
         nameRes: Int,
         descRes: Int,
-        importance: Int
+        importance: Int,
+        bypassByChannelId: Map<String, Boolean>
     ) {
-        // Re-creating an existing channel is a no-op, so this is safe to call on
-        // every launch - and importantly it does NOT override user changes.
+        val existing = manager.getNotificationChannel(id)
+        // Stored preference wins; otherwise keep whatever the channel already
+        // has, so a launch never quietly changes the user's setting.
+        val bypass = bypassByChannelId[id] ?: (existing?.canBypassDnd() ?: false)
+
         val channel = NotificationChannel(id, context.getString(nameRes), importance).apply {
             description = context.getString(descRes)
             enableVibration(true)
             setShowBadge(true)
+            setBypassDnd(bypass)
         }
         manager.createNotificationChannel(channel)
     }

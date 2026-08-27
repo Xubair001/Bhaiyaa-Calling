@@ -2,6 +2,8 @@ package com.codeaza.bhaiyaaa.service
 
 import android.content.Context
 import android.hardware.camera2.CameraAccessException
+import android.media.AudioAttributes
+import android.os.VibrationAttributes
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
@@ -46,16 +48,45 @@ object CallAlertManager {
         runCatching { torchOff(context) }
     }
 
+    /**
+     * Vibrates, declaring the buzz as a ringtone rather than a generic one.
+     *
+     * This matters more than it looks. A vibration posted with no usage
+     * attributes is classified as an ordinary notification, and silent mode and
+     * Do Not Disturb suppress it - which is why the flashlight would fire for a
+     * VIP call while the phone stayed completely still. Tagging it USAGE_RINGTONE
+     * puts it in the same class as an incoming call, so it is allowed through
+     * wherever the user has permitted calls through.
+     */
     private fun vibrate(context: Context, patternCsv: String) {
         val pattern = parsePattern(patternCsv) ?: return
         try {
             val vibrator = vibrator(context) ?: return
             if (!vibrator.hasVibrator()) return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-            } else {
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
                 @Suppress("DEPRECATION")
                 vibrator.vibrate(pattern, -1)
+                return
+            }
+
+            val effect = VibrationEffect.createWaveform(pattern, -1)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                vibrator.vibrate(
+                    effect,
+                    VibrationAttributes.Builder()
+                        .setUsage(VibrationAttributes.USAGE_RINGTONE)
+                        .build()
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(
+                    effect,
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
             }
         } catch (e: Exception) {
             // No vibrator, or permission revoked mid-session. Notification still fires.
