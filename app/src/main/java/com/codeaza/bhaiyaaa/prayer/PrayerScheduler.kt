@@ -30,6 +30,7 @@ object PrayerScheduler {
 
     private const val REQUEST_BASE_START = 8000
     private const val REQUEST_BASE_END = 8500
+    private const val REQUEST_TEST_END = 8999
 
     /** True when the platform will honour an exact alarm from this app. */
     fun canScheduleExact(context: Context): Boolean {
@@ -99,6 +100,32 @@ object PrayerScheduler {
         } catch (e: SecurityException) {
             // Exact-alarm permission revoked between the check and the call.
             runCatching {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+            }
+        }
+    }
+
+    /**
+     * Arms a one-off exit for the "test silence" button.
+     *
+     * Goes through AlarmManager rather than a coroutine delay so the phone is
+     * handed back even if the app is closed or killed in the meantime - being
+     * left silent by a test would be worse than the bug it is checking for.
+     */
+    fun scheduleSilenceEnd(context: Context, at: Long) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, PrayerAlarmReceiver::class.java).apply {
+            action = PrayerAlarmReceiver.ACTION_END
+            putExtra(PrayerAlarmReceiver.EXTRA_PRAYER, "TEST")
+        }
+        val pending = PendingIntent.getBroadcast(
+            context, REQUEST_TEST_END, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        runCatching {
+            if (canScheduleExact(context)) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+            } else {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
             }
         }

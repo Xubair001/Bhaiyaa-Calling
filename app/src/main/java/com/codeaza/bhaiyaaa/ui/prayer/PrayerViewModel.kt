@@ -20,6 +20,7 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
+import com.codeaza.bhaiyaaa.prayer.SilenceController
 import com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator
 import com.codeaza.bhaiyaaa.util.Permissions
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,10 @@ import java.util.Locale
 import java.util.TimeZone
 
 class PrayerViewModel(application: Application) : AndroidViewModel(application) {
+
+    private companion object {
+        const val TEST_SILENCE_MILLIS = 60_000L
+    }
 
     private val db = AppDatabase.getInstance(application)
     private val settingsRepo = SettingsRepository(application)
@@ -190,6 +195,40 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
         } catch (e: Exception) {
             // Geocoding is a network call on most devices; offline it throws.
             fallback
+        }
+    }
+
+    /** Why silence cannot run right now, or null. Surfaced in the UI. */
+    fun blockedReason(): String? =
+        SilenceController.blockedReason(getApplication(), settings.value.silenceMode)
+
+    /**
+     * Applies the silence for one minute, right now.
+     *
+     * Waiting until the next prayer to find out whether this works is a poor
+     * way to test it, and it is why the feature could look broken with no way
+     * to tell what part had failed.
+     */
+    fun testSilenceNow() = viewModelScope.launch {
+        val mode = settings.value.silenceMode
+        SilenceController.blockedReason(getApplication(), mode)?.let {
+            _message.value = it
+            return@launch
+        }
+        val applied = SilenceController.enterSilence(getApplication(), "TEST", mode)
+        if (!applied) {
+            _message.value = "This phone wouldn't let BHAIYAAA change the ringer."
+            return@launch
+        }
+        // The exit is an alarm, not a delay, so the phone comes back even if
+        // this screen is closed.
+        PrayerScheduler.scheduleSilenceEnd(
+            getApplication(),
+            System.currentTimeMillis() + TEST_SILENCE_MILLIS
+        )
+        _message.value = when (mode) {
+            PrayerSilenceMode.VIBRATE -> "Vibrate only for one minute — try calling yourself."
+            PrayerSilenceMode.SILENT -> "Silenced for one minute — try calling yourself."
         }
     }
 

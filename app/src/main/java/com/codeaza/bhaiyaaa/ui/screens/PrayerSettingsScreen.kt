@@ -180,6 +180,28 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                             }
                         }
                     }
+
+                    val blocked = viewModel.blockedReason()
+                    if (blocked != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            blocked,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(onClick = { viewModel.testSilenceNow() }) {
+                        Text("Test for one minute")
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "Applies it right now so you can check it works, and undoes it after " +
+                            "a minute.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 

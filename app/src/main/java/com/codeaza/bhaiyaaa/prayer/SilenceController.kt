@@ -66,9 +66,13 @@ object SilenceController {
         mode: PrayerSilenceMode = PrayerSilenceMode.SILENT
     ): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
-        // Changing the ringer mode to silent, and changing the DND filter, both
-        // require policy access on M+.
-        if (!hasDndAccess(context)) return false
+
+        // Only SILENT needs policy access: setting RINGER_MODE_SILENT and
+        // changing the DND filter are both gated on it, but switching the
+        // ringer to VIBRATE is not. Gating both meant vibrate-only failed for
+        // anyone who had not granted DND access, despite not needing it.
+        if (mode == PrayerSilenceMode.SILENT && !hasDndAccess(context)) return false
+
         val manager = context.getSystemService(NotificationManager::class.java) ?: return false
         val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
 
@@ -122,10 +126,13 @@ object SilenceController {
                 KEY_PREVIOUS_RINGER,
                 AudioManager.RINGER_MODE_NORMAL
             )
+            // The ringer is restored regardless: leaving the phone on vibrate
+            // after a prayer is the failure that actually costs the user a call,
+            // and restoring it needs no policy access.
+            val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            runCatching { audio?.ringerMode = previousRinger }
             if (hasDndAccess(context)) {
-                manager.setInterruptionFilter(previousFilter)
-                val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-                runCatching { audio?.ringerMode = previousRinger }
+                runCatching { manager.setInterruptionFilter(previousFilter) }
             }
             store.edit()
                 .putBoolean(KEY_ACTIVE, false)
@@ -136,6 +143,17 @@ object SilenceController {
             Log.w(TAG, "Could not exit silence: ${it.javaClass.simpleName}")
             false
         }
+    }
+
+    /**
+     * Why [enterSilence] could not run, for the UI to explain. Null when fine.
+     */
+    fun blockedReason(context: Context, mode: PrayerSilenceMode): String? = when {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.M ->
+            "This Android version is too old for automatic silencing."
+        mode == PrayerSilenceMode.SILENT && !hasDndAccess(context) ->
+            "Silent mode needs Do Not Disturb access. Grant it, or switch to Vibrate only."
+        else -> null
     }
 
     /**
