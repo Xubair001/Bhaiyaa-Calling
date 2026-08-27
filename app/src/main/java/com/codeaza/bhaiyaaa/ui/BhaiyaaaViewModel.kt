@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -67,6 +68,18 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
 
     val settings: StateFlow<AppSettings> = settingsRepo.settings
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
+
+    /**
+     * False until DataStore has answered once.
+     *
+     * [settings] has to start from some value, and that placeholder says
+     * onboardingComplete = false - so anything reading it before the real value
+     * arrives concludes this is a first run. That is why onboarding flashed up
+     * on every single launch. Nothing that branches on settings should render
+     * until this is true.
+     */
+    private val _settingsLoaded = MutableStateFlow(false)
+    val settingsLoaded: StateFlow<Boolean> = _settingsLoaded.asStateFlow()
 
     // ---------------------------------------------------------------- data
 
@@ -125,6 +138,10 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
     val searchResults: StateFlow<SearchResults> = _searchResults.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            settingsRepo.settings.first()
+            _settingsLoaded.value = true
+        }
         // Debounced so typing doesn't fire a query per keystroke.
         @OptIn(FlowPreview::class)
         viewModelScope.launch {

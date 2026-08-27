@@ -56,6 +56,27 @@ enum class PrayerMethod(val storageValue: String, val label: String, val note: S
     }
 }
 
+/**
+ * How quiet the phone goes during a prayer window.
+ *
+ * These need different mechanisms, which is not obvious. Do Not Disturb's
+ * alarms-only filter suppresses vibration along with sound, so it cannot
+ * deliver "vibrate only" - that has to come from the ringer mode instead.
+ */
+enum class PrayerSilenceMode(
+    val storageValue: String,
+    val label: String,
+    val description: String
+) {
+    SILENT("SILENT", "Silent", "No sound and no vibration"),
+    VIBRATE("VIBRATE", "Vibrate only", "No sound, but the phone still buzzes");
+
+    companion object {
+        fun from(value: String?): PrayerSilenceMode =
+            entries.firstOrNull { it.storageValue == value } ?: SILENT
+    }
+}
+
 /** Affects the Asr time only: Hanafi uses a longer shadow than the others. */
 enum class PrayerMadhab(val storageValue: String, val label: String) {
     HANAFI("HANAFI", "Hanafi"),
@@ -93,6 +114,7 @@ data class PrayerSettings(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationLabel: String = "",
+    val silenceMode: PrayerSilenceMode = PrayerSilenceMode.SILENT,
 ) {
     /** Automatic mode is only usable once we know where the user is. */
     val hasLocation: Boolean get() = latitude != null && longitude != null

@@ -16,6 +16,7 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
+import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
@@ -79,6 +80,7 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
     fun setMode(mode: PrayerMode) = update { settingsRepo.setPrayerMode(mode) }
     fun setMethod(method: PrayerMethod) = update { settingsRepo.setPrayerMethod(method) }
     fun setMadhab(madhab: PrayerMadhab) = update { settingsRepo.setPrayerMadhab(madhab) }
+    fun setSilenceMode(mode: PrayerSilenceMode) = update { settingsRepo.setPrayerSilenceMode(mode) }
 
     fun setSilenceMinutes(prayer: Prayer, minutes: Int) = update {
         db.prayerDao().setSilenceMinutes(prayer.storageValue, minutes.coerceIn(1, 180))

@@ -2,6 +2,7 @@ package com.codeaza.bhaiyaaa.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -28,7 +30,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -52,6 +54,7 @@ import com.codeaza.bhaiyaaa.domain.model.Prayer
 import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
+import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
 import com.codeaza.bhaiyaaa.prayer.SilenceController
@@ -151,6 +154,35 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
         }
 
         if (settings.enabled) {
+            item {
+                SectionCard(title = "How quiet") {
+                    PrayerSilenceMode.entries.forEach { mode ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = settings.silenceMode == mode,
+                                    role = Role.RadioButton,
+                                    onClick = { viewModel.setSilenceMode(mode) }
+                                )
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = settings.silenceMode == mode, onClick = null)
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(mode.label, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    mode.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 SectionCard(title = "Where times come from") {
                     PrayerMode.entries.forEach { mode ->
@@ -263,6 +295,9 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                         Row(
                             Modifier
                                 .fillMaxWidth()
+                                // The whole row is the target, not just the
+                                // small text button beside it.
+                                .clickable { editing = prayer }
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -285,7 +320,13 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            TextButton(onClick = { editing = prayer }) { Text("Edit") }
+                            TextButton(onClick = { editing = prayer }) {
+                                Text(
+                                    if (settings.mode == PrayerMode.MANUAL &&
+                                        row?.manualMinutesFromMidnight == null
+                                    ) "Set" else "Edit"
+                                )
+                            }
                             Switch(
                                 checked = row?.enabled ?: true,
                                 onCheckedChange = { viewModel.setPrayerEnabled(prayer, it) }
@@ -342,6 +383,9 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
             currentSilence = row?.silenceMinutes ?: 15,
             currentOffset = row?.startOffsetMinutes ?: -3,
             canClearOverride = settings.mode == PrayerMode.AUTOMATIC,
+            calculatedTime = windowByPrayer[prayer]
+                ?.takeIf { !it.isOverridden }
+                ?.let { Formatting.time(it.prayerTimeMillis) },
             onDismiss = { editing = null },
             onSave = { minutes, silence, offset ->
                 viewModel.setManualTime(prayer, minutes)
@@ -371,6 +415,7 @@ private fun EditPrayerDialog(
     currentSilence: Int,
     currentOffset: Int,
     canClearOverride: Boolean,
+    calculatedTime: String?,
     onDismiss: () -> Unit,
     onSave: (Int?, Int, Int) -> Unit
 ) {
@@ -386,8 +431,11 @@ private fun EditPrayerDialog(
         onDismissRequest = onDismiss,
         title = { Text(prayerLabel) },
         text = {
-            Column {
-                TimePicker(state = state)
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                // TimeInput, not the dial TimePicker: the dial is ~330dp tall
+                // and gets clipped inside an AlertDialog on a normal phone,
+                // which is why the time could not actually be set.
+                TimeInput(state = state)
                 Spacer(Modifier.height(12.dp))
                 Text("Go quiet $earlyBy minutes early", style = MaterialTheme.typography.bodyMedium)
                 Slider(
@@ -412,8 +460,14 @@ private fun EditPrayerDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (canClearOverride) {
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        "Setting a time here overrides the calculation for this prayer.",
+                        if (calculatedTime != null) {
+                            "Calculated for your location: $calculatedTime. Setting a time " +
+                                "here overrides it for this prayer only."
+                        } else {
+                            "Setting a time here overrides the calculation for this prayer."
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

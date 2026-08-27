@@ -1,6 +1,7 @@
 package com.codeaza.bhaiyaaa.ui.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,6 +82,14 @@ fun BhaiyaaaApp(
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val lockState by viewModel.lockState.collectAsStateWithLifecycle()
+    val settingsLoaded by viewModel.settingsLoaded.collectAsStateWithLifecycle()
+
+    // Hold the splash colour rather than guessing. Rendering before settings
+    // load meant onboarding appeared for a frame on every launch.
+    if (!settingsLoaded) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        return
+    }
 
     if (!settings.onboardingComplete) {
         OnboardingScreen(

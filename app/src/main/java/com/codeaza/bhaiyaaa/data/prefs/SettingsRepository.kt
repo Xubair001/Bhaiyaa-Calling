@@ -15,6 +15,7 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
+import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
 import com.codeaza.bhaiyaaa.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -48,6 +49,7 @@ class SettingsRepository(private val context: Context) {
         val PRAYER_LAT = stringPreferencesKey("prayer_latitude")
         val PRAYER_LNG = stringPreferencesKey("prayer_longitude")
         val PRAYER_LOCATION_LABEL = stringPreferencesKey("prayer_location_label")
+        val PRAYER_SILENCE_MODE = stringPreferencesKey("prayer_silence_mode")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data
@@ -75,7 +77,8 @@ class SettingsRepository(private val context: Context) {
                     // coordinate is exact data that must not be rounded.
                     latitude = p[Keys.PRAYER_LAT]?.toDoubleOrNull(),
                     longitude = p[Keys.PRAYER_LNG]?.toDoubleOrNull(),
-                    locationLabel = p[Keys.PRAYER_LOCATION_LABEL].orEmpty()
+                    locationLabel = p[Keys.PRAYER_LOCATION_LABEL].orEmpty(),
+                    silenceMode = PrayerSilenceMode.from(p[Keys.PRAYER_SILENCE_MODE])
                 )
             )
         }
@@ -95,6 +98,8 @@ class SettingsRepository(private val context: Context) {
     suspend fun setPrayerMode(mode: PrayerMode) = put(Keys.PRAYER_MODE, mode.storageValue)
     suspend fun setPrayerMethod(method: PrayerMethod) = put(Keys.PRAYER_METHOD, method.storageValue)
     suspend fun setPrayerMadhab(madhab: PrayerMadhab) = put(Keys.PRAYER_MADHAB, madhab.storageValue)
+    suspend fun setPrayerSilenceMode(mode: PrayerSilenceMode) =
+        put(Keys.PRAYER_SILENCE_MODE, mode.storageValue)
 
     suspend fun setPrayerLocation(latitude: Double, longitude: Double, label: String) {
         context.dataStore.edit {

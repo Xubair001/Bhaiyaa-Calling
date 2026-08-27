@@ -2,8 +2,10 @@ package com.codeaza.bhaiyaaa.prayer
 
 import android.app.NotificationManager
 import android.content.Context
+import android.media.AudioManager
 import android.os.Build
 import android.util.Log
+import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
 
 /**
  * Turns the phone quiet for a prayer window and puts it back afterwards.
@@ -27,6 +29,7 @@ object SilenceController {
 
     private const val PREFS = "bhaiyaaa_silence_state"
     private const val KEY_PREVIOUS_FILTER = "previous_filter"
+    private const val KEY_PREVIOUS_RINGER = "previous_ringer"
     private const val KEY_ACTIVE = "silence_active"
     private const val KEY_ACTIVE_PRAYER = "active_prayer"
     private const val TAG = "BhaiyaaaSilence"
@@ -46,22 +49,52 @@ object SilenceController {
     fun activePrayerName(context: Context): String? =
         prefs(context).getString(KEY_ACTIVE_PRAYER, null)
 
-    /** @return false when DND access is missing, so the caller can say so. */
-    fun enterSilence(context: Context, prayerName: String): Boolean {
+    /**
+     * @param mode SILENT uses Do Not Disturb; VIBRATE uses the ringer.
+     *
+     * They need different mechanisms. DND's alarms-only filter suppresses
+     * vibration along with sound, so asking for "vibrate only" through DND
+     * produces a phone that does nothing at all - which is exactly what
+     * happened. Vibrate is therefore done with the ringer mode and the DND
+     * filter is left alone.
+     *
+     * @return false when DND access is missing, so the caller can say so.
+     */
+    fun enterSilence(
+        context: Context,
+        prayerName: String,
+        mode: PrayerSilenceMode = PrayerSilenceMode.SILENT
+    ): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
+        // Changing the ringer mode to silent, and changing the DND filter, both
+        // require policy access on M+.
         if (!hasDndAccess(context)) return false
         val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
 
         return runCatching {
-            // Remember what to go back to *before* changing it. If this is a
-            // repeat call, keep the originally saved value rather than saving
-            // our own filter over it.
+            // Remember what to go back to *before* changing anything. On a
+            // repeat call keep the originally saved values rather than saving
+            // our own state over them.
             if (!isSilenceActive(context)) {
                 prefs(context).edit()
                     .putInt(KEY_PREVIOUS_FILTER, manager.currentInterruptionFilter)
+                    .putInt(KEY_PREVIOUS_RINGER, audio?.ringerMode ?: AudioManager.RINGER_MODE_NORMAL)
                     .apply()
             }
-            manager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
+
+            when (mode) {
+                PrayerSilenceMode.SILENT -> {
+                    manager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
+                    runCatching { audio?.ringerMode = AudioManager.RINGER_MODE_SILENT }
+                }
+                PrayerSilenceMode.VIBRATE -> {
+                    // Deliberately not touching the DND filter: turning it on
+                    // would suppress the very vibration being asked for.
+                    runCatching { audio?.ringerMode = AudioManager.RINGER_MODE_VIBRATE }
+                }
+            }
+
             prefs(context).edit()
                 .putBoolean(KEY_ACTIVE, true)
                 .putString(KEY_ACTIVE_PRAYER, prayerName)
@@ -81,12 +114,18 @@ object SilenceController {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return false
 
         return runCatching {
-            val previous = store.getInt(
+            val previousFilter = store.getInt(
                 KEY_PREVIOUS_FILTER,
                 NotificationManager.INTERRUPTION_FILTER_ALL
             )
+            val previousRinger = store.getInt(
+                KEY_PREVIOUS_RINGER,
+                AudioManager.RINGER_MODE_NORMAL
+            )
             if (hasDndAccess(context)) {
-                manager.setInterruptionFilter(previous)
+                manager.setInterruptionFilter(previousFilter)
+                val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                runCatching { audio?.ringerMode = previousRinger }
             }
             store.edit()
                 .putBoolean(KEY_ACTIVE, false)
