@@ -1,6 +1,7 @@
 package com.codeaza.bhaiyaaa.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -103,7 +104,17 @@ class NavigationUiTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Bhai Mode").performClick()
-        composeRule.waitForIdle()
+
+        // The tone is persisted to DataStore and read back as a Flow, so the
+        // recomposition happens after an async round-trip. waitForIdle() can
+        // return before that lands, so poll for the node instead of asserting
+        // immediately - otherwise this passes or fails on timing.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule
+                .onAllNodes(hasText("Assalam o Alaikum, boss 👋"))
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
         // The preview is generated from the same phrasebook the app uses.
         composeRule.onNodeWithText("Assalam o Alaikum, boss 👋").assertExists()
     }
