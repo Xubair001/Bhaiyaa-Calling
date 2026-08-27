@@ -6,33 +6,75 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
-object BiometricAuth {
-    fun canAuthenticate(context: Context): Boolean {
-        val manager = BiometricManager.from(context)
-        return manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) ==
-            BiometricManager.BIOMETRIC_SUCCESS
-    }
+/** Result of an unlock attempt, distinguishing "wrong" from "cancelled". */
+sealed interface BiometricResult {
+    data object Success : BiometricResult
+    data object Cancelled : BiometricResult
+    data class Error(val message: String) : BiometricResult
+}
 
-    fun authenticate(activity: FragmentActivity, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        val executor = ContextCompat.getMainExecutor(activity)
+object BiometricAuth {
+
+    private const val AUTHENTICATORS = BiometricManager.Authenticators.BIOMETRIC_WEAK
+
+    /** True only when hardware exists AND the user has enrolled something. */
+    fun canAuthenticate(context: Context): Boolean =
+        BiometricManager.from(context).canAuthenticate(AUTHENTICATORS) ==
+            BiometricManager.BIOMETRIC_SUCCESS
+
+    /** Why biometrics aren't available, so Settings can explain rather than just grey out. */
+    fun unavailableReason(context: Context): String? =
+        when (BiometricManager.from(context).canAuthenticate(AUTHENTICATORS)) {
+            BiometricManager.BIOMETRIC_SUCCESS -> null
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE ->
+                "This device has no biometric hardware."
+            BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE ->
+                "Biometric hardware is unavailable right now."
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ->
+                "No fingerprint or face is enrolled on this device yet."
+            else -> "Biometric unlock isn't available on this device."
+        }
+
+    fun authenticate(
+        activity: FragmentActivity,
+        onResult: (BiometricResult) -> Unit
+    ) {
+        if (!canAuthenticate(activity)) {
+            onResult(BiometricResult.Error(unavailableReason(activity) ?: "Unavailable"))
+            return
+        }
+
         val prompt = BiometricPrompt(
             activity,
-            executor,
+            ContextCompat.getMainExecutor(activity),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    onSuccess()
+                    onResult(BiometricResult.Success)
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    onError(errString.toString())
+                    // Cancelling is a normal choice, not an error to shout about -
+                    // the user just falls back to the PIN pad.
+                    val cancelled = errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+                        errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
+                        errorCode == BiometricPrompt.ERROR_CANCELED
+                    onResult(
+                        if (cancelled) BiometricResult.Cancelled
+                        else BiometricResult.Error(errString.toString())
+                    )
                 }
             }
         )
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+
+        val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Unlock BHAIYAAA")
-            .setSubtitle("Verify it's you")
-            .setNegativeButtonText("Use PIN instead")
+            .setSubtitle("Your VIP list and private notes are locked")
+            .setNegativeButtonText("Use PIN")
+            .setAllowedAuthenticators(AUTHENTICATORS)
+            .setConfirmationRequired(false)
             .build()
-        prompt.authenticate(promptInfo)
+
+        runCatching { prompt.authenticate(info) }
+            .onFailure { onResult(BiometricResult.Error(it.message ?: "Couldn't start biometric prompt")) }
     }
 }
