@@ -3,19 +3,27 @@ package com.codeaza.bhaiyaaa
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
-import com.codeaza.bhaiyaaa.ui.navigation.BhaiyaaaApp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import com.codeaza.bhaiyaaa.ui.theme.BhaiyaaaTheme
 
-// FragmentActivity (not plain ComponentActivity) because BiometricPrompt
-// requires a FragmentActivity/Fragment host to survive configuration changes.
+/**
+ * FragmentActivity rather than ComponentActivity: BiometricPrompt requires a
+ * FragmentActivity host to survive configuration changes.
+ */
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             BhaiyaaaTheme {
-                BhaiyaaaApp()
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    Text("BHAIYAAA")
+                }
             }
         }
     }

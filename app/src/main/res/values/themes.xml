@@ -1,3 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Bhaiyaaa" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <!-- Base app theme. The UI itself is entirely Jetpack Compose, so this XML
+         theme only governs the window before the first frame composes: the
+         window background, and transparent system bars for edge-to-edge.
+         Status/navigation bar icon contrast is driven from Compose instead,
+         so it follows the in-app theme setting rather than only the system one. -->
+    <style name="Theme.Bhaiyaaa" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/window_background_light</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Launch theme: core-splashscreen draws the icon, then hands off to
+         Theme.Bhaiyaaa via postSplashScreenTheme once Compose is ready. -->
+    <style name="Theme.Bhaiyaaa.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Bhaiyaaa</item>
+    </style>
 </resources>

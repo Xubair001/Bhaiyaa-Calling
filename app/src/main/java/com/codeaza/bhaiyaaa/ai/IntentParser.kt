@@ -1,0 +1,126 @@
+package com.codeaza.bhaiyaaa.ai
+
+import java.util.Locale
+
+/**
+ * Turns a typed or spoken phrase into an [AssistantIntent].
+ *
+ * Rule-based by design. Section 13 of the product brief is explicit that
+ * structured questions must hit the database rather than have a model guess at
+ * them, so this parser's only job is to decide *which* query to run and with
+ * what arguments. It never produces an answer itself, and when it can't tell
+ * what was meant it returns [AssistantIntent.Unknown] rather than picking the
+ * closest-looking option.
+ */
+object IntentParser {
+
+    private val REMINDER_PREFIXES = listOf(
+        "remind me to ", "remind me ", "reminder to ", "reminder: ",
+        "remember to ", "note to self ", "set a reminder to ", "set reminder to "
+    )
+
+    private val RECALL_PREFIXES = listOf(
+        "what did ", "what has ", "when did ", "did i note ", "what do you know about ",
+        "what was ", "remind me what "
+    )
+
+    fun parse(rawInput: String, now: Long): AssistantIntent {
+        val raw = rawInput.trim()
+        if (raw.isBlank()) return AssistantIntent.Unknown
+        val q = raw.lowercase(Locale.ROOT)
+
+        if (q == "help" || q.startsWith("what can you") || q.startsWith("how do you")) {
+            return AssistantIntent.Help
+        }
+
+        // --- reminders (checked first: "remind me to call Ali tomorrow" also
+        //     contains "call", which would otherwise look like a call query) ---
+        for (prefix in REMINDER_PREFIXES) {
+            if (!q.startsWith(prefix)) continue
+            val body = raw.substring(prefix.length).trim()
+            val parsed = TimeExpressions.parse(body, now)
+            val cleaned = TimeExpressions.stripTimePhrase(body, parsed.matchedText)
+            val text = cleaned.ifBlank { body }
+            return AssistantIntent.CreateReminder(text, parsed.dueAt)
+        }
+
+        if (q.contains("my reminders") || q.contains("pending reminders") ||
+            q == "reminders" || q.contains("what do i have to do")
+        ) {
+            return AssistantIntent.PendingReminders
+        }
+
+        // --- memory recall: "what did Ahmed say about the deployment" ---------
+        for (prefix in RECALL_PREFIXES) {
+            if (!q.startsWith(prefix)) continue
+            // "when did i last talk to X" is a call question, not a memory one.
+            if (q.contains("last call") || q.contains("last talk") || q.contains("last speak") ||
+                q.contains("last spoke")
+            ) break
+            val body = raw.substring(prefix.length).trim().removeSuffix("?").trim()
+            if (body.isNotBlank()) return AssistantIntent.RecallMemory(body)
+        }
+
+        // --- VIP -------------------------------------------------------------
+        if (q.contains("vip")) return AssistantIntent.VipList
+
+        // --- last call with someone -----------------------------------------
+        if (q.contains("last call") || q.contains("last talk") || q.contains("last spoke") ||
+            q.contains("last speak") || q.contains("when did i")
+        ) {
+            val name = extractName(raw)
+            if (name.isNotBlank()) return AssistantIntent.LastCallWith(name)
+        }
+
+        // --- missed ----------------------------------------------------------
+        if (q.contains("missed")) return AssistantIntent.MissedCalls(periodOf(q))
+
+        // --- most contacted --------------------------------------------------
+        if (q.contains("most") && (q.contains("call") || q.contains("contact") || q.contains("talk"))) {
+            return AssistantIntent.MostContacted(periodOf(q))
+        }
+
+        // --- counts ----------------------------------------------------------
+        if ((q.contains("how many") || q.contains("count")) && q.contains("call")) {
+            return AssistantIntent.CallCount(periodOf(q))
+        }
+
+        // --- recent callers --------------------------------------------------
+        if (q.contains("who called") || q.contains("recent call") || q.contains("recent caller") ||
+            q.startsWith("who has called") || q == "recent"
+        ) {
+            return AssistantIntent.RecentCallers
+        }
+
+        // --- a bare name, or "tell me about X" -------------------------------
+        if (q.startsWith("who is ") || q.startsWith("tell me about ") || q.startsWith("show me ")) {
+            val name = raw.substringAfter(' ').substringAfter(' ').trim().removeSuffix("?")
+            if (name.isNotBlank()) return AssistantIntent.ContactLookup(name)
+        }
+
+        if (q.contains("call") && q.contains("today")) return AssistantIntent.CallCount(Period.TODAY)
+
+        return AssistantIntent.Unknown
+    }
+
+    private fun periodOf(q: String): Period = when {
+        q.contains("today") -> Period.TODAY
+        q.contains("this week") || q.contains("week") -> Period.THIS_WEEK
+        q.contains("this month") || q.contains("month") -> Period.THIS_MONTH
+        else -> Period.RECENT
+    }
+
+    /** Pulls a person's name out of "…with Ahmed", "…to Ali", "…from Sara". */
+    internal fun extractName(raw: String): String {
+        val lower = raw.lowercase(Locale.ROOT)
+        for (marker in listOf(" with ", " to ", " from ", " speak to ", " talk to ")) {
+            val idx = lower.lastIndexOf(marker)
+            if (idx == -1) continue
+            return raw.substring(idx + marker.length)
+                .trim()
+                .removeSuffix("?")
+                .trim()
+        }
+        return ""
+    }
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand: a deep emerald that reads premium in both themes. Cultural
+         personality is carried by BHAIYAAA's language, not by flag colours. -->
+    <color name="brand_green">#0B6B57</color>
+    <color name="brand_green_dark">#04241E</color>
+    <color name="splash_background">#0B6B57</color>
+    <color name="window_background_light">#FBFDF9</color>
+    <color name="window_background_dark">#0F1512</color>
+    <color name="ic_launcher_background">#0B6B57</color>
+</resources>

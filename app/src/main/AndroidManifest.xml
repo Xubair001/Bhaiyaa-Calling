@@ -1,42 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Names instead of bare numbers, and the contact list itself. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Real call history for Calls, Insights and the assistant's answers. -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <!-- Detect that a call is ringing so a VIP alert can fire in time. -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- VIP vibration patterns. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Android 13+ runtime permission for any notification at all. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Requested only when the user taps the mic in Assistant, never at launch. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Re-arm reminder alarms after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Model downloads in the Model Manager are user-initiated only. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!--
+      Note: torch control via CameraManager.setTorchMode() does NOT require the
+      CAMERA permission, so BHAIYAAA deliberately does not ask for it.
+    -->
     <uses-feature
         android:name="android.hardware.camera.flash"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <!-- Speech recognition is provided by the device's own recognizer service. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <application
         android:name=".BhaiyaaaApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:theme="@style/Theme.Bhaiyaaa"
+        android:enableOnBackInvokedCallback="true"
         android:supportsRtl="true">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Bhaiyaaa">
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Bhaiyaaa.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!--
+          PHONE_STATE is a protected broadcast: this is the same mechanism
+          caller-ID and call-blocker apps use, and it needs neither the default
+          dialer nor the call-screening role.
+        -->
         <receiver
-            android:name=".call.IncomingCallReceiver"
+            android:name=".service.IncomingCallReceiver"
             android:exported="true"
             android:permission="android.permission.READ_PHONE_STATE">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".service.ReminderAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
