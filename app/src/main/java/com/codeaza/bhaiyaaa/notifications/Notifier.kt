@@ -27,6 +27,7 @@ object Notifier {
     private const val VIP_NOTIFICATION_BASE = 1000
     private const val REMINDER_NOTIFICATION_BASE = 2000
     private const val MISSED_NOTIFICATION_ID = 3001
+    private const val TEST_NOTIFICATION_ID = 4001
 
     fun canPost(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -64,6 +65,31 @@ object Notifier {
             .setCategory(NotificationCompat.CATEGORY_CALL)
 
         post(context, VIP_NOTIFICATION_BASE + (rawNumber.hashCode() and 0xFFF), builder.build())
+    }
+
+    /**
+     * Posts a real notification on a tier's channel so "Test alert" tests the
+     * whole thing, not just the parts the app drives directly.
+     *
+     * Sound is owned by the notification channel, not by the app - so vibration
+     * and the torch can fire while the phone stays silent, because nothing was
+     * ever posted. Going through the real channel means the test hears exactly
+     * what an actual call on that tier would, including whether it breaks
+     * through Do Not Disturb.
+     */
+    fun notifyTestAlert(context: Context, level: VipLevel) {
+        if (!canPost(context)) return
+        val builder = NotificationCompat.Builder(context, NotificationChannels.channelFor(level))
+            .setSmallIcon(android.R.drawable.sym_call_incoming)
+            .setContentTitle("${level.label} test alert")
+            .setContentText("This is how a ${level.label} call will reach you.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setAutoCancel(true)
+            .setContentIntent(openApp(context))
+            // Clears itself so a test never lingers in the shade.
+            .setTimeoutAfter(10_000)
+        post(context, TEST_NOTIFICATION_ID, builder.build())
     }
 
     fun notifyReminder(context: Context, reminderId: Long, text: String) {

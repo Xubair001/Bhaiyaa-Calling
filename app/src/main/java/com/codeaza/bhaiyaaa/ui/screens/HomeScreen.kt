@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -137,7 +138,13 @@ fun HomeScreen(
 
         item {
             Row(
-                Modifier.fillMaxWidth(),
+                // IntrinsicSize.Min sizes the row to its tallest child, and each
+                // tile fills it - so a label that wraps to two lines no longer
+                // leaves its neighbours visibly shorter. Handles large font
+                // scales too, where any label may wrap.
+                Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 StatTile(

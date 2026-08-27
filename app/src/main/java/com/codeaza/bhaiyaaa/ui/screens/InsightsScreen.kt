@@ -2,6 +2,7 @@ package com.codeaza.bhaiyaaa.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -68,7 +69,12 @@ fun InsightsScreen(viewModel: BhaiyaaaViewModel) {
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 StatTile(insights.callsToday.toString(), "Calls today", Modifier.weight(1f))
                 StatTile(insights.callsThisWeek.toString(), "This week", Modifier.weight(1f))
                 StatTile(

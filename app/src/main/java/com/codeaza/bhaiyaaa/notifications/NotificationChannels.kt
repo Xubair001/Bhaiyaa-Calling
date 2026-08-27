@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.provider.Settings
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -20,11 +21,24 @@ import com.codeaza.bhaiyaaa.domain.model.VipLevel
  */
 object NotificationChannels {
 
-    const val VIP = "vip_calls"
-    const val SUPER_VIP = "super_vip_calls"
-    const val EMERGENCY = "emergency_calls"
+    /**
+     * Channel ids carry a version suffix.
+     *
+     * Android freezes a channel's sound, importance and vibration the moment it
+     * is created - an app can never change them afterwards, by design, because
+     * they belong to the user from then on. The only way to ship a corrected
+     * default is to publish a new channel and retire the old one, which is what
+     * the suffix is for. v2 moved the VIP tiers from the default notification
+     * ping to the ringtone, so an alert sounds like a call rather than an email.
+     */
+    const val VIP = "vip_calls_v2"
+    const val SUPER_VIP = "super_vip_calls_v2"
+    const val EMERGENCY = "emergency_calls_v2"
     const val REMINDERS = "reminders"
     const val MISSED = "missed_important"
+
+    /** Superseded ids, deleted on launch so they stop cluttering system settings. */
+    private val LEGACY_CHANNEL_IDS = listOf("vip_calls", "super_vip_calls", "emergency_calls")
 
     /**
      * Whether the user has given BHAIYAAA permission to override Do Not Disturb.
@@ -116,9 +130,16 @@ object NotificationChannels {
     fun createAll(context: Context, bypassByChannelId: Map<String, Boolean> = emptyMap()) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        create(context, manager, VIP, R.string.channel_vip_name, R.string.channel_vip_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId)
-        create(context, manager, SUPER_VIP, R.string.channel_super_vip_name, R.string.channel_super_vip_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId)
-        create(context, manager, EMERGENCY, R.string.channel_emergency_name, R.string.channel_emergency_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId)
+
+        // Retire superseded channels first, otherwise the user sees two "VIP
+        // calls" entries in system settings and cannot tell which is live.
+        LEGACY_CHANNEL_IDS.forEach { old ->
+            runCatching { manager.deleteNotificationChannel(old) }
+        }
+
+        create(context, manager, VIP, R.string.channel_vip_name, R.string.channel_vip_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId, ringtone = true)
+        create(context, manager, SUPER_VIP, R.string.channel_super_vip_name, R.string.channel_super_vip_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId, ringtone = true)
+        create(context, manager, EMERGENCY, R.string.channel_emergency_name, R.string.channel_emergency_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId, ringtone = true)
         create(context, manager, REMINDERS, R.string.channel_reminders_name, R.string.channel_reminders_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
         create(context, manager, MISSED, R.string.channel_missed_name, R.string.channel_missed_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
     }
@@ -131,7 +152,8 @@ object NotificationChannels {
         nameRes: Int,
         descRes: Int,
         importance: Int,
-        bypassByChannelId: Map<String, Boolean>
+        bypassByChannelId: Map<String, Boolean>,
+        ringtone: Boolean = false
     ) {
         val existing = manager.getNotificationChannel(id)
         // Stored preference wins; otherwise keep whatever the channel already
@@ -143,6 +165,27 @@ object NotificationChannels {
             enableVibration(true)
             setShowBadge(true)
             setBypassDnd(bypass)
+
+            if (ringtone) {
+                // A VIP alert should sound like a call, not like an email. The
+                // default *notification* tone is a short ping; the ringtone with
+                // USAGE_NOTIFICATION_RINGTONE is what the system treats as
+                // call-class audio, which is also what DND exemptions key off.
+                //
+                // Android makes sound immutable once a channel exists, so this
+                // applies on first creation. For a channel that already exists,
+                // the per-tier "Ringtone & sound" link sends the user to the
+                // system page, which is the only thing that can change it.
+                runCatching {
+                    setSound(
+                        Settings.System.DEFAULT_RINGTONE_URI,
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                }
+            }
         }
         manager.createNotificationChannel(channel)
     }

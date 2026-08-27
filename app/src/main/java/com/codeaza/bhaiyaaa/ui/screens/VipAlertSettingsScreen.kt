@@ -34,6 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.notifications.NotificationChannels
+import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.service.CallAlertManager
 import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
@@ -82,11 +83,19 @@ fun VipAlertSettingsScreen(viewModel: BhaiyaaaViewModel) {
                 },
                 onSave = { viewModel.saveNotificationRule(it) },
                 onTest = {
+                    // The full path: vibration, torch, and a real notification
+                    // on this tier's channel - which is what actually makes the
+                    // sound and what obeys Do Not Disturb.
                     CallAlertManager.triggerAlert(
                         context = context,
                         rule = it,
                         flashlightGloballyEnabled = settings.flashlightEnabled
                     )
+                    if (settings.notificationsEnabled && it.notificationsEnabled) {
+                        Notifier.notifyTestAlert(context, level)
+                    } else {
+                        viewModel.showMessage("Alerts are switched off for this tier.")
+                    }
                 }
             )
         }
