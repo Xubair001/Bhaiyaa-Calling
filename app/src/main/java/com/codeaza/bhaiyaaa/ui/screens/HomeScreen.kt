@@ -425,6 +425,10 @@ private fun PrayerCard(
                         active != null -> "${active.prayer.label} — phone is quiet"
                         !enabled -> "Namaz ka waqt, phone khamosh"
                         needsLocation -> "Prayer silence needs your location"
+                        // No windows at all means nothing is configured yet.
+                        // Saying "none left today" there reads as if it had run
+                        // and finished, when in fact it has never run.
+                        windows.isEmpty() -> "Prayer times aren't set yet"
                         next != null -> "Next: ${next.prayer.label} at ${Formatting.time(next.prayerTimeMillis)}"
                         else -> "Prayer silence is on"
                     },
@@ -441,21 +445,25 @@ private fun PrayerCard(
                                 "one, then puts it back exactly as it was."
                         needsLocation ->
                             "Set a location, or enter the times yourself."
+                        windows.isEmpty() ->
+                            "Tap to set your five prayer times."
                         next != null ->
                             "Quiet from ${Formatting.time(next.startMillis)} to " +
                                 "${Formatting.time(next.endMillis)}"
                         else ->
-                            "No prayers left today."
+                            "Done for today. Next window is tomorrow at Fajr."
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                 )
-                if (!enabled) {
+                // Offer the action whenever there is nothing to show, not only
+                // when the feature is switched off.
+                if (!enabled || windows.isEmpty() || needsLocation) {
                     Spacer(Modifier.height(12.dp))
                     Button(onClick = onOpen) { Text("Set prayer times") }
                 }
             }
-            if (enabled) {
+            if (enabled && windows.isNotEmpty() && !needsLocation) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
