@@ -35,24 +35,6 @@ If you take the per-architecture download: `arm64-v8a` for any modern phone,
 `armeabi-v7a` for older 32-bit ARM, `x86_64` for emulators. Picking the wrong
 one fails with a bare "app not installed", which is why it isn't the default.
 
-### Sharing the APK privately
-
-An APK cannot be password-locked: Android's package installer must read the
-archive to install it. What can be protected is the handover.
-
-```bash
-tools/package-protected.sh                # wraps the universal APK
-tools/package-protected.sh path/to.apk out.7z
-```
-
-Produces an AES-256 archive with encrypted file names, so the recipient needs
-the password even to see what is inside. They open it with 7-Zip, Keka, p7zip
-or ZArchiver.
-
-This protects the transfer, not the app: once extracted, the recipient holds an
-ordinary APK and can install or forward it freely. It controls who gets the
-first copy — it is not a licence check.
-
 ---
 
 ## Architecture
