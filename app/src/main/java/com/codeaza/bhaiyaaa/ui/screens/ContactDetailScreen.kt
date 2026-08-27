@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -89,9 +88,10 @@ fun ContactDetailScreen(
     val memories by remember(phoneNumber) { viewModel.memoriesForContact(phoneNumber) }
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
-    val stats by produceState<ContactStats?>(initialValue = null, current.matchKey, calls.size) {
-        value = viewModel.statsFor(current.matchKey)
-    }
+    // Aggregates come straight from the database as a Flow, so they stay in
+    // step with the call list above without a manual refresh.
+    val stats by remember(current.matchKey) { viewModel.observeStatsFor(current.matchKey) }
+        .collectAsStateWithLifecycle(initialValue = null)
 
     var notesDraft by remember(current.phoneNumber) { mutableStateOf(current.notes.orEmpty()) }
     var newMemory by remember { mutableStateOf("") }

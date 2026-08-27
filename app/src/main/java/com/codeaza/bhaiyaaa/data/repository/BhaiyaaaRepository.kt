@@ -61,6 +61,11 @@ class BhaiyaaaRepository(
     fun observeContact(phoneNumber: String): Flow<ContactEntity?> =
         contactDao.observeByPhoneNumber(phoneNumber)
 
+    fun observeCall(id: Long): Flow<CallRecordEntity?> = callDao.observeById(id)
+
+    fun observeStatsFor(matchKey: String): Flow<ContactStats?> =
+        callDao.observeStatsForContact(matchKey)
+
     // ------------------------------------------------------------------ sync
 
     /**

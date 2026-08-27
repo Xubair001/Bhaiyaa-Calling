@@ -26,6 +26,10 @@ interface CallRecordDao {
     @Query("SELECT * FROM call_records WHERE id = :id LIMIT 1")
     suspend fun findById(id: Long): CallRecordEntity?
 
+    /** Observable form, so a detail screen reflects its own edits immediately. */
+    @Query("SELECT * FROM call_records WHERE id = :id LIMIT 1")
+    fun observeById(id: Long): Flow<CallRecordEntity?>
+
     /**
      * IGNORE, not REPLACE: the primary key is the device call-log id, so a
      * re-sync re-offers rows we already have. Ignoring them keeps sync
@@ -68,6 +72,23 @@ interface CallRecordDao {
         """
     )
     suspend fun statsForContact(matchKey: String): ContactStats?
+
+    /** Observable form of [statsForContact], for the contact detail screen. */
+    @Query(
+        """
+        SELECT matchKey AS matchKey,
+               COUNT(*) AS totalCalls,
+               SUM(CASE WHEN type = 'INCOMING' THEN 1 ELSE 0 END) AS incomingCalls,
+               SUM(CASE WHEN type = 'OUTGOING' THEN 1 ELSE 0 END) AS outgoingCalls,
+               SUM(CASE WHEN type = 'MISSED' THEN 1 ELSE 0 END) AS missedCalls,
+               SUM(CASE WHEN durationSeconds > 0 THEN durationSeconds ELSE 0 END) AS answeredDurationSeconds,
+               SUM(CASE WHEN durationSeconds > 0 THEN 1 ELSE 0 END) AS answeredCalls,
+               MAX(timestamp) AS lastCallAt
+        FROM call_records
+        WHERE matchKey = :matchKey
+        """
+    )
+    fun observeStatsForContact(matchKey: String): Flow<ContactStats?>
 
     @Query(
         """

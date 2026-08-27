@@ -25,6 +25,17 @@
 -dontwarn java.awt.**
 -dontwarn javax.swing.**
 
+# ------------------------------------------------------- Tink (EncryptedSharedPreferences)
+# androidx.security:security-crypto pulls in Google Tink, whose bytecode
+# references ErrorProne and JSR-305 annotations that are compile-only and are
+# deliberately not on the runtime classpath. R8 treats the dangling references
+# as missing classes and fails the build; they are never loaded at runtime, so
+# the correct fix is to silence them rather than to add the dependencies.
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+-dontwarn com.google.api.client.http.**
+-dontwarn org.joda.time.**
+
 # ------------------------------------------------------------------ Room/FTS
 # Room generates its own implementations, so entities need no reflection rules.
 # The one exception is the FTS content-table plumbing, which resolves table

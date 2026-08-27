@@ -217,7 +217,9 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
 
     fun memoriesForContact(phoneNumber: String) = repository.memoriesForContact(phoneNumber)
 
-    suspend fun statsFor(matchKey: String) = repository.statsFor(matchKey)
+    fun observeStatsFor(matchKey: String) = repository.observeStatsFor(matchKey)
+
+    fun observeCall(id: Long) = repository.observeCall(id)
 
     // ----------------------------------------------------------------- calls
 
@@ -228,8 +230,6 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
     fun setCallNote(id: Long, note: String?) = viewModelScope.launch {
         repository.setCallNote(id, note)
     }
-
-    suspend fun findCallForDetail(id: Long) = repository.findCall(id)
 
     // -------------------------------------------------------------- memories
 

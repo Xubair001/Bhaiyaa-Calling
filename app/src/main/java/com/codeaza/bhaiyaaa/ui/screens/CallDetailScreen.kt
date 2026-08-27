@@ -20,12 +20,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.unit.dp
 import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
 import com.codeaza.bhaiyaaa.domain.model.CallType
@@ -51,9 +51,10 @@ fun CallDetailScreen(
     viewModel: BhaiyaaaViewModel,
     onOpenContact: (String) -> Unit
 ) {
-    val call by produceState<CallRecordEntity?>(initialValue = null, callId) {
-        value = viewModel.findCallForDetail(callId)
-    }
+    // Observed rather than fetched once, so ticking "important" or saving a
+    // note re-renders from the database instead of from a mirrored local copy.
+    val call by remember(callId) { viewModel.observeCall(callId) }
+        .collectAsStateWithLifecycle(initialValue = null)
 
     val current = call
     if (current == null) {
@@ -71,7 +72,6 @@ fun CallDetailScreen(
 
     var noteDraft by remember(current.id) { mutableStateOf(current.note.orEmpty()) }
     var memoryDraft by remember(current.id) { mutableStateOf("") }
-    var important by remember(current.id) { mutableStateOf(current.isImportant) }
     val type = CallType.from(current.type)
 
     Column(
@@ -121,11 +121,8 @@ fun CallDetailScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Switch(
-                    checked = important,
-                    onCheckedChange = {
-                        important = it
-                        viewModel.setCallImportant(current.id, it)
-                    }
+                    checked = current.isImportant,
+                    onCheckedChange = { viewModel.setCallImportant(current.id, it) }
                 )
             }
         }
