@@ -21,17 +21,19 @@ than whatever is installed. Requirements: JDK 17, Android SDK with platform 35.
 
 CI runs on every push to `main` ([build-apk.yml](.github/workflows/build-apk.yml)):
 unit tests → compile instrumented tests → build APKs → upload artifacts.
-Download **`bhaiyaaa-debug-apk`** from the run's Artifacts.
 
-Because Vosk ships a native library per architecture, the build produces ABI
-splits plus a universal APK:
+Two artifacts are produced. Unless you have a reason to care about download
+size, take the first one:
 
-| APK | Size | Use |
+| Artifact | Contains | Use it when |
 |---|---|---|
-| `app-arm64-v8a-debug.apk` | ~29 MB | Virtually every phone made since 2017 |
-| `app-armeabi-v7a-debug.apk` | ~28 MB | Older 32-bit ARM devices |
-| `app-x86_64-debug.apk` | ~30 MB | Emulators |
-| `app-universal-debug.apk` | ~56 MB | If you'd rather not check |
+| **`bhaiyaaa-apk`** | `BHAIYAAA-install-this.apk` (~56 MB) | **Almost always.** One file, installs on any phone |
+| `bhaiyaaa-apk-per-architecture` | three ~29 MB APKs | You want a smaller download and know your CPU |
+
+The split exists because Vosk ships a native library per CPU architecture.
+If you take the per-architecture download: `arm64-v8a` for any modern phone,
+`armeabi-v7a` for older 32-bit ARM, `x86_64` for emulators. Picking the wrong
+one fails with a bare "app not installed", which is why it isn't the default.
 
 ---
 

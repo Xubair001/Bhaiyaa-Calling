@@ -53,13 +53,36 @@ jobs:
       - name: Build debug APKs
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APKs
+      # Vosk ships one native library per CPU architecture, so the build emits
+      # a per-ABI APK plus a universal one. Asking a human to know their phone's
+      # CPU before installing is a bad trade, so the default artifact holds a
+      # single file that always installs, and the smaller per-ABI builds are a
+      # separate, clearly-labelled download.
+      - name: Stage the install-me APK
+        run: |
+          mkdir -p artifact
+          cp app/build/outputs/apk/debug/app-universal-debug.apk \
+             artifact/BHAIYAAA-install-this.apk
+          ls -lh artifact/
+
+      - name: Upload APK (install this one)
         uses: actions/upload-artifact@v4
         with:
-          name: bhaiyaaa-debug-apk
-          # ABI splits plus a universal APK. Most phones want arm64-v8a;
-          # app-universal-debug.apk works everywhere at roughly twice the size.
-          path: app/build/outputs/apk/debug/*.apk
+          name: bhaiyaaa-apk
+          path: artifact/BHAIYAAA-install-this.apk
+          if-no-files-found: error
+
+      - name: Upload smaller per-architecture APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: bhaiyaaa-apk-per-architecture
+          # Roughly half the size, but you must match your phone's CPU:
+          # arm64-v8a for any modern phone, armeabi-v7a for older 32-bit ARM,
+          # x86_64 for emulators.
+          path: |
+            app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+            app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk
+            app/build/outputs/apk/debug/app-x86_64-debug.apk
           if-no-files-found: error
 
   lint:
