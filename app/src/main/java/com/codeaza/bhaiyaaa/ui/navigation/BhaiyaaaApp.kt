@@ -49,6 +49,7 @@ import com.codeaza.bhaiyaaa.ui.screens.ContactsScreen
 import com.codeaza.bhaiyaaa.ui.screens.DataSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.HomeScreen
 import com.codeaza.bhaiyaaa.ui.screens.InsightsScreen
+import com.codeaza.bhaiyaaa.ui.screens.LicencesScreen
 import com.codeaza.bhaiyaaa.ui.screens.MemoryScreen
 import com.codeaza.bhaiyaaa.ui.screens.ModelManagerScreen
 import com.codeaza.bhaiyaaa.ui.screens.MoreScreen
@@ -227,6 +228,8 @@ private fun BhaiyaaaNavHost(
         composable(Routes.HOME) {
             HomeScreen(
                 viewModel = viewModel,
+                prayerViewModel = prayerViewModel,
+                onOpenPrayer = { navController.navigate(Routes.SETTINGS_PRAYER) },
                 onOpenCalls = { navController.navigate(Routes.CALLS) },
                 onOpenVip = { navController.navigate(Routes.VIP) },
                 onOpenInsights = { navController.navigate(Routes.INSIGHTS) },
@@ -314,7 +317,10 @@ private fun BhaiyaaaNavHost(
         composable(Routes.SETTINGS_DATA) { DataSettingsScreen(viewModel) }
         composable(Routes.SETTINGS_PRAYER) { PrayerSettingsScreen(prayerViewModel) }
         composable(Routes.SETTINGS_MODELS) { ModelManagerScreen(modelViewModel) }
-        composable(Routes.SETTINGS_ABOUT) { AboutScreen() }
+        composable(Routes.SETTINGS_ABOUT) {
+            AboutScreen(onOpenLicences = { navController.navigate(Routes.SETTINGS_LICENCES) })
+        }
+        composable(Routes.SETTINGS_LICENCES) { LicencesScreen() }
 
         composable(
             route = Routes.CONTACT_DETAIL,
@@ -366,6 +372,7 @@ private fun titleFor(route: String?): String = when {
     route == Routes.SETTINGS_PRAYER -> "Prayer silence"
     route == Routes.SETTINGS_MODELS -> "AI models"
     route == Routes.SETTINGS_ABOUT -> "About"
+    route == Routes.SETTINGS_LICENCES -> "Licences"
     route.startsWith("contact/") -> "Contact"
     route.startsWith("call/") -> "Call"
     else -> "BHAIYAAA"

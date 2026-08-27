@@ -70,6 +70,9 @@ enum class PrayerMadhab(val storageValue: String, val label: String) {
 /** One prayer resolved to an actual instant today, with its silence window. */
 data class PrayerWindow(
     val prayer: Prayer,
+    /** The prayer itself. Shown to the user - it is what they recognise. */
+    val prayerTimeMillis: Long,
+    /** When the phone goes quiet, which is usually a few minutes earlier. */
     val startMillis: Long,
     val silenceMinutes: Int,
     val enabled: Boolean,

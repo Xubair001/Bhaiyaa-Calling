@@ -17,7 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.ai.ResourcePhrasebook
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
+import com.codeaza.bhaiyaaa.domain.model.PrayerMode
+import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
+import com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator
+import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
+import com.codeaza.bhaiyaaa.ui.theme.CardShape
 import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
 import com.codeaza.bhaiyaaa.domain.model.CallType
 import com.codeaza.bhaiyaaa.ui.components.CallTypeIcon
@@ -59,6 +68,8 @@ import java.util.Calendar
 @Composable
 fun HomeScreen(
     viewModel: BhaiyaaaViewModel,
+    prayerViewModel: PrayerViewModel,
+    onOpenPrayer: () -> Unit,
     onOpenCalls: () -> Unit,
     onOpenVip: () -> Unit,
     onOpenInsights: () -> Unit,
@@ -75,6 +86,9 @@ fun HomeScreen(
     val missedToday by viewModel.missedToday.collectAsStateWithLifecycle()
     val hasPermissions by viewModel.hasCorePermissions.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+
+    val prayerSettings by prayerViewModel.settings.collectAsStateWithLifecycle()
+    val prayerWindows by prayerViewModel.todayWindows.collectAsStateWithLifecycle()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -164,6 +178,16 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
+
+        item {
+            PrayerCard(
+                enabled = prayerSettings.enabled,
+                needsLocation = prayerSettings.mode == PrayerMode.AUTOMATIC &&
+                    !prayerSettings.hasLocation,
+                windows = prayerWindows,
+                onOpen = onOpenPrayer
+            )
         }
 
         item {
@@ -347,6 +371,97 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
+        }
+    }
+}
+
+/**
+ * Prayer silence, surfaced on the dashboard.
+ *
+ * This is the feature people install BHAIYAAA for, and burying it three taps
+ * deep in Settings would mean most of them never find it. Until it is set up
+ * the card invites; once it is, it earns its place by answering the only
+ * question that matters at a glance - when does my phone go quiet next.
+ */
+@Composable
+private fun PrayerCard(
+    enabled: Boolean,
+    needsLocation: Boolean,
+    windows: List<PrayerWindow>,
+    onOpen: () -> Unit
+) {
+    val now = System.currentTimeMillis()
+    val active = remember(windows, now) { PrayerTimeCalculator.activeWindow(windows, now) }
+    val next = remember(windows, now) { PrayerTimeCalculator.nextWindow(windows, now) }
+
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onOpen() },
+        shape = CardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            // Sits in the tertiary container so it reads as an invitation
+            // rather than as another statistic.
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Filled.Schedule,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(26.dp)
+            )
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = when {
+                        active != null -> "${active.prayer.label} — phone is quiet"
+                        !enabled -> "Namaz ka waqt, phone khamosh"
+                        needsLocation -> "Prayer silence needs your location"
+                        next != null -> "Next: ${next.prayer.label} at ${Formatting.time(next.prayerTimeMillis)}"
+                        else -> "Prayer silence is on"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = when {
+                        active != null ->
+                            "Until ${Formatting.time(active.endMillis)}"
+                        !enabled ->
+                            "Set your prayer times and BHAIYAAA silences your phone for each " +
+                                "one, then puts it back exactly as it was."
+                        needsLocation ->
+                            "Set a location, or enter the times yourself."
+                        next != null ->
+                            "Quiet from ${Formatting.time(next.startMillis)} to " +
+                                "${Formatting.time(next.endMillis)}"
+                        else ->
+                            "No prayers left today."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
+                )
+                if (!enabled) {
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onOpen) { Text("Set prayer times") }
+                }
+            }
+            if (enabled) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
         }
     }
 }

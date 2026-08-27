@@ -34,7 +34,7 @@ import com.codeaza.bhaiyaaa.data.db.entity.TagEntity
         NotificationRuleEntity::class,
         PrayerEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

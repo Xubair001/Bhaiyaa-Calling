@@ -14,24 +14,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.codeaza.bhaiyaaa.BuildConfig
-import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.SettingsInfoRow
+import com.codeaza.bhaiyaaa.ui.components.SettingsLinkRow
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 
 /**
- * About, including a plain statement of what BHAIYAAA deliberately does NOT do.
- * Being explicit about the limits is the point - it is what stops a user
- * assuming the app hears their calls.
+ * About.
+ *
+ * Says what the app is, who made it, and what it will not do. Library names and
+ * build details are not information a user of a phone app has any use for, so
+ * they live behind the licences page - where attribution belongs anyway.
  */
 @Composable
-fun AboutScreen() {
+fun AboutScreen(onOpenLicences: () -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
         Column(Modifier.padding(20.dp)) {
-            Text("BHAIYAAA", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "BHAIYAAA",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Spacer(Modifier.height(4.dp))
             Text(
                 "Apna banda, phone ke andar.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -40,57 +47,66 @@ fun AboutScreen() {
         }
 
         SettingsSectionHeader("Version")
-        SettingsInfoRow("App version", BuildConfig.VERSION_NAME)
-        SettingsInfoRow("Build", if (BuildConfig.DEBUG) "Debug" else "Release")
+        SettingsInfoRow("Version", BuildConfig.VERSION_NAME)
 
-        SettingsSectionHeader("What it does")
+        SettingsSectionHeader("Made by")
         Column(Modifier.padding(horizontal = 20.dp)) {
             Text(
-                "Everything runs on this phone. No account, no cloud, no API key, and no paid " +
-                    "service. Your contacts, call history, notes and memories are stored in a " +
-                    "local database and never uploaded.",
+                "Abdullah Zubair",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Software Engineer",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        SettingsSectionHeader("Your privacy")
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Text(
+                "Everything stays on this phone. There is no account, no cloud and no " +
+                    "tracking. Your contacts, call history, notes and prayer times are stored " +
+                    "locally and are never uploaded anywhere.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
 
-        SettingsSectionHeader("What it deliberately doesn't do")
+        SettingsSectionHeader("What BHAIYAAA will not do")
         Column(Modifier.padding(horizontal = 20.dp)) {
-            LimitationText(
-                "Record or transcribe calls",
-                "Modern Android blocks non-system apps from capturing call audio, and consent " +
-                    "law for recording calls varies by country. BHAIYAAA stores what you write " +
-                    "down about a call and never claims to have heard it."
+            Limitation(
+                "Record or listen to your calls",
+                "It remembers what you write down about a call, and nothing else."
             )
-            LimitationText(
-                "Replace your dialer or screen calls",
-                "It listens for the system's ringing broadcast — the same mechanism caller-ID " +
-                    "apps use — and never takes over the default dialer or call-screening role."
+            Limitation(
+                "Take over your dialer",
+                "It works alongside your phone app and never replaces it."
             )
-            LimitationText(
-                "Block calls",
-                "Marking someone as spam is a label for your own reference. BHAIYAAA does not " +
-                    "intercept or reject calls."
+            Limitation(
+                "Block anyone",
+                "Marking a number as spam is a label for your own reference."
             )
-            LimitationText(
-                "Guarantee alerts when the screen is off",
-                "Some manufacturers delay or drop background broadcasts. Allowing unrestricted " +
-                    "battery use helps, but this is a platform limitation."
+            Limitation(
+                "Promise an alert every time",
+                "Some phones restrict apps in the background. If VIP alerts or prayer " +
+                    "silence are ever late, allow BHAIYAAA unrestricted battery use."
             )
         }
 
-        SettingsSectionHeader("Open-source components")
-        SettingsInfoRow("Manrope typeface", "SIL Open Font License 1.1")
-        SettingsInfoRow("Vosk speech recognition", "Apache-2.0")
-        SettingsInfoRow("AndroidX / Jetpack Compose", "Apache-2.0")
-        SettingsInfoRow("Room, WorkManager, DataStore", "Apache-2.0")
-        SettingsInfoRow("Kotlin & coroutines", "Apache-2.0")
+        SettingsSectionHeader("Legal")
+        SettingsLinkRow(
+            title = "Open-source licences",
+            subtitle = "Acknowledgements for the components BHAIYAAA is built on",
+            onClick = onOpenLicences
+        )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(28.dp))
     }
 }
 
 @Composable
-private fun LimitationText(title: String, body: String) {
+private fun Limitation(title: String, body: String) {
     Column(Modifier.padding(vertical = 8.dp)) {
         Text(title, style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(2.dp))

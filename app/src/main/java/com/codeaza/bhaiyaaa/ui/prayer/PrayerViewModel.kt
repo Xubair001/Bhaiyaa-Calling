@@ -83,6 +83,13 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
         db.prayerDao().setSilenceMinutes(prayer.storageValue, minutes.coerceIn(1, 180))
     }
 
+    /** @param minutes negative means the window opens before the prayer. */
+    fun setStartOffset(prayer: Prayer, minutes: Int) = update {
+        db.prayerDao().find(prayer.storageValue)?.let { row ->
+            db.prayerDao().upsert(row.copy(startOffsetMinutes = minutes.coerceIn(-60, 60)))
+        }
+    }
+
     fun setPrayerEnabled(prayer: Prayer, enabled: Boolean) = update {
         db.prayerDao().setEnabled(prayer.storageValue, enabled)
     }

@@ -240,7 +240,22 @@ internal val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
-internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4, MIGRATION_4_5)
+/**
+ * v6 gives each prayer a start offset, so the quiet window can open before the
+ * prayer rather than at it - you want the phone already silent as you arrive.
+ *
+ * Rows still holding the old 20-minute default are moved to the new 15-minute
+ * one. That default was seeded by the app and never chosen by anyone, so
+ * carrying it forward would just preserve a value nobody picked.
+ */
+internal val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE prayers ADD COLUMN startOffsetMinutes INTEGER NOT NULL DEFAULT -3")
+        db.execSQL("UPDATE prayers SET silenceMinutes = 15 WHERE silenceMinutes = 20")
+    }
+}
+
+internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
 
 /**
  * Test seam. The migration is the one piece of this app that can destroy data

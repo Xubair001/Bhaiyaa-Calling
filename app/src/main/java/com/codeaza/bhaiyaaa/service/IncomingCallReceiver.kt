@@ -8,6 +8,8 @@ import com.codeaza.bhaiyaaa.ai.DefaultPhrasebook
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
+import com.codeaza.bhaiyaaa.domain.usecase.AlertDecision
+import com.codeaza.bhaiyaaa.domain.usecase.AlertOutcome
 import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.prayer.PrayerSilence
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
@@ -62,22 +64,18 @@ class IncomingCallReceiver : BroadcastReceiver() {
                     val db = AppDatabase.getInstance(context)
                     val contact = db.contactDao().findByMatchKey(matchKey) ?: return@withTimeoutOrNull
                     val level = VipLevel.from(contact.vipLevel)
-                    if (!level.isVip) return@withTimeoutOrNull
-                    if (!contact.notificationsEnabled) return@withTimeoutOrNull
-
                     val settings = SettingsRepository(context).settings.first()
-                    if (!settings.notificationsEnabled) return@withTimeoutOrNull
-
                     val rule = db.notificationRuleDao().findForLevel(level.storageValue)
-                        ?: return@withTimeoutOrNull
 
-                    // A prayer silence window outranks a VIP tier unless that
-                    // tier was explicitly allowed through. Returning here means
-                    // no vibration, no torch and no notification - the phone
-                    // stays as quiet as the user asked it to be.
-                    if (!rule.ringsDuringPrayer && PrayerSilence.isActiveNow(context)) {
-                        return@withTimeoutOrNull
-                    }
+                    // Every precedence rule lives in AlertDecision, so this
+                    // receiver only has to act on the answer.
+                    val outcome = AlertDecision.evaluate(
+                        contact = contact,
+                        rule = rule,
+                        alertsGloballyEnabled = settings.notificationsEnabled,
+                        prayerSilenceActive = PrayerSilence.isActiveNow(context)
+                    )
+                    if (outcome != AlertOutcome.ALERT || rule == null) return@withTimeoutOrNull
 
                     CallAlertManager.triggerAlert(
                         context = context,

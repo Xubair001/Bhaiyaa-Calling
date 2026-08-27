@@ -266,9 +266,12 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                                 Text(
                                     buildString {
                                         if (window != null) {
-                                            append(Formatting.time(window.startMillis))
+                                            append(Formatting.time(window.prayerTimeMillis))
                                             if (window.isOverridden) append(" · your time")
-                                            append(" · silent ${window.silenceMinutes} min")
+                                            append("\nQuiet ")
+                                            append(Formatting.time(window.startMillis))
+                                            append(" – ")
+                                            append(Formatting.time(window.endMillis))
                                         } else {
                                             append("No time set")
                                         }
@@ -331,12 +334,14 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
         EditPrayerDialog(
             prayerLabel = prayer.label,
             currentMinutes = row?.manualMinutesFromMidnight,
-            currentSilence = row?.silenceMinutes ?: 20,
+            currentSilence = row?.silenceMinutes ?: 15,
+            currentOffset = row?.startOffsetMinutes ?: -3,
             canClearOverride = settings.mode == PrayerMode.AUTOMATIC,
             onDismiss = { editing = null },
-            onSave = { minutes, silence ->
+            onSave = { minutes, silence, offset ->
                 viewModel.setManualTime(prayer, minutes)
                 viewModel.setSilenceMinutes(prayer, silence)
+                viewModel.setStartOffset(prayer, offset)
                 editing = null
             }
         )
@@ -359,9 +364,10 @@ private fun EditPrayerDialog(
     prayerLabel: String,
     currentMinutes: Int?,
     currentSilence: Int,
+    currentOffset: Int,
     canClearOverride: Boolean,
     onDismiss: () -> Unit,
-    onSave: (Int?, Int) -> Unit
+    onSave: (Int?, Int, Int) -> Unit
 ) {
     val state = rememberTimePickerState(
         initialHour = (currentMinutes ?: 0) / 60,
@@ -369,6 +375,7 @@ private fun EditPrayerDialog(
         is24Hour = false
     )
     var silence by remember { mutableIntStateOf(currentSilence) }
+    var earlyBy by remember { mutableIntStateOf(-currentOffset) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -377,12 +384,27 @@ private fun EditPrayerDialog(
             Column {
                 TimePicker(state = state)
                 Spacer(Modifier.height(12.dp))
-                Text("Stay silent for $silence minutes", style = MaterialTheme.typography.bodyMedium)
+                Text("Go quiet $earlyBy minutes early", style = MaterialTheme.typography.bodyMedium)
+                Slider(
+                    value = earlyBy.toFloat(),
+                    onValueChange = { earlyBy = it.toInt() },
+                    valueRange = 0f..20f,
+                    steps = 19
+                )
+                Spacer(Modifier.height(8.dp))
+                Text("Stay quiet for $silence minutes in total", style = MaterialTheme.typography.bodyMedium)
                 Slider(
                     value = silence.toFloat(),
                     onValueChange = { silence = it.toInt() },
                     valueRange = 5f..60f,
                     steps = 10
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "So the phone is quiet from $earlyBy minutes before the adhan until " +
+                        "${silence - earlyBy} minutes after it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (canClearOverride) {
                     Text(
@@ -394,12 +416,12 @@ private fun EditPrayerDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { onSave(state.hour * 60 + state.minute, silence) }) { Text("Save") }
+            Button(onClick = { onSave(state.hour * 60 + state.minute, silence, -earlyBy) }) { Text("Save") }
         },
         dismissButton = {
             Row {
                 if (canClearOverride && currentMinutes != null) {
-                    TextButton(onClick = { onSave(null, silence) }) { Text("Use calculated") }
+                    TextButton(onClick = { onSave(null, silence, -earlyBy) }) { Text("Use calculated") }
                 }
                 TextButton(onClick = onDismiss) { Text("Cancel") }
             }

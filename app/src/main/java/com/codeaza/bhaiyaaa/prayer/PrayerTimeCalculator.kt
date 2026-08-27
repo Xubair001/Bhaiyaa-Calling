@@ -60,9 +60,14 @@ object PrayerTimeCalculator {
                     PrayerMode.AUTOMATIC -> override ?: calculated[prayer]
                 } ?: return@mapNotNull null
 
+                // The offset shifts the window, it does not extend it: a
+                // 15-minute window opening 3 minutes early runs from T-3 to
+                // T+12, so "silent for 15 minutes" stays literally true.
+                val offset = entity.startOffsetMinutes.coerceIn(-60, 60)
                 PrayerWindow(
                     prayer = prayer,
-                    startMillis = start,
+                    prayerTimeMillis = start,
+                    startMillis = start + offset * 60_000L,
                     silenceMinutes = entity.silenceMinutes.coerceIn(1, 180),
                     enabled = entity.enabled,
                     isOverridden = override != null
@@ -160,13 +165,18 @@ object PrayerTimeCalculator {
         PrayerMadhab.SHAFI -> Madhab.SHAFI
     }
 
-    /** Default rows, seeded once. Twenty minutes covers wudu, jamaat and sunnah. */
+    /**
+     * Default rows, seeded once: quiet from three minutes before the prayer,
+     * for fifteen minutes in total. Enough for wudu, jamaat and sunnah without
+     * holding the phone silent long after everyone has left.
+     */
     fun defaultPrayerRows(): List<PrayerEntity> = Prayer.entries.map { prayer ->
         PrayerEntity(
             name = prayer.storageValue,
             enabled = true,
-            silenceMinutes = 20,
+            silenceMinutes = 15,
             manualMinutesFromMidnight = null,
+            startOffsetMinutes = -3,
             sortOrder = prayer.order
         )
     }

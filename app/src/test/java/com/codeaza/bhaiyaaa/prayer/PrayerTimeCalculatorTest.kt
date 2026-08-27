@@ -41,8 +41,9 @@ class PrayerTimeCalculatorTest {
     )
 
     private fun rows(
-        silence: Int = 20,
+        silence: Int = 15,
         enabled: Boolean = true,
+        offset: Int = -3,
         overrides: Map<Prayer, Int?> = emptyMap()
     ) = Prayer.entries.map { p ->
         PrayerEntity(
@@ -50,6 +51,7 @@ class PrayerTimeCalculatorTest {
             enabled = enabled,
             silenceMinutes = silence,
             manualMinutesFromMidnight = overrides[p],
+            startOffsetMinutes = offset,
             sortOrder = p.order
         )
     }
@@ -74,11 +76,11 @@ class PrayerTimeCalculatorTest {
             .associateBy { it.prayer }
 
         // Not exact values - just that the arithmetic and time zone agree.
-        assertThat(localHour(windows.getValue(Prayer.FAJR).startMillis)).isIn(2..6)
-        assertThat(localHour(windows.getValue(Prayer.DHUHR).startMillis)).isIn(11..14)
-        assertThat(localHour(windows.getValue(Prayer.ASR).startMillis)).isIn(14..18)
-        assertThat(localHour(windows.getValue(Prayer.MAGHRIB).startMillis)).isIn(17..20)
-        assertThat(localHour(windows.getValue(Prayer.ISHA).startMillis)).isIn(18..23)
+        assertThat(localHour(windows.getValue(Prayer.FAJR).prayerTimeMillis)).isIn(2..6)
+        assertThat(localHour(windows.getValue(Prayer.DHUHR).prayerTimeMillis)).isIn(11..14)
+        assertThat(localHour(windows.getValue(Prayer.ASR).prayerTimeMillis)).isIn(14..18)
+        assertThat(localHour(windows.getValue(Prayer.MAGHRIB).prayerTimeMillis)).isIn(17..20)
+        assertThat(localHour(windows.getValue(Prayer.ISHA).prayerTimeMillis)).isIn(18..23)
     }
 
     @Test
@@ -90,12 +92,12 @@ class PrayerTimeCalculatorTest {
             .associateBy { it.prayer }
 
         // Hanafi uses a longer shadow, so Asr is later.
-        assertThat(hanafi.getValue(Prayer.ASR).startMillis)
-            .isGreaterThan(shafi.getValue(Prayer.ASR).startMillis)
-        assertThat(hanafi.getValue(Prayer.FAJR).startMillis)
-            .isEqualTo(shafi.getValue(Prayer.FAJR).startMillis)
-        assertThat(hanafi.getValue(Prayer.MAGHRIB).startMillis)
-            .isEqualTo(shafi.getValue(Prayer.MAGHRIB).startMillis)
+        assertThat(hanafi.getValue(Prayer.ASR).prayerTimeMillis)
+            .isGreaterThan(shafi.getValue(Prayer.ASR).prayerTimeMillis)
+        assertThat(hanafi.getValue(Prayer.FAJR).prayerTimeMillis)
+            .isEqualTo(shafi.getValue(Prayer.FAJR).prayerTimeMillis)
+        assertThat(hanafi.getValue(Prayer.MAGHRIB).prayerTimeMillis)
+            .isEqualTo(shafi.getValue(Prayer.MAGHRIB).prayerTimeMillis)
     }
 
     @Test
@@ -109,14 +111,14 @@ class PrayerTimeCalculatorTest {
         ).associateBy { it.prayer }
 
         val dhuhr = overridden.getValue(Prayer.DHUHR)
-        val cal = Calendar.getInstance(zone).apply { timeInMillis = dhuhr.startMillis }
+        val cal = Calendar.getInstance(zone).apply { timeInMillis = dhuhr.prayerTimeMillis }
         assertThat(cal.get(Calendar.HOUR_OF_DAY)).isEqualTo(12)
         assertThat(cal.get(Calendar.MINUTE)).isEqualTo(30)
         assertThat(dhuhr.isOverridden).isTrue()
 
         // Everything else is untouched and still marked as calculated.
-        assertThat(overridden.getValue(Prayer.FAJR).startMillis)
-            .isEqualTo(calculated.getValue(Prayer.FAJR).startMillis)
+        assertThat(overridden.getValue(Prayer.FAJR).prayerTimeMillis)
+            .isEqualTo(calculated.getValue(Prayer.FAJR).prayerTimeMillis)
         assertThat(overridden.getValue(Prayer.FAJR).isOverridden).isFalse()
     }
 
@@ -200,6 +202,47 @@ class PrayerTimeCalculatorTest {
         assertThat(cal.get(Calendar.HOUR_OF_DAY)).isEqualTo(5)
         assertThat(cal.get(Calendar.MINUTE)).isEqualTo(45)
         assertThat(cal.get(Calendar.DAY_OF_MONTH)).isEqualTo(27)
+    }
+
+    @Test
+    fun `the window opens before the prayer by the configured offset`() {
+        val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(offset = -3), day, zone)
+        windows.forEach {
+            assertThat(it.startMillis).isEqualTo(it.prayerTimeMillis - 3 * 60_000L)
+        }
+    }
+
+    @Test
+    fun `the offset shifts the window without lengthening it`() {
+        val windows = PrayerTimeCalculator.windowsForDay(
+            lahore, rows(silence = 15, offset = -3), day, zone
+        )
+        windows.forEach {
+            // Fifteen minutes total, from three before to twelve after.
+            assertThat(it.endMillis - it.startMillis).isEqualTo(15 * 60_000L)
+            assertThat(it.endMillis).isEqualTo(it.prayerTimeMillis + 12 * 60_000L)
+        }
+    }
+
+    @Test
+    fun `a zero offset starts the window exactly at the prayer`() {
+        val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(offset = 0), day, zone)
+        windows.forEach { assertThat(it.startMillis).isEqualTo(it.prayerTimeMillis) }
+    }
+
+    @Test
+    fun `an absurd offset is clamped`() {
+        val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(offset = -9999), day, zone)
+        windows.forEach {
+            assertThat(it.startMillis).isEqualTo(it.prayerTimeMillis - 60 * 60_000L)
+        }
+    }
+
+    @Test
+    fun `defaults are fifteen minutes starting three minutes early`() {
+        val defaults = PrayerTimeCalculator.defaultPrayerRows()
+        assertThat(defaults.all { it.silenceMinutes == 15 }).isTrue()
+        assertThat(defaults.all { it.startOffsetMinutes == -3 }).isTrue()
     }
 
     @Test
