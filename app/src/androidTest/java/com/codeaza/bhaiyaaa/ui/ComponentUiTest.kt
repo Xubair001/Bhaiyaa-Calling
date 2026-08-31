@@ -111,6 +111,9 @@ class ComponentUiTest {
             SukoonTheme { StatTile(value = "7", label = "Calls today") }
         }
         composeRule.onNodeWithText("7").assertIsDisplayed()
-        composeRule.onNodeWithText("Calls today").assertIsDisplayed()
+        // StatTile sets the label as a tracked overline, so it renders
+        // uppercased. Matched case-insensitively rather than pinning the
+        // styling into the test.
+        composeRule.onNodeWithText("Calls today", ignoreCase = true).assertIsDisplayed()
     }
 }

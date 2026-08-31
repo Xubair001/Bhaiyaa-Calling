@@ -1,7 +1,10 @@
 package com.codeaza.bhaiyaaa.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -59,8 +62,9 @@ class NavigationUiTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("VIP contacts").assertIsDisplayed()
-        composeRule.onNodeWithText("Memory").assertIsDisplayed()
-        composeRule.onNodeWithText("Insights").assertIsDisplayed()
+        composeRule.onNodeWithText("Saved notes").assertIsDisplayed()
+        composeRule.onNodeWithText("Reminders").assertIsDisplayed()
+        composeRule.onNodeWithText("Call insights").assertIsDisplayed()
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
     }
 
@@ -72,8 +76,9 @@ class NavigationUiTest {
         composeRule.onNodeWithText("Settings").performClick()
         composeRule.waitForIdle()
 
-        listOf("Notifications", "VIP alerts", "Appearance", "Assistant personality", "AI models",
-            "Security", "Data", "About Sukoon").forEach { row ->
+        listOf("Alerts & sounds", "How VIPs reach you", "Quiet times", "Appearance",
+            "How Sukoon talks", "Offline voice", "App lock", "Backup & delete",
+            "About Sukoon").forEach { row ->
             composeRule.onNodeWithText(row).assertExists()
         }
     }
@@ -100,7 +105,7 @@ class NavigationUiTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Settings").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Assistant personality").performClick()
+        composeRule.onNodeWithText("How Sukoon talks").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Bhai Mode").performClick()
@@ -126,7 +131,63 @@ class NavigationUiTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Ask Sukoon").assertIsDisplayed()
-        composeRule.onNodeWithText("Who called me?").assertExists()
+        composeRule.onNodeWithText("Who called me most this week?").assertExists()
+    }
+
+    /**
+     * Adds a reminder and checks it lands in the right day group.
+     *
+     * This runs against whatever database the phone already holds, so it
+     * clears its own rows at both ends: a run that fails midway would
+     * otherwise leave one behind, and the next run would find several.
+     */
+    @Test
+    fun reminders_addedReminderIsFiledUnderItsDay() {
+        completeOnboardingIfShown()
+        openReminders()
+        deleteTestReminders()
+
+        composeRule.onNodeWithText("e.g. Call Ali tomorrow at 5pm").assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextInput(SUBJECT + " tomorrow at 5pm")
+        composeRule.onNodeWithText("Add").performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(hasText(SUBJECT)).fetchSemanticsNodes().isNotEmpty()
+        }
+        // The group header is the assertion: it only appears because the time
+        // phrase parsed into a due date for tomorrow. The rendered timestamp
+        // is deliberately not checked - the phone may already hold other
+        // reminders due tomorrow, and the wording is covered by FormattingTest.
+        composeRule.onNodeWithText("TOMORROW").assertExists()
+
+        deleteTestReminders()
+        composeRule.onAllNodes(hasText(SUBJECT)).fetchSemanticsNodes().let {
+            assert(it.isEmpty()) { "left " + it.size + " test reminders behind" }
+        }
+    }
+
+    private fun openReminders() {
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Reminders").performClick()
+        composeRule.waitForIdle()
+    }
+
+    /** Removes every row this test has ever added, however many there are. */
+    private fun deleteTestReminders() {
+        repeat(10) {
+            val menus = composeRule.onAllNodesWithContentDescription("More actions for " + SUBJECT)
+            if (menus.fetchSemanticsNodes().isEmpty()) return
+            menus[0].performClick()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText("Delete").performClick()
+            composeRule.waitForIdle()
+        }
+    }
+
+    private companion object {
+        /** Distinctive enough not to collide with anything already on the phone. */
+        const val SUBJECT = "Zzz test reminder"
     }
 }
 
