@@ -149,6 +149,9 @@ fun CallsScreen(
                     CallRow(
                         call = call,
                         vipLevel = vipByKey[call.matchKey] ?: VipLevel.NONE,
+                        // Filtering the list is the common case here, so rows
+                        // slide into their new place instead of jumping.
+                        modifier = Modifier.animateItem(),
                         onClick = { onOpenCall(call.id) }
                     )
                 }

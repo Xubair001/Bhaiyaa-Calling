@@ -1,6 +1,8 @@
 package com.codeaza.bhaiyaaa.ui.screens
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
@@ -44,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +58,7 @@ import com.codeaza.bhaiyaaa.domain.usecase.ReminderGrouping
 import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.ui.theme.CardShape
+import com.codeaza.bhaiyaaa.ui.theme.Motion
 import com.codeaza.bhaiyaaa.util.Formatting
 import kotlinx.coroutines.delay
 import java.util.Calendar
@@ -134,12 +137,13 @@ fun RemindersScreen(viewModel: SukoonViewModel) {
 
         groups.forEach { group ->
             item(key = "header-${group.bucket.name}") {
-                GroupHeader(group.bucket, group.items.size)
+                GroupHeader(group.bucket, group.items.size, Modifier.animateItem())
             }
             items(group.items, key = { it.id }) { reminder ->
                 ReminderRow(
                     reminder = reminder,
                     overdue = group.bucket == ReminderBucket.OVERDUE,
+                    modifier = Modifier.animateItem(),
                     now = now,
                     onToggleDone = { viewModel.setReminderDone(reminder.id, it) },
                     onEdit = { editing = reminder },
@@ -158,6 +162,7 @@ fun RemindersScreen(viewModel: SukoonViewModel) {
                     ReminderRow(
                         reminder = reminder,
                         overdue = false,
+                        modifier = Modifier.animateItem(),
                         now = now,
                         onToggleDone = { viewModel.setReminderDone(reminder.id, it) },
                         onEdit = { editing = reminder },
@@ -232,9 +237,9 @@ private fun Composer(draft: String, onDraftChange: (String) -> Unit, onAdd: () -
 }
 
 @Composable
-private fun GroupHeader(bucket: ReminderBucket, count: Int) {
+private fun GroupHeader(bucket: ReminderBucket, count: Int, modifier: Modifier = Modifier) {
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(top = 8.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -277,10 +282,18 @@ private fun DoneHeader(count: Int, expanded: Boolean, onToggle: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.weight(1f))
+        // One icon rotated, not two swapped: the chevron turning is what says
+        // the section opened, and a swap at this size just flickers.
+        val turn by animateFloatAsState(
+            targetValue = if (expanded) 180f else 0f,
+            animationSpec = tween(Motion.STANDARD, easing = Motion.Standard),
+            label = "completedChevron"
+        )
         Icon(
-            imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            imageVector = Icons.Outlined.ExpandMore,
             contentDescription = if (expanded) "Hide completed" else "Show completed",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.rotate(turn)
         )
     }
 }
@@ -290,6 +303,7 @@ private fun DoneHeader(count: Int, expanded: Boolean, onToggle: () -> Unit) {
 internal fun ReminderRow(
     reminder: ReminderEntity,
     overdue: Boolean,
+    modifier: Modifier = Modifier,
     now: Long = System.currentTimeMillis(),
     onToggleDone: (Boolean) -> Unit,
     onEdit: () -> Unit,
@@ -298,7 +312,7 @@ internal fun ReminderRow(
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     Card(
-        Modifier
+        modifier
             .fillMaxWidth()
             .animateContentSize(),
         shape = CardShape,

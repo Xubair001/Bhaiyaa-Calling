@@ -131,6 +131,7 @@ fun ContactsScreen(
                     val contactStats = statsByKey[contact.matchKey]
                     Row(
                         Modifier
+                            .animateItem()
                             .fillMaxWidth()
                             .clickable { onOpenContact(contact.phoneNumber) }
                             .padding(horizontal = 4.dp, vertical = 10.dp),

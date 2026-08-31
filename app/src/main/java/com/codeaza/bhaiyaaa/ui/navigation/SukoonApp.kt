@@ -1,6 +1,10 @@
 package com.codeaza.bhaiyaaa.ui.navigation
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -27,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -39,6 +44,7 @@ import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.LockState
 import com.codeaza.bhaiyaaa.ui.assistant.AssistantViewModel
 import com.codeaza.bhaiyaaa.ui.models.ModelManagerViewModel
+import com.codeaza.bhaiyaaa.ui.theme.Motion
 import com.codeaza.bhaiyaaa.ui.onboarding.OnboardingScreen
 import com.codeaza.bhaiyaaa.ui.screens.AboutScreen
 import com.codeaza.bhaiyaaa.ui.screens.AppearanceSettingsScreen
@@ -232,7 +238,66 @@ private fun SukoonNavHost(
 
     fun openCall(callId: Long) = navController.navigate(Routes.callDetail(callId))
 
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.HOME,
+        // Two different moves, deliberately given two different motions.
+        //
+        // The bottom-bar tabs are peers, so switching between them only
+        // crossfades - sliding would imply one sits inside the other, and the
+        // direction would be a lie because there is no order to Home, Calls
+        // and Contacts.
+        //
+        // Opening a detail or settings screen slides, because there the
+        // hierarchy is real, and the direction is what tells you which way you
+        // moved. The slide is a fifth of the width rather than the full
+        // distance: a whole-screen slide at this duration reads as sluggish,
+        // and the fade is doing most of the work anyway.
+        enterTransition = {
+            if (isLateral()) {
+                fadeIn(tween(Motion.SCREEN_ENTER, easing = Motion.Standard))
+            } else {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    tween(Motion.SCREEN_ENTER, easing = Motion.Entering),
+                    initialOffset = { it / 5 }
+                ) + fadeIn(tween(Motion.SCREEN_ENTER, easing = Motion.Entering))
+            }
+        },
+        exitTransition = {
+            if (isLateral()) {
+                fadeOut(tween(Motion.SCREEN_EXIT, easing = Motion.Standard))
+            } else {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    tween(Motion.SCREEN_EXIT, easing = Motion.Leaving),
+                    targetOffset = { it / 5 }
+                ) + fadeOut(tween(Motion.SCREEN_EXIT, easing = Motion.Leaving))
+            }
+        },
+        popEnterTransition = {
+            if (isLateral()) {
+                fadeIn(tween(Motion.SCREEN_ENTER, easing = Motion.Standard))
+            } else {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End,
+                    tween(Motion.SCREEN_ENTER, easing = Motion.Entering),
+                    initialOffset = { it / 5 }
+                ) + fadeIn(tween(Motion.SCREEN_ENTER, easing = Motion.Entering))
+            }
+        },
+        popExitTransition = {
+            if (isLateral()) {
+                fadeOut(tween(Motion.SCREEN_EXIT, easing = Motion.Standard))
+            } else {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End,
+                    tween(Motion.SCREEN_EXIT, easing = Motion.Leaving),
+                    targetOffset = { it / 5 }
+                ) + fadeOut(tween(Motion.SCREEN_EXIT, easing = Motion.Leaving))
+            }
+        }
+    ) {
 
         composable(Routes.HOME) {
             HomeScreen(
@@ -386,3 +451,7 @@ private fun titleFor(route: String?): String = when {
     route.startsWith("call/") -> "Call"
     else -> "Sukoon"
 }
+
+/** Reads the two ends of the move off the transition scope for [NavMotion]. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isLateral(): Boolean =
+    NavMotion.isLateral(initialState.destination.route, targetState.destination.route)

@@ -148,7 +148,9 @@ fun AssistantScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(messages, key = { it.id }) { message -> ChatBubble(message) }
+                items(messages, key = { it.id }) { message ->
+                    ChatBubble(message, Modifier.animateItem())
+                }
                 if (isThinking) {
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -267,14 +269,14 @@ fun AssistantScreen(
 }
 
 @Composable
-private fun ChatBubble(message: ChatMessage) {
+private fun ChatBubble(message: ChatMessage, modifier: Modifier = Modifier) {
     val alignment = if (message.fromUser) Alignment.CenterEnd else Alignment.CenterStart
     val background = if (message.fromUser) MaterialTheme.colorScheme.primaryContainer
     else MaterialTheme.colorScheme.surfaceVariant
     val textColor = if (message.fromUser) MaterialTheme.colorScheme.onPrimaryContainer
     else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Box(Modifier.fillMaxWidth(), contentAlignment = alignment) {
+    Box(modifier.fillMaxWidth(), contentAlignment = alignment) {
         Column(
             Modifier
                 .fillMaxWidth(0.88f)
