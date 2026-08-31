@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import com.codeaza.bhaiyaaa.MainActivity
 import com.codeaza.bhaiyaaa.R
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
+import com.codeaza.bhaiyaaa.service.ReminderActionReceiver
 
 /**
  * All notification posting goes through here.
@@ -92,6 +93,15 @@ object Notifier {
         post(context, TEST_NOTIFICATION_ID, builder.build())
     }
 
+    /**
+     * Reminder alert, with Snooze and Done on it.
+     *
+     * The actions are what make the notification useful rather than decorative.
+     * A reminder is marked notified once it fires and the receiver skips
+     * anything already notified, so without a way to defer from here, swiping
+     * the alert away was the same as deleting it - the reminder stayed in the
+     * list and never spoke again.
+     */
     fun notifyReminder(context: Context, reminderId: Long, text: String) {
         if (!canPost(context)) return
         val builder = NotificationCompat.Builder(context, NotificationChannels.REMINDERS)
@@ -102,7 +112,45 @@ object Notifier {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(openApp(context))
+            .addAction(
+                0,
+                "Snooze 10 min",
+                reminderAction(context, ReminderActionReceiver.ACTION_SNOOZE, reminderId)
+            )
+            .addAction(
+                0,
+                "Done",
+                reminderAction(context, ReminderActionReceiver.ACTION_DONE, reminderId)
+            )
         post(context, REMINDER_NOTIFICATION_BASE + reminderId.toInt(), builder.build())
+    }
+
+    /** Clears a reminder's alert once it has been handled inside the app. */
+    fun cancelReminder(context: Context, reminderId: Long) {
+        runCatching {
+            NotificationManagerCompat.from(context)
+                .cancel(REMINDER_NOTIFICATION_BASE + reminderId.toInt())
+        }
+    }
+
+    /**
+     * Request codes mix the action into the id. Sharing one code across both
+     * buttons would make the second PendingIntent overwrite the first, and
+     * Snooze would silently start completing reminders.
+     */
+    private fun reminderAction(context: Context, action: String, reminderId: Long): PendingIntent {
+        val intent = Intent(context, ReminderActionReceiver::class.java).apply {
+            this.action = action
+            putExtra(ReminderActionReceiver.EXTRA_REMINDER_ID, reminderId)
+        }
+        val code = REMINDER_NOTIFICATION_BASE + reminderId.toInt() * 2 +
+            if (action == ReminderActionReceiver.ACTION_DONE) 1 else 0
+        return PendingIntent.getBroadcast(
+            context,
+            code,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     fun notifyMissedImportant(context: Context, contactName: String, count: Int) {

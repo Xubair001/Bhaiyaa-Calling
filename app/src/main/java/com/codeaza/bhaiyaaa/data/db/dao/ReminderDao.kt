@@ -25,8 +25,31 @@ interface ReminderDao {
     @Update
     suspend fun update(reminder: ReminderEntity)
 
-    @Query("UPDATE reminders SET isDone = :done WHERE id = :id")
+    /**
+     * Un-completing also clears [ReminderEntity.notified].
+     *
+     * The alarm receiver skips anything already notified, so without this a
+     * reminder ticked off and then brought back could never fire again - it
+     * would sit in the list looking armed, and stay silent.
+     */
+    @Query(
+        """UPDATE reminders
+           SET isDone = :done,
+               notified = (CASE WHEN :done THEN notified ELSE 0 END)
+           WHERE id = :id"""
+    )
     suspend fun setDone(id: Long, done: Boolean)
+
+    /** Editing clears notified too: a re-timed reminder is owed a fresh alert. */
+    @Query("UPDATE reminders SET text = :text, dueAt = :dueAt, notified = 0 WHERE id = :id")
+    suspend fun edit(id: Long, text: String, dueAt: Long?)
+
+    /** Snooze. Also un-completes, so snoozing from a notification always arms. */
+    @Query("UPDATE reminders SET dueAt = :dueAt, notified = 0, isDone = 0 WHERE id = :id")
+    suspend fun rescheduleTo(id: Long, dueAt: Long)
+
+    @Query("SELECT * FROM reminders WHERE isDone = 1 ORDER BY IFNULL(dueAt, createdAt) DESC LIMIT :limit")
+    fun observeDone(limit: Int = 30): Flow<List<ReminderEntity>>
 
     @Query("UPDATE reminders SET notified = 1 WHERE id = :id")
     suspend fun markNotified(id: Long)

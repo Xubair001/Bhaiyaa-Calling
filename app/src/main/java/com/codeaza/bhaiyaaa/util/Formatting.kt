@@ -1,6 +1,9 @@
 package com.codeaza.bhaiyaaa.util
 
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -31,6 +34,33 @@ object Formatting {
             else -> dateTime(millis)
         }
     }
+
+    /**
+     * A due date, which can be in either direction.
+     *
+     * [relativeDateTime] is for things that already happened: it answers
+     * "Today" for anything at or after this morning, which is right for a call
+     * log and wrong for a reminder - one due next Tuesday would read "Today,
+     * 5:00 PM".
+     *
+     * Days are counted as calendar days in the phone's zone, not as 24-hour
+     * blocks, so a DST night does not shift the answer by one.
+     */
+    fun whenDue(millis: Long, now: Long = System.currentTimeMillis()): String {
+        val zone = ZoneId.systemDefault()
+        val due = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        return when (ChronoUnit.DAYS.between(today, due)) {
+            0L -> "Today, ${time(millis)}"
+            1L -> "Tomorrow, ${time(millis)}"
+            -1L -> "Yesterday, ${time(millis)}"
+            in 2L..6L, in -6L..-2L -> "${weekday(millis)}, ${time(millis)}"
+            else -> dateTime(millis)
+        }
+    }
+
+    private fun weekday(millis: Long): String =
+        SimpleDateFormat("EEEE", Locale.getDefault()).format(millis)
 
     /** Compact duration: 45s, 3m 20s, 1h 05m. */
     fun duration(seconds: Long): String {

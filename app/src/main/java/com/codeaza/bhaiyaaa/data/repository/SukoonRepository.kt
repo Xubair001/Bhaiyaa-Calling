@@ -47,6 +47,7 @@ class SukoonRepository(
     val calls: Flow<List<CallRecordEntity>> = callDao.observeAll()
     val reminders: Flow<List<ReminderEntity>> = reminderDao.observeActive()
     val pendingReminderCount: Flow<Int> = reminderDao.observePendingCount()
+    val doneReminders: Flow<List<ReminderEntity>> = reminderDao.observeDone()
     val memories: Flow<List<MemoryEntity>> = memoryDao.observeAll()
     val nonPrivateMemories: Flow<List<MemoryEntity>> = memoryDao.observeNonPrivate()
     val memoryCount: Flow<Int> = memoryDao.observeCount()
@@ -303,6 +304,14 @@ class SukoonRepository(
 
     suspend fun setReminderDone(id: Long, done: Boolean) = withContext(Dispatchers.IO) {
         reminderDao.setDone(id, done)
+    }
+
+    suspend fun editReminder(id: Long, text: String, dueAt: Long?) = withContext(Dispatchers.IO) {
+        reminderDao.edit(id, text.trim(), dueAt)
+    }
+
+    suspend fun snoozeReminder(id: Long, until: Long) = withContext(Dispatchers.IO) {
+        reminderDao.rescheduleTo(id, until)
     }
 
     suspend fun deleteReminder(id: Long) = withContext(Dispatchers.IO) { reminderDao.deleteById(id) }

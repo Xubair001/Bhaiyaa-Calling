@@ -27,7 +27,9 @@ import com.codeaza.bhaiyaaa.domain.usecase.GlobalSearch
 import com.codeaza.bhaiyaaa.domain.usecase.InsightsCalculator
 import com.codeaza.bhaiyaaa.domain.usecase.SearchResults
 import com.codeaza.bhaiyaaa.notifications.NotificationChannels
+import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.service.ReminderScheduler
+import com.codeaza.bhaiyaaa.util.Formatting
 import com.codeaza.bhaiyaaa.util.Permissions
 import com.codeaza.bhaiyaaa.util.SecurePrefs
 import kotlinx.coroutines.FlowPreview
@@ -96,6 +98,15 @@ class SukoonViewModel(application: Application) : AndroidViewModel(application) 
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val reminders: StateFlow<List<ReminderEntity>> = repository.reminders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Recently completed, so ticking something off is undoable.
+     *
+     * Active reminders are filtered to isDone = 0, so before this a mis-tapped
+     * checkbox made the row vanish with no way to bring it back.
+     */
+    val doneReminders: StateFlow<List<ReminderEntity>> = repository.doneReminders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val tags: StateFlow<List<TagEntity>> = repository.tags
@@ -325,12 +336,54 @@ class SukoonViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setReminderDone(id: Long, done: Boolean) = viewModelScope.launch {
         repository.setReminderDone(id, done)
-        if (done) ReminderScheduler.cancel(getApplication(), id)
+        if (done) {
+            ReminderScheduler.cancel(getApplication(), id)
+            // Ticking it off in the app should clear the alert it posted,
+            // otherwise the shade keeps nagging about something already handled.
+            Notifier.cancelReminder(getApplication(), id)
+        } else {
+            // Bringing one back has to re-arm it. The row reappearing is not
+            // the same as the alarm existing - cancel() destroyed that.
+            rearm(id)
+        }
+    }
+
+    fun editReminder(id: Long, text: String, dueAt: Long?) = viewModelScope.launch {
+        if (text.isBlank()) return@launch
+        repository.editReminder(id, text, dueAt)
+        ReminderScheduler.cancel(getApplication(), id)
+        Notifier.cancelReminder(getApplication(), id)
+        rearm(id)
+    }
+
+    /** Moves a reminder to [until] and re-arms it. Also un-completes it. */
+    fun snoozeReminder(id: Long, until: Long) = viewModelScope.launch {
+        repository.snoozeReminder(id, until)
+        ReminderScheduler.cancel(getApplication(), id)
+        Notifier.cancelReminder(getApplication(), id)
+        ReminderScheduler.schedule(getApplication(), id, until)
+        showMessage("Moved to ${Formatting.whenDue(until)}.")
     }
 
     fun deleteReminder(id: Long) = viewModelScope.launch {
         ReminderScheduler.cancel(getApplication(), id)
+        Notifier.cancelReminder(getApplication(), id)
         repository.deleteReminder(id)
+    }
+
+    /**
+     * Arms the alarm for a reminder if it is still owed one.
+     *
+     * A past due date is left unarmed on purpose: an alarm set in the past
+     * fires the instant it is scheduled, so re-opening an overdue reminder
+     * would buzz immediately. It shows under Overdue instead.
+     */
+    private suspend fun rearm(id: Long) {
+        val reminder = repository.findReminder(id) ?: return
+        val dueAt = reminder.dueAt ?: return
+        if (!reminder.isDone && dueAt > System.currentTimeMillis()) {
+            ReminderScheduler.schedule(getApplication(), id, dueAt)
+        }
     }
 
     // -------------------------------------------------------------- settings
