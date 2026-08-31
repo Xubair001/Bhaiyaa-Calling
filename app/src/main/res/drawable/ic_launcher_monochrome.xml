@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Themed-icon variant for Android 13+. Same shape; the system supplies the
+  colour, so the fill here is only a placeholder it will replace.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M23,55 A29,29 0 1,0 81,55 A29,29 0 1,0 23,55 Z
+                          M39,46 A25,25 0 1,0 89,46 A25,25 0 1,0 39,46 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M69,36 A5,5 0 1,0 79,36 A5,5 0 1,0 69,36 Z" />
+</vector>

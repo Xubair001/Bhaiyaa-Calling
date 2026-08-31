@@ -6,8 +6,8 @@
       Compose composes is already the right colour rather than a white flash.
     -->
     <color name="brand_violet">#6A3FBF</color>
-    <color name="splash_background">#121016</color>
+    <color name="splash_background">#1A1230</color>
     <color name="window_background_light">#FDF7FF</color>
     <color name="window_background_dark">#121016</color>
-    <color name="ic_launcher_background">#121016</color>
+    <color name="ic_launcher_background">#1A1230</color>
 </resources>

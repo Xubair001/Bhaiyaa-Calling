@@ -1,18 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sukoon's mark: a crescent with a single point of light.
+
+  The crescent says what the name says - night, stillness, quiet - rather than
+  enumerating features, and nods to the lunar calendar behind prayer times
+  without becoming a flag motif. The point of light is what separates it from
+  Android's own Do Not Disturb glyph, which is a bare crescent; a circle rather
+  than a five-pointed star, so it reads as a mark and not as a flag.
+
+  The crescent is one path of two subpaths with evenOdd fill, so the second
+  circle punches the shape out of the first. The dot is a SEPARATE path on
+  purpose: inside that same evenOdd path it would sit within the cutout circle,
+  giving it an even crossing count, and it would render as a hole rather than a
+  dot.
+
+  Everything sits inside x 23..79, y 26..84 of the 108 viewport, within the
+  66dp safe zone an adaptive launcher may crop to.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M35,30 L73,30 A8,8 0 0 1 81,38 L81,62 A8,8 0 0 1 73,70 L45,70 L38,80 L40,70 L35,70 A8,8 0 0 1 27,62 L27,38 A8,8 0 0 1 35,30 Z" />
+        android:fillColor="#E9DDFF"
+        android:fillType="evenOdd"
+        android:pathData="M23,55 A29,29 0 1,0 81,55 A29,29 0 1,0 23,55 Z
+                          M39,46 A25,25 0 1,0 89,46 A25,25 0 1,0 39,46 Z" />
     <path
-        android:fillColor="#0F6B4F"
-        android:pathData="M42,48 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
-    <path
-        android:fillColor="#0F6B4F"
-        android:pathData="M66,48 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
-    <path
-        android:fillColor="#0F6B4F"
-        android:pathData="M40,58 Q54,66 68,58 L68,61 Q54,70 40,61 Z" />
+        android:fillColor="#E9DDFF"
+        android:pathData="M69,36 A5,5 0 1,0 79,36 A5,5 0 1,0 69,36 Z" />
 </vector>

@@ -1,9 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Deep violet, lifted slightly toward the top so the crescent sits in the
+  lighter part of the field rather than on flat colour.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#0F6B4F"
-        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+    <path android:pathData="M0,0 L108,0 L108,108 L0,108 Z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:startX="54" android:startY="0"
+                android:endX="54" android:endY="108"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#3B2A6B" />
+                <item android:offset="1.0" android:color="#1A1230" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>
