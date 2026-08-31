@@ -105,23 +105,6 @@ enum class PrayerMadhab(val storageValue: String, val label: String) {
     }
 }
 
-/** One prayer resolved to an actual instant today, with its silence window. */
-data class PrayerWindow(
-    val prayer: Prayer,
-    /** The prayer itself. Shown to the user - it is what they recognise. */
-    val prayerTimeMillis: Long,
-    /** When the phone goes quiet, which is usually a few minutes earlier. */
-    val startMillis: Long,
-    val silenceMinutes: Int,
-    val enabled: Boolean,
-    /** True when the time came from a manual override rather than the calculation. */
-    val isOverridden: Boolean
-) {
-    val endMillis: Long get() = startMillis + silenceMinutes * 60_000L
-
-    fun containsNow(now: Long): Boolean = enabled && now >= startMillis && now < endMillis
-}
-
 /** Everything the prayer feature needs, in one snapshot. */
 data class PrayerSettings(
     val enabled: Boolean = false,
@@ -132,10 +115,23 @@ data class PrayerSettings(
     val longitude: Double? = null,
     val locationLabel: String = "",
     val silenceMode: PrayerSilenceMode = PrayerSilenceMode.SILENT,
+    /**
+     * Null means "follow the device".
+     *
+     * Worth overriding when travelling: the phone may pick up the local zone
+     * while the user still keeps the times of home, or the reverse. Everything
+     * derives local midnight from this, so prayers and custom schedules agree.
+     */
+    val timeZoneId: String? = null,
 ) {
     /** Automatic mode is only usable once we know where the user is. */
     val hasLocation: Boolean get() = latitude != null && longitude != null
 
     val isUsable: Boolean
         get() = enabled && (mode == PrayerMode.MANUAL || hasLocation)
+
+    /** The zone every time in the app is resolved against. */
+    val zone: java.util.TimeZone
+        get() = timeZoneId?.let { java.util.TimeZone.getTimeZone(it) }
+            ?: java.util.TimeZone.getDefault()
 }

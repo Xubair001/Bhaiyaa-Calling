@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.db.entity.NotificationRuleEntity
 import com.codeaza.bhaiyaaa.data.db.entity.PrayerEntity
+import com.codeaza.bhaiyaaa.data.db.entity.SilenceScheduleEntity
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.domain.model.Prayer
 import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
@@ -17,11 +18,13 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
 import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
-import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
+import com.codeaza.bhaiyaaa.domain.model.Weekdays
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
 import com.codeaza.bhaiyaaa.prayer.SilenceController
 import com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator
+import com.codeaza.bhaiyaaa.prayer.SilencePlan
 import com.codeaza.bhaiyaaa.util.Permissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,9 +58,13 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
     val rules = db.notificationRuleDao().observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** User-defined quiet periods. Independent of the prayer feature. */
+    val schedules: StateFlow<List<SilenceScheduleEntity>> = db.silenceScheduleDao().observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     /** Today's resolved windows, recomputed whenever anything they depend on changes. */
-    private val _todayWindows = MutableStateFlow<List<PrayerWindow>>(emptyList())
-    val todayWindows: StateFlow<List<PrayerWindow>> = _todayWindows.asStateFlow()
+    private val _todayWindows = MutableStateFlow<List<SilenceWindow>>(emptyList())
+    val todayWindows: StateFlow<List<SilenceWindow>> = _todayWindows.asStateFlow()
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
@@ -74,8 +81,12 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
     private suspend fun recompute() {
         val prayerSettings = settingsRepo.settings.first().prayer
         val rows = db.prayerDao().allOnce()
-        _todayWindows.value = PrayerTimeCalculator.windowsForDay(
-            prayerSettings, rows, System.currentTimeMillis(), TimeZone.getDefault()
+        _todayWindows.value = SilencePlan.windowsForDay(
+            settings = prayerSettings,
+            prayers = rows,
+            schedules = db.silenceScheduleDao().allOnce(),
+            dayStartMillis = System.currentTimeMillis(),
+            zone = prayerSettings.zone
         )
     }
 
@@ -230,6 +241,61 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
             PrayerSilenceMode.VIBRATE -> "Vibrate only for one minute — try calling yourself."
             PrayerSilenceMode.SILENT -> "Silenced for one minute — try calling yourself."
         }
+    }
+
+    // ----------------------------------------------------- custom schedules
+
+    fun saveSchedule(
+        id: Long?,
+        label: String,
+        startMinutes: Int,
+        durationMinutes: Int,
+        daysMask: Int,
+        mode: PrayerSilenceMode,
+        enabled: Boolean = true
+    ) = update {
+        val cleanLabel = label.trim().ifBlank { "Quiet time" }
+        val entity = SilenceScheduleEntity(
+            id = id ?: 0,
+            label = cleanLabel,
+            startMinutesFromMidnight = startMinutes.coerceIn(0, 1439),
+            durationMinutes = durationMinutes.coerceIn(1, 720),
+            // A schedule with no days would never run and would look broken;
+            // fall back to every day rather than silently saving a dead row.
+            daysMask = daysMask.takeIf { it and Weekdays.EVERY_DAY != 0 } ?: Weekdays.EVERY_DAY,
+            enabled = enabled,
+            silenceMode = mode.storageValue,
+            createdAt = System.currentTimeMillis()
+        )
+        if (id == null) db.silenceScheduleDao().insert(entity)
+        else db.silenceScheduleDao().upsert(entity)
+        _message.value = if (id == null) "\"$cleanLabel\" added." else "\"$cleanLabel\" updated."
+    }
+
+    fun setScheduleEnabled(id: Long, enabled: Boolean) = update {
+        db.silenceScheduleDao().setEnabled(id, enabled)
+    }
+
+    fun deleteSchedule(id: Long) = update {
+        db.silenceScheduleDao().deleteById(id)
+        _message.value = "Schedule deleted."
+    }
+
+    // ------------------------------------------------------------ time zone
+
+    fun setTimeZone(id: String?) = update {
+        settingsRepo.setPrayerTimeZone(id)
+    }
+
+    /** A short, curated list plus whatever the device is on, rather than all 600. */
+    fun timeZoneOptions(): List<String> {
+        val device = java.util.TimeZone.getDefault().id
+        val common = listOf(
+            "Asia/Karachi", "Asia/Dubai", "Asia/Riyadh", "Asia/Kolkata", "Asia/Dhaka",
+            "Europe/London", "Europe/Istanbul", "America/New_York", "America/Chicago",
+            "America/Los_Angeles", "Australia/Sydney"
+        )
+        return (listOf(device) + common).distinct()
     }
 
     fun consumeMessage() {

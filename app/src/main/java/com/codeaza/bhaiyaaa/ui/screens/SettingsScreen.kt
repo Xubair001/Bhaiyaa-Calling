@@ -61,18 +61,8 @@ fun SettingsScreen(
         )
 
         SettingsLinkRow(
-            title = "Prayer silence",
-            subtitle = if (settings.prayer.enabled) {
-                if (settings.prayer.mode.name == "AUTOMATIC" && settings.prayer.hasLocation) {
-                    "On · ${settings.prayer.locationLabel}"
-                } else if (settings.prayer.mode.name == "AUTOMATIC") {
-                    "On · location not set"
-                } else {
-                    "On · your own times"
-                }
-            } else {
-                "Off"
-            },
+            title = "Quiet times",
+            subtitle = "Prayer silence and your own quiet periods",
             icon = Icons.Filled.Schedule,
             onClick = onOpenPrayer
         )

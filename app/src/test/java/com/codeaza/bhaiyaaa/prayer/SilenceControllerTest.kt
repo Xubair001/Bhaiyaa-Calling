@@ -57,7 +57,7 @@ class SilenceControllerTest {
     @Test
     fun `silence is not reported active before anything has started`() {
         assertThat(SilenceController.isSilenceActive(context)).isFalse()
-        assertThat(SilenceController.activePrayerName(context)).isNull()
+        assertThat(SilenceController.activeWindowLabel(context)).isNull()
     }
 
     @Test
@@ -66,7 +66,7 @@ class SilenceControllerTest {
         val entered = SilenceController.enterSilence(context, "FAJR", PrayerSilenceMode.SILENT)
         assertThat(entered).isTrue()
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
-        assertThat(SilenceController.activePrayerName(context)).isEqualTo("FAJR")
+        assertThat(SilenceController.activeWindowLabel(context)).isEqualTo("FAJR")
     }
 
     @Test
@@ -76,7 +76,7 @@ class SilenceControllerTest {
         SilenceController.exitSilence(context)
 
         assertThat(SilenceController.isSilenceActive(context)).isFalse()
-        assertThat(SilenceController.activePrayerName(context)).isNull()
+        assertThat(SilenceController.activeWindowLabel(context)).isNull()
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.util.Calendar
@@ -64,61 +65,65 @@ class PrayerTimeCalculatorTest {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(), day, zone)
 
         assertThat(windows).hasSize(5)
-        assertThat(windows.map { it.prayer })
-            .containsExactly(Prayer.FAJR, Prayer.DHUHR, Prayer.ASR, Prayer.MAGHRIB, Prayer.ISHA)
-            .inOrder()
+        assertThat(windows.map { it.key }).containsExactly(
+            SilenceWindow.prayerKey(Prayer.FAJR),
+            SilenceWindow.prayerKey(Prayer.DHUHR),
+            SilenceWindow.prayerKey(Prayer.ASR),
+            SilenceWindow.prayerKey(Prayer.MAGHRIB),
+            SilenceWindow.prayerKey(Prayer.ISHA)
+        ).inOrder()
         assertThat(windows.map { it.startMillis }).isInOrder()
     }
 
     @Test
     fun `calculated times land in plausible parts of the day`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(), day, zone)
-            .associateBy { it.prayer }
+            .byPrayer()
 
         // Not exact values - just that the arithmetic and time zone agree.
-        assertThat(localHour(windows.getValue(Prayer.FAJR).prayerTimeMillis)).isIn(2..6)
-        assertThat(localHour(windows.getValue(Prayer.DHUHR).prayerTimeMillis)).isIn(11..14)
-        assertThat(localHour(windows.getValue(Prayer.ASR).prayerTimeMillis)).isIn(14..18)
-        assertThat(localHour(windows.getValue(Prayer.MAGHRIB).prayerTimeMillis)).isIn(17..20)
-        assertThat(localHour(windows.getValue(Prayer.ISHA).prayerTimeMillis)).isIn(18..23)
+        assertThat(localHour(windows.getValue(Prayer.FAJR).anchorMillis)).isIn(2..6)
+        assertThat(localHour(windows.getValue(Prayer.DHUHR).anchorMillis)).isIn(11..14)
+        assertThat(localHour(windows.getValue(Prayer.ASR).anchorMillis)).isIn(14..18)
+        assertThat(localHour(windows.getValue(Prayer.MAGHRIB).anchorMillis)).isIn(17..20)
+        assertThat(localHour(windows.getValue(Prayer.ISHA).anchorMillis)).isIn(18..23)
     }
 
     @Test
     fun `madhab changes Asr and nothing else`() {
         val hanafi = PrayerTimeCalculator.windowsForDay(lahore, rows(), day, zone)
-            .associateBy { it.prayer }
+            .byPrayer()
         val shafi = PrayerTimeCalculator
             .windowsForDay(lahore.copy(madhab = PrayerMadhab.SHAFI), rows(), day, zone)
-            .associateBy { it.prayer }
+            .byPrayer()
 
         // Hanafi uses a longer shadow, so Asr is later.
-        assertThat(hanafi.getValue(Prayer.ASR).prayerTimeMillis)
-            .isGreaterThan(shafi.getValue(Prayer.ASR).prayerTimeMillis)
-        assertThat(hanafi.getValue(Prayer.FAJR).prayerTimeMillis)
-            .isEqualTo(shafi.getValue(Prayer.FAJR).prayerTimeMillis)
-        assertThat(hanafi.getValue(Prayer.MAGHRIB).prayerTimeMillis)
-            .isEqualTo(shafi.getValue(Prayer.MAGHRIB).prayerTimeMillis)
+        assertThat(hanafi.getValue(Prayer.ASR).anchorMillis)
+            .isGreaterThan(shafi.getValue(Prayer.ASR).anchorMillis)
+        assertThat(hanafi.getValue(Prayer.FAJR).anchorMillis)
+            .isEqualTo(shafi.getValue(Prayer.FAJR).anchorMillis)
+        assertThat(hanafi.getValue(Prayer.MAGHRIB).anchorMillis)
+            .isEqualTo(shafi.getValue(Prayer.MAGHRIB).anchorMillis)
     }
 
     @Test
     fun `a manual override beats the calculation for that prayer only`() {
         val calculated = PrayerTimeCalculator.windowsForDay(lahore, rows(), day, zone)
-            .associateBy { it.prayer }
+            .byPrayer()
 
         // Dhuhr forced to 12:30 local.
         val overridden = PrayerTimeCalculator.windowsForDay(
             lahore, rows(overrides = mapOf(Prayer.DHUHR to 12 * 60 + 30)), day, zone
-        ).associateBy { it.prayer }
+        ).byPrayer()
 
         val dhuhr = overridden.getValue(Prayer.DHUHR)
-        val cal = Calendar.getInstance(zone).apply { timeInMillis = dhuhr.prayerTimeMillis }
+        val cal = Calendar.getInstance(zone).apply { timeInMillis = dhuhr.anchorMillis }
         assertThat(cal.get(Calendar.HOUR_OF_DAY)).isEqualTo(12)
         assertThat(cal.get(Calendar.MINUTE)).isEqualTo(30)
         assertThat(dhuhr.isOverridden).isTrue()
 
         // Everything else is untouched and still marked as calculated.
-        assertThat(overridden.getValue(Prayer.FAJR).prayerTimeMillis)
-            .isEqualTo(calculated.getValue(Prayer.FAJR).prayerTimeMillis)
+        assertThat(overridden.getValue(Prayer.FAJR).anchorMillis)
+            .isEqualTo(calculated.getValue(Prayer.FAJR).anchorMillis)
         assertThat(overridden.getValue(Prayer.FAJR).isOverridden).isFalse()
     }
 
@@ -132,7 +137,9 @@ class PrayerTimeCalculatorTest {
         )
 
         // A prayer with no entered time is omitted, never guessed at.
-        assertThat(windows.map { it.prayer }).containsExactly(Prayer.FAJR, Prayer.ISHA).inOrder()
+        assertThat(windows.map { it.key }).containsExactly(
+            SilenceWindow.prayerKey(Prayer.FAJR), SilenceWindow.prayerKey(Prayer.ISHA)
+        ).inOrder()
         assertThat(windows.all { it.isOverridden }).isTrue()
     }
 
@@ -160,13 +167,13 @@ class PrayerTimeCalculatorTest {
     fun `an absurd silence duration is clamped rather than trusted`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(silence = 100_000), day, zone)
         // Three hours is the ceiling; a corrupt value must not silence the phone all day.
-        assertThat(windows.first().silenceMinutes).isEqualTo(180)
+        assertThat(windows.first().durationMinutes).isEqualTo(180)
     }
 
     @Test
     fun `activeWindow finds the window containing now and no other`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(silence = 20), day, zone)
-        val dhuhr = windows.first { it.prayer == Prayer.DHUHR }
+        val dhuhr = windows.first { it.key == SilenceWindow.prayerKey(Prayer.DHUHR) }
 
         assertThat(PrayerTimeCalculator.activeWindow(windows, dhuhr.startMillis)).isEqualTo(dhuhr)
         assertThat(PrayerTimeCalculator.activeWindow(windows, dhuhr.startMillis + 60_000)).isEqualTo(dhuhr)
@@ -186,7 +193,7 @@ class PrayerTimeCalculatorTest {
     @Test
     fun `nextWindow returns the soonest upcoming prayer`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(), day, zone)
-        val fajr = windows.first { it.prayer == Prayer.FAJR }
+        val fajr = windows.first { it.key == SilenceWindow.prayerKey(Prayer.FAJR) }
 
         val next = PrayerTimeCalculator.nextWindow(windows, fajr.startMillis - 1)
         assertThat(next).isEqualTo(fajr)
@@ -208,7 +215,7 @@ class PrayerTimeCalculatorTest {
     fun `the window opens before the prayer by the configured offset`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(offset = -3), day, zone)
         windows.forEach {
-            assertThat(it.startMillis).isEqualTo(it.prayerTimeMillis - 3 * 60_000L)
+            assertThat(it.startMillis).isEqualTo(it.anchorMillis - 3 * 60_000L)
         }
     }
 
@@ -220,21 +227,21 @@ class PrayerTimeCalculatorTest {
         windows.forEach {
             // Fifteen minutes total, from three before to twelve after.
             assertThat(it.endMillis - it.startMillis).isEqualTo(15 * 60_000L)
-            assertThat(it.endMillis).isEqualTo(it.prayerTimeMillis + 12 * 60_000L)
+            assertThat(it.endMillis).isEqualTo(it.anchorMillis + 12 * 60_000L)
         }
     }
 
     @Test
     fun `a zero offset starts the window exactly at the prayer`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(offset = 0), day, zone)
-        windows.forEach { assertThat(it.startMillis).isEqualTo(it.prayerTimeMillis) }
+        windows.forEach { assertThat(it.startMillis).isEqualTo(it.anchorMillis) }
     }
 
     @Test
     fun `an absurd offset is clamped`() {
         val windows = PrayerTimeCalculator.windowsForDay(lahore, rows(offset = -9999), day, zone)
         windows.forEach {
-            assertThat(it.startMillis).isEqualTo(it.prayerTimeMillis - 60 * 60_000L)
+            assertThat(it.startMillis).isEqualTo(it.anchorMillis - 60 * 60_000L)
         }
     }
 
@@ -254,3 +261,12 @@ class PrayerTimeCalculatorTest {
         assertThat(defaults.all { it.manualMinutesFromMidnight == null }).isTrue()
     }
 }
+
+/**
+ * Re-keys a window list by Prayer so assertions can index by the prayer they
+ * are about. Windows are keyed by an opaque string now that custom schedules
+ * share the type.
+ */
+private fun List<SilenceWindow>.byPrayer(): Map<Prayer, SilenceWindow> =
+    mapNotNull { w -> Prayer.entries.firstOrNull { SilenceWindow.prayerKey(it) == w.key }?.to(w) }
+        .toMap()

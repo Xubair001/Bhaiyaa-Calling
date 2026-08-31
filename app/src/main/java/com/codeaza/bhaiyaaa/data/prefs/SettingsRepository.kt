@@ -50,6 +50,7 @@ class SettingsRepository(private val context: Context) {
         val PRAYER_LNG = stringPreferencesKey("prayer_longitude")
         val PRAYER_LOCATION_LABEL = stringPreferencesKey("prayer_location_label")
         val PRAYER_SILENCE_MODE = stringPreferencesKey("prayer_silence_mode")
+        val PRAYER_TIME_ZONE = stringPreferencesKey("prayer_time_zone")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data
@@ -78,7 +79,8 @@ class SettingsRepository(private val context: Context) {
                     latitude = p[Keys.PRAYER_LAT]?.toDoubleOrNull(),
                     longitude = p[Keys.PRAYER_LNG]?.toDoubleOrNull(),
                     locationLabel = p[Keys.PRAYER_LOCATION_LABEL].orEmpty(),
-                    silenceMode = PrayerSilenceMode.from(p[Keys.PRAYER_SILENCE_MODE])
+                    silenceMode = PrayerSilenceMode.from(p[Keys.PRAYER_SILENCE_MODE]),
+                    timeZoneId = p[Keys.PRAYER_TIME_ZONE]?.takeIf { it.isNotBlank() }
                 )
             )
         }
@@ -100,6 +102,9 @@ class SettingsRepository(private val context: Context) {
     suspend fun setPrayerMadhab(madhab: PrayerMadhab) = put(Keys.PRAYER_MADHAB, madhab.storageValue)
     suspend fun setPrayerSilenceMode(mode: PrayerSilenceMode) =
         put(Keys.PRAYER_SILENCE_MODE, mode.storageValue)
+
+    /** Empty string clears the override and returns to the device's own zone. */
+    suspend fun setPrayerTimeZone(id: String?) = put(Keys.PRAYER_TIME_ZONE, id.orEmpty())
 
     suspend fun setPrayerLocation(latitude: Double, longitude: Double, label: String) {
         context.dataStore.edit {

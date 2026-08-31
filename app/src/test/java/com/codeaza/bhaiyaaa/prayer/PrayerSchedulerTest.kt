@@ -93,7 +93,7 @@ class PrayerSchedulerTest {
         // The start alarm is in the past and was never armed, so this only
         // passes if reschedule applies a running window itself.
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
-        assertThat(SilenceController.activePrayerName(context)).isEqualTo(Prayer.DHUHR.storageValue)
+        assertThat(SilenceController.activeWindowLabel(context)).isEqualTo(Prayer.DHUHR.label)
     }
 
     @Test
@@ -169,10 +169,10 @@ class PrayerSchedulerTest {
         configure(Prayer.ASR, atOffsetMinutes = -1, silence = 20, early = 3)
 
         PrayerScheduler.reschedule(context)
-        val firstPrayer = SilenceController.activePrayerName(context)
+        val firstPrayer = SilenceController.activeWindowLabel(context)
         PrayerScheduler.reschedule(context)
 
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
-        assertThat(SilenceController.activePrayerName(context)).isEqualTo(firstPrayer)
+        assertThat(SilenceController.activeWindowLabel(context)).isEqualTo(firstPrayer)
     }
 }

@@ -378,7 +378,7 @@ private fun titleFor(route: String?): String = when {
     route == Routes.SETTINGS_PERSONALITY -> "Personality"
     route == Routes.SETTINGS_SECURITY -> "Security"
     route == Routes.SETTINGS_DATA -> "Data"
-    route == Routes.SETTINGS_PRAYER -> "Prayer silence"
+    route == Routes.SETTINGS_PRAYER -> "Quiet times"
     route == Routes.SETTINGS_MODELS -> "AI models"
     route == Routes.SETTINGS_ABOUT -> "About"
     route == Routes.SETTINGS_LICENCES -> "Licences"

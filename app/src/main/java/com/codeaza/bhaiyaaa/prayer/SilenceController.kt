@@ -31,7 +31,7 @@ object SilenceController {
     private const val KEY_PREVIOUS_FILTER = "previous_filter"
     private const val KEY_PREVIOUS_RINGER = "previous_ringer"
     private const val KEY_ACTIVE = "silence_active"
-    private const val KEY_ACTIVE_PRAYER = "active_prayer"
+    private const val KEY_ACTIVE_LABEL = "active_prayer"
     private const val TAG = "SukoonSilence"
 
     private fun prefs(context: Context) =
@@ -46,8 +46,9 @@ object SilenceController {
     fun isSilenceActive(context: Context): Boolean =
         prefs(context).getBoolean(KEY_ACTIVE, false)
 
-    fun activePrayerName(context: Context): String? =
-        prefs(context).getString(KEY_ACTIVE_PRAYER, null)
+    /** The label of the window currently silencing, for the UI to name it. */
+    fun activeWindowLabel(context: Context): String? =
+        prefs(context).getString(KEY_ACTIVE_LABEL, null)
 
     /**
      * @param mode SILENT uses Do Not Disturb; VIBRATE uses the ringer.
@@ -62,7 +63,7 @@ object SilenceController {
      */
     fun enterSilence(
         context: Context,
-        prayerName: String,
+        windowLabel: String,
         mode: PrayerSilenceMode = PrayerSilenceMode.SILENT
     ): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
@@ -101,7 +102,7 @@ object SilenceController {
 
             prefs(context).edit()
                 .putBoolean(KEY_ACTIVE, true)
-                .putString(KEY_ACTIVE_PRAYER, prayerName)
+                .putString(KEY_ACTIVE_LABEL, windowLabel)
                 .apply()
             true
         }.getOrElse {
@@ -136,7 +137,7 @@ object SilenceController {
             }
             store.edit()
                 .putBoolean(KEY_ACTIVE, false)
-                .remove(KEY_ACTIVE_PRAYER)
+                .remove(KEY_ACTIVE_LABEL)
                 .apply()
             true
         }.getOrElse {

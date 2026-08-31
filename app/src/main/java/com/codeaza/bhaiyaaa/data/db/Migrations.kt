@@ -255,7 +255,34 @@ internal val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
-internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+/**
+ * v7 adds user-defined quiet periods, which are not tied to a prayer.
+ *
+ * Times are stored as minutes past local midnight with a weekday mask, not as
+ * instants: "quiet from 9pm on weeknights" describes the clock, and has to keep
+ * meaning that tomorrow, and after the user changes time zone.
+ */
+internal val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS silence_schedules (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                label TEXT NOT NULL,
+                startMinutesFromMidnight INTEGER NOT NULL,
+                durationMinutes INTEGER NOT NULL,
+                daysMask INTEGER NOT NULL,
+                enabled INTEGER NOT NULL,
+                silenceMode TEXT NOT NULL,
+                createdAt INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+internal val ALL_MIGRATIONS: Array<Migration> =
+    arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 
 /**
  * Test seam. The migration is the one piece of this app that can destroy data

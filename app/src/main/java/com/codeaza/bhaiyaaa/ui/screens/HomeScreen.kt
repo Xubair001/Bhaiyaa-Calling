@@ -41,9 +41,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.ai.ResourcePhrasebook
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
-import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator
+import com.codeaza.bhaiyaaa.prayer.SilencePlan
 import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
 import com.codeaza.bhaiyaaa.ui.theme.CardShape
 import com.codeaza.bhaiyaaa.ui.SukoonViewModel
@@ -387,12 +387,12 @@ fun HomeScreen(
 private fun PrayerCard(
     enabled: Boolean,
     needsLocation: Boolean,
-    windows: List<PrayerWindow>,
+    windows: List<SilenceWindow>,
     onOpen: () -> Unit
 ) {
     val now = System.currentTimeMillis()
-    val active = remember(windows, now) { PrayerTimeCalculator.activeWindow(windows, now) }
-    val next = remember(windows, now) { PrayerTimeCalculator.nextWindow(windows, now) }
+    val active = remember(windows, now) { SilencePlan.activeWindow(windows, now) }
+    val next = remember(windows, now) { SilencePlan.nextWindow(windows, now) }
 
     Card(
         Modifier
@@ -422,14 +422,14 @@ private fun PrayerCard(
             Column(Modifier.weight(1f)) {
                 Text(
                     text = when {
-                        active != null -> "${active.prayer.label} — phone is quiet"
+                        active != null -> "${active.label} — phone is quiet"
                         !enabled -> "Namaz ka waqt, phone khamosh"
                         needsLocation -> "Prayer silence needs your location"
                         // No windows at all means nothing is configured yet.
                         // Saying "none left today" there reads as if it had run
                         // and finished, when in fact it has never run.
                         windows.isEmpty() -> "Prayer times aren't set yet"
-                        next != null -> "Next: ${next.prayer.label} at ${Formatting.time(next.prayerTimeMillis)}"
+                        next != null -> "Next: ${next.label} at ${Formatting.time(next.anchorMillis)}"
                         else -> "Prayer silence is on"
                     },
                     style = MaterialTheme.typography.titleMedium,

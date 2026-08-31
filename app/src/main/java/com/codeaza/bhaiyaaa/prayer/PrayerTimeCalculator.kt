@@ -11,7 +11,8 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
-import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
+import com.codeaza.bhaiyaaa.domain.model.SilenceSource
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import java.util.Calendar
 import java.util.TimeZone
 
@@ -42,7 +43,7 @@ object PrayerTimeCalculator {
         prayers: List<PrayerEntity>,
         dayStartMillis: Long,
         zone: TimeZone = TimeZone.getDefault()
-    ): List<PrayerWindow> {
+    ): List<SilenceWindow> {
         if (!settings.isUsable) return emptyList()
 
         val calculated = calculatedTimes(settings, dayStartMillis, zone)
@@ -64,12 +65,15 @@ object PrayerTimeCalculator {
                 // 15-minute window opening 3 minutes early runs from T-3 to
                 // T+12, so "silent for 15 minutes" stays literally true.
                 val offset = entity.startOffsetMinutes.coerceIn(-60, 60)
-                PrayerWindow(
-                    prayer = prayer,
-                    prayerTimeMillis = start,
+                SilenceWindow(
+                    key = SilenceWindow.prayerKey(prayer),
+                    label = prayer.label,
+                    source = SilenceSource.PRAYER,
+                    anchorMillis = start,
                     startMillis = start + offset * 60_000L,
-                    silenceMinutes = entity.silenceMinutes.coerceIn(1, 180),
+                    durationMinutes = entity.silenceMinutes.coerceIn(1, 180),
                     enabled = entity.enabled,
+                    mode = settings.silenceMode,
                     isOverridden = override != null
                 )
             }
@@ -77,11 +81,11 @@ object PrayerTimeCalculator {
     }
 
     /** The window covering [now], if any. Used to decide whether to alert on a call. */
-    fun activeWindow(windows: List<PrayerWindow>, now: Long): PrayerWindow? =
+    fun activeWindow(windows: List<SilenceWindow>, now: Long): SilenceWindow? =
         windows.firstOrNull { it.containsNow(now) }
 
     /** The next window that starts after [now], for scheduling and for the UI. */
-    fun nextWindow(windows: List<PrayerWindow>, now: Long): PrayerWindow? =
+    fun nextWindow(windows: List<SilenceWindow>, now: Long): SilenceWindow? =
         windows.filter { it.enabled && it.startMillis > now }.minByOrNull { it.startMillis }
 
     private fun calculatedTimes(

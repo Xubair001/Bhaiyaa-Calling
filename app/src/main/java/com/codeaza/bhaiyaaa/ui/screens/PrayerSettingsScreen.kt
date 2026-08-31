@@ -50,11 +50,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.codeaza.bhaiyaaa.data.db.entity.SilenceScheduleEntity
 import com.codeaza.bhaiyaaa.domain.model.Prayer
+import com.codeaza.bhaiyaaa.domain.model.Weekdays
 import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
 import com.codeaza.bhaiyaaa.prayer.SilenceController
@@ -100,9 +103,17 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
 
     var editing by remember { mutableStateOf<Prayer?>(null) }
     var showCoordinates by remember { mutableStateOf(false) }
+    var editingSchedule by remember { mutableStateOf<SilenceScheduleEntity?>(null) }
+    var creatingSchedule by remember { mutableStateOf(false) }
+    var showTimeZones by remember { mutableStateOf(false) }
+    val schedules by viewModel.schedules.collectAsStateWithLifecycle()
 
     val byName = remember(prayers) { prayers.associateBy { it.name } }
-    val windowByPrayer = remember(windows) { windows.associateBy { it.prayer } }
+    // Keyed by the window's stable key, since the list now also holds
+    // custom schedules that have no Prayer at all.
+    val windowByPrayer = remember(windows) {
+        windows.associateBy { it.key }
+    }
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -313,7 +324,7 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                     }
                     Prayer.entries.forEach { prayer ->
                         val row = byName[prayer.storageValue]
-                        val window = windowByPrayer[prayer]
+                        val window = windowByPrayer[SilenceWindow.prayerKey(prayer)]
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -328,7 +339,7 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                                 Text(
                                     buildString {
                                         if (window != null) {
-                                            append(Formatting.time(window.prayerTimeMillis))
+                                            append(Formatting.time(window.anchorMillis))
                                             if (window.isOverridden) append(" · your time")
                                             append("\nQuiet ")
                                             append(Formatting.time(window.startMillis))
@@ -395,6 +406,112 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                 )
             }
         }
+
+        item {
+            SectionCard(
+                title = "Your own quiet times",
+                action = { TextButton(onClick = { creatingSchedule = true }) { Text("Add") } }
+            ) {
+                if (schedules.isEmpty()) {
+                    Text(
+                        "Set a quiet period for anything — a meeting, a class, sleep. These " +
+                            "work whether or not prayer silence is on.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = { creatingSchedule = true }) { Text("Add a quiet time") }
+                } else {
+                    schedules.forEach { schedule ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { editingSchedule = schedule }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(schedule.label, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    buildString {
+                                        append(formatClock(schedule.startMinutesFromMidnight))
+                                        append(" · ${schedule.durationMinutes} min")
+                                        append(" · ${Weekdays.describe(schedule.daysMask)}")
+                                        append(
+                                            " · ${PrayerSilenceMode.from(schedule.silenceMode).label}"
+                                        )
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = schedule.enabled,
+                                onCheckedChange = {
+                                    viewModel.setScheduleEnabled(schedule.id, it)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            SectionCard(title = "Time zone") {
+                Text(
+                    settings.timeZoneId ?: "Following this phone (${java.util.TimeZone.getDefault().id})",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Every prayer time and quiet period is worked out against this. Worth " +
+                        "setting if you travel and want to keep the times of home.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { showTimeZones = true }) { Text("Change") }
+                    if (settings.timeZoneId != null) {
+                        TextButton(onClick = { viewModel.setTimeZone(null) }) {
+                            Text("Follow phone")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (creatingSchedule || editingSchedule != null) {
+        ScheduleEditorDialog(
+            existing = editingSchedule,
+            onDismiss = { creatingSchedule = false; editingSchedule = null },
+            onSave = { draft ->
+                viewModel.saveSchedule(
+                    id = draft.id,
+                    label = draft.label,
+                    startMinutes = draft.startMinutes,
+                    durationMinutes = draft.durationMinutes,
+                    daysMask = draft.daysMask,
+                    mode = draft.mode
+                )
+                creatingSchedule = false; editingSchedule = null
+            },
+            onDelete = { id ->
+                viewModel.deleteSchedule(id)
+                creatingSchedule = false; editingSchedule = null
+            }
+        )
+    }
+
+    if (showTimeZones) {
+        TimeZoneDialog(
+            options = viewModel.timeZoneOptions(),
+            selected = settings.timeZoneId,
+            onDismiss = { showTimeZones = false },
+            onPick = { id -> viewModel.setTimeZone(id); showTimeZones = false }
+        )
     }
 
     editing?.let { prayer ->
@@ -408,9 +525,9 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
             currentSilence = row?.silenceMinutes ?: 15,
             currentOffset = row?.startOffsetMinutes ?: -3,
             canClearOverride = settings.mode == PrayerMode.AUTOMATIC,
-            calculatedTime = windowByPrayer[prayer]
+            calculatedTime = windowByPrayer[SilenceWindow.prayerKey(prayer)]
                 ?.takeIf { !it.isOverridden }
-                ?.let { Formatting.time(it.prayerTimeMillis) },
+                ?.let { Formatting.time(it.anchorMillis) },
             onDismiss = { editing = null },
             onSave = { minutes, silence, offset ->
                 viewModel.setManualTime(prayer, minutes)
@@ -557,5 +674,68 @@ private fun CoordinatesDialog(
             ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+/** Minutes past midnight as a 12-hour clock time. */
+private fun formatClock(minutesFromMidnight: Int): String {
+    val hour24 = (minutesFromMidnight / 60).coerceIn(0, 23)
+    val minute = minutesFromMidnight % 60
+    val suffix = if (hour24 < 12) "AM" else "PM"
+    val hour12 = when {
+        hour24 == 0 -> 12
+        hour24 > 12 -> hour24 - 12
+        else -> hour24
+    }
+    return "%d:%02d %s".format(hour12, minute, suffix)
+}
+
+/**
+ * Time-zone picker.
+ *
+ * A short curated list plus whatever the phone is on, rather than all six
+ * hundred IANA zones - a searchable list of every zone is a worse experience
+ * than eleven that cover almost everyone who will use this.
+ */
+@Composable
+private fun TimeZoneDialog(
+    options: List<String>,
+    selected: String?,
+    onDismiss: () -> Unit,
+    onPick: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Time zone") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                options.forEach { id ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = selected == id,
+                                role = Role.RadioButton,
+                                onClick = { onPick(id) }
+                            )
+                            .padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = selected == id, onClick = null)
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(id.substringAfter('/').replace('_', ' '),
+                                style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                id,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } }
     )
 }

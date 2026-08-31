@@ -8,6 +8,7 @@ import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
 import com.codeaza.bhaiyaaa.domain.model.PrayerMethod
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerSettings
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -81,9 +82,9 @@ class PrayerEditPersistenceTest {
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
         )
-        val dhuhr = windows.first { it.prayer == Prayer.DHUHR }
+        val dhuhr = windows.first { it.key == SilenceWindow.prayerKey(Prayer.DHUHR) }
 
-        assertThat(hourMinute(dhuhr.prayerTimeMillis)).isEqualTo(12 to 30)
+        assertThat(hourMinute(dhuhr.anchorMillis)).isEqualTo(12 to 30)
         assertThat(dhuhr.isOverridden).isTrue()
     }
 
@@ -100,10 +101,10 @@ class PrayerEditPersistenceTest {
 
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic.copy(mode = PrayerMode.MANUAL), db.prayerDao().allOnce(), day, zone
-        ).associateBy { it.prayer }
+        ).byPrayer()
 
         wanted.forEach { (p, m) ->
-            assertThat(hourMinute(windows.getValue(p).prayerTimeMillis))
+            assertThat(hourMinute(windows.getValue(p).anchorMillis))
                 .isEqualTo((m / 60) to (m % 60))
         }
     }
@@ -116,7 +117,7 @@ class PrayerEditPersistenceTest {
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
         )
-        assertThat(hourMinute(windows.first { it.prayer == Prayer.ASR }.prayerTimeMillis))
+        assertThat(hourMinute(windows.first { it.key == SilenceWindow.prayerKey(Prayer.ASR) }.anchorMillis))
             .isEqualTo(17 to 5)
     }
 
@@ -124,15 +125,15 @@ class PrayerEditPersistenceTest {
     fun `clearing an override returns that prayer to the calculation`() = runTest {
         val calculated = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
-        ).first { it.prayer == Prayer.MAGHRIB }.prayerTimeMillis
+        ).first { it.key == SilenceWindow.prayerKey(Prayer.MAGHRIB) }.anchorMillis
 
         db.prayerDao().setManualTime(Prayer.MAGHRIB.storageValue, 19 * 60)
         db.prayerDao().setManualTime(Prayer.MAGHRIB.storageValue, null)
 
         val after = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
-        ).first { it.prayer == Prayer.MAGHRIB }
-        assertThat(after.prayerTimeMillis).isEqualTo(calculated)
+        ).first { it.key == SilenceWindow.prayerKey(Prayer.MAGHRIB) }
+        assertThat(after.anchorMillis).isEqualTo(calculated)
         assertThat(after.isOverridden).isFalse()
     }
 
@@ -145,9 +146,9 @@ class PrayerEditPersistenceTest {
 
         val isha = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
-        ).first { it.prayer == Prayer.ISHA }
+        ).first { it.key == SilenceWindow.prayerKey(Prayer.ISHA) }
 
-        assertThat(hourMinute(isha.prayerTimeMillis)).isEqualTo(20 to 0)
+        assertThat(hourMinute(isha.anchorMillis)).isEqualTo(20 to 0)
         assertThat(hourMinute(isha.startMillis)).isEqualTo(19 to 50)
         assertThat(isha.endMillis - isha.startMillis).isEqualTo(30 * 60_000L)
     }
@@ -158,7 +159,7 @@ class PrayerEditPersistenceTest {
 
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
-        ).associateBy { it.prayer }
+        ).byPrayer()
 
         assertThat(windows.getValue(Prayer.FAJR).enabled).isFalse()
         assertThat(windows.getValue(Prayer.DHUHR).enabled).isTrue()
@@ -192,7 +193,7 @@ class PrayerEditPersistenceTest {
 
         val maghrib = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
-        ).first { it.prayer == Prayer.MAGHRIB }
+        ).first { it.key == SilenceWindow.prayerKey(Prayer.MAGHRIB) }
         assertThat(maghrib.isOverridden).isFalse()
     }
 
@@ -206,8 +207,17 @@ class PrayerEditPersistenceTest {
 
         val fajr = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
-        ).first { it.prayer == Prayer.FAJR }
+        ).first { it.key == SilenceWindow.prayerKey(Prayer.FAJR) }
         assertThat(fajr.isOverridden).isTrue()
-        assertThat(hourMinute(fajr.prayerTimeMillis)).isEqualTo(0 to 0)
+        assertThat(hourMinute(fajr.anchorMillis)).isEqualTo(0 to 0)
     }
 }
+
+/**
+ * Re-keys a window list by Prayer so assertions can index by the prayer they
+ * are about. Windows are keyed by an opaque string now that custom schedules
+ * share the type.
+ */
+private fun List<SilenceWindow>.byPrayer(): Map<Prayer, SilenceWindow> =
+    mapNotNull { w -> Prayer.entries.firstOrNull { SilenceWindow.prayerKey(it) == w.key }?.to(w) }
+        .toMap()

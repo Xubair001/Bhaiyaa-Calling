@@ -3,9 +3,8 @@ package com.codeaza.bhaiyaaa.prayer
 import android.content.Context
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
-import com.codeaza.bhaiyaaa.domain.model.PrayerWindow
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import kotlinx.coroutines.flow.first
-import java.util.TimeZone
 
 /** Answers "is a prayer window running right now" for the incoming-call path. */
 object PrayerSilence {
@@ -27,14 +26,18 @@ object PrayerSilence {
     suspend fun currentWindow(
         context: Context,
         now: Long = System.currentTimeMillis()
-    ): PrayerWindow? {
+    ): SilenceWindow? {
         val settings = SettingsRepository(context).settings.first().prayer
-        if (!settings.isUsable) return null
-        val prayers = AppDatabase.getInstance(context).prayerDao().allOnce()
-        if (prayers.isEmpty()) return null
-        val windows = PrayerTimeCalculator.windowsForDay(
-            settings, prayers, now, TimeZone.getDefault()
+        val db = AppDatabase.getInstance(context)
+        // Custom schedules run whether or not the prayer feature is on, so this
+        // cannot short-circuit on settings.isUsable the way it used to.
+        val windows = SilencePlan.windowsForDay(
+            settings = settings,
+            prayers = db.prayerDao().allOnce(),
+            schedules = db.silenceScheduleDao().allOnce(),
+            dayStartMillis = now,
+            zone = settings.zone
         )
-        return PrayerTimeCalculator.activeWindow(windows, now)
+        return SilencePlan.activeWindow(windows, now)
     }
 }
