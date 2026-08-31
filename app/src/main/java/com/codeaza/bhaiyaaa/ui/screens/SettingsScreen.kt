@@ -46,57 +46,59 @@ fun SettingsScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        SettingsSectionHeader("Alerts")
+        SettingsSectionHeader("When someone calls")
         SettingsLinkRow(
-            title = "Notifications",
-            subtitle = if (settings.notificationsEnabled) "On" else "Off",
+            title = "Alerts & sounds",
+            subtitle = if (settings.notificationsEnabled)
+                "VIP alerts are on" else "VIP alerts are off",
             icon = Icons.Filled.Notifications,
             onClick = onOpenNotifications
         )
         SettingsLinkRow(
-            title = "VIP alerts",
-            subtitle = "Vibration, flashlight and sound per tier",
+            title = "How VIPs reach you",
+            subtitle = "Vibration, flashlight and sound for each tier",
             icon = Icons.Filled.Star,
             onClick = onOpenVipAlerts
         )
 
         SettingsLinkRow(
             title = "Quiet times",
-            subtitle = "Prayer silence and your own quiet periods",
+            subtitle = "Your own quiet periods, and prayer silence",
             icon = Icons.Filled.Schedule,
             onClick = onOpenPrayer
         )
 
-        SettingsSectionHeader("Experience")
+        SettingsSectionHeader("Look and feel")
         SettingsLinkRow(
             title = "Appearance",
-            subtitle = settings.themeMode.label,
+            subtitle = "Theme and colours — ${settings.themeMode.label}",
             icon = Icons.Filled.Palette,
             onClick = onOpenAppearance
         )
         SettingsLinkRow(
-            title = "Assistant personality",
-            subtitle = settings.personality.label,
+            title = "How Sukoon talks",
+            subtitle = "Tone of replies — ${settings.personality.label}",
             icon = Icons.AutoMirrored.Filled.Chat,
             onClick = onOpenPersonality
         )
         SettingsLinkRow(
-            title = "AI models",
-            subtitle = "Install optional offline speech models",
+            title = "Offline voice",
+            subtitle = "Speak to the assistant with no internet",
             icon = Icons.Filled.Memory,
             onClick = onOpenModels
         )
 
-        SettingsSectionHeader("Privacy & data")
+        SettingsSectionHeader("Your data")
         SettingsLinkRow(
-            title = "Security",
-            subtitle = if (SecurePrefs.isLockEnabled(context)) "Privacy lock on" else "Privacy lock off",
+            title = "App lock",
+            subtitle = if (SecurePrefs.isLockEnabled(context))
+                "PIN required to open Sukoon" else "Anyone can open Sukoon",
             icon = Icons.Filled.Lock,
             onClick = onOpenSecurity
         )
         SettingsLinkRow(
-            title = "Data",
-            subtitle = "Export, import, delete",
+            title = "Backup & delete",
+            subtitle = "Save a copy of your data, or erase it",
             icon = Icons.Filled.Storage,
             onClick = onOpenData
         )

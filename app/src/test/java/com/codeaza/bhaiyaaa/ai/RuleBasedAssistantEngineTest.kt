@@ -6,6 +6,9 @@ import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.projection.ContactCallCount
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
+import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
+import com.codeaza.bhaiyaaa.domain.model.SilenceSource
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import com.google.common.truth.Truth.assertThat
@@ -83,6 +86,11 @@ class RuleBasedAssistantEngineTest {
 
         override suspend fun callsForMatchKey(matchKey: String, limit: Int) =
             calls.filter { it.matchKey == matchKey }.sortedByDescending { it.timestamp }.take(limit)
+
+        var active: SilenceWindow? = null
+        var next: SilenceWindow? = null
+        override suspend fun activeQuietWindow() = active
+        override suspend fun nextQuietWindow() = next
     }
 
     private fun engine(data: AssistantDataSource, mode: PersonalityMode = PersonalityMode.FRIENDLY) =
@@ -213,6 +221,69 @@ class RuleBasedAssistantEngineTest {
         assertThat(pro.text).contains("1 missed call")
         assertThat(bhai.text).contains("bhai")
         assertThat(pro.text).doesNotContain("bhai")
+    }
+
+    @Test
+    fun `silence for a duration is understood and asked for, not performed`() = runTest {
+        val response = engine(FakeData()).respond("silence my phone for 20 minutes")
+
+        assertThat(response.intent).isEqualTo(AssistantIntent.SilenceFor(20))
+        val action = response.action
+        assertThat(action).isInstanceOf(AssistantAction.SilenceRequested::class.java)
+        // The engine stays pure: it decides, the caller touches the ringer.
+        assertThat((action as AssistantAction.SilenceRequested).minutes).isEqualTo(20)
+    }
+
+    @Test
+    fun `hours are converted to minutes`() = runTest {
+        val response = engine(FakeData()).respond("mute for 2 hours")
+        assertThat(response.intent).isEqualTo(AssistantIntent.SilenceFor(120))
+    }
+
+    @Test
+    fun `a bare silence request gets a sensible default`() = runTest {
+        val response = engine(FakeData()).respond("silence my phone")
+        assertThat(response.intent).isEqualTo(AssistantIntent.SilenceFor(30))
+    }
+
+    @Test
+    fun `it reports a quiet window already running`() = runTest {
+        val data = FakeData()
+        data.active = SilenceWindow(
+            key = "prayer:ASR", label = "Asr", source = SilenceSource.PRAYER,
+            anchorMillis = now, startMillis = now - 60_000, durationMinutes = 15,
+            enabled = true, mode = PrayerSilenceMode.SILENT
+        )
+        val response = engine(data).respond("when is the next prayer")
+        assertThat(response.text).contains("Asr")
+        assertThat(response.text).contains("quiet until")
+    }
+
+    @Test
+    fun `it reports the next quiet window when none is running`() = runTest {
+        val data = FakeData()
+        data.next = SilenceWindow(
+            key = "prayer:MAGHRIB", label = "Maghrib", source = SilenceSource.PRAYER,
+            anchorMillis = now + 3_600_000, startMillis = now + 3_420_000,
+            durationMinutes = 15, enabled = true, mode = PrayerSilenceMode.SILENT
+        )
+        val response = engine(data).respond("when is the next prayer")
+        assertThat(response.text).contains("Maghrib")
+    }
+
+    @Test
+    fun `with nothing scheduled it says so rather than inventing a time`() = runTest {
+        val response = engine(FakeData()).respond("when is the next prayer")
+        assertThat(response.text).contains("Nothing scheduled")
+    }
+
+    @Test
+    fun `a reminder mentioning an hour is not mistaken for a silence request`() = runTest {
+        val data = FakeData()
+        val response = engine(data).respond("remind me to call Ali in 2 hours")
+        // "hours" appears in both phrasings; the reminder prefix has to win.
+        assertThat(response.intent).isInstanceOf(AssistantIntent.CreateReminder::class.java)
+        assertThat(data.createdReminders).hasSize(1)
     }
 
     @Test

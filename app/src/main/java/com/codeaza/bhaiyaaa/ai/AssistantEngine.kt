@@ -5,10 +5,20 @@ import com.codeaza.bhaiyaaa.data.db.entity.ContactEntity
 import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.projection.ContactCallCount
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 
 /** An action the assistant actually carried out, so the UI can reflect it. */
 sealed interface AssistantAction {
     data class ReminderCreated(val id: Long, val text: String, val dueAt: Long?) : AssistantAction
+
+    /**
+     * The engine decided the phone should go quiet, but did not do it.
+     *
+     * Silencing is a platform action, not a database one. Keeping it out of the
+     * engine is what lets the engine stay pure and unit-testable - the caller
+     * applies it, exactly as it does for a reminder's alarm.
+     */
+    data class SilenceRequested(val minutes: Int) : AssistantAction
 }
 
 /**
@@ -56,4 +66,10 @@ interface AssistantDataSource {
     suspend fun pendingReminders(): List<ReminderEntity>
     suspend fun createReminder(text: String, dueAt: Long?): Long
     suspend fun callsForMatchKey(matchKey: String, limit: Int): List<CallRecordEntity>
+
+    /** The window currently silencing the phone, if any. */
+    suspend fun activeQuietWindow(): SilenceWindow?
+
+    /** The next window due to start, prayer or custom. */
+    suspend fun nextQuietWindow(): SilenceWindow?
 }

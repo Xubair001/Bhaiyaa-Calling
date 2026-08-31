@@ -44,6 +44,8 @@ class RuleBasedAssistantEngine(
             is AssistantIntent.RecallMemory -> recallMemory(intent)
             is AssistantIntent.ContactLookup -> contactLookup(intent)
             is AssistantIntent.PendingReminders -> pendingReminders(intent)
+            is AssistantIntent.SilenceFor -> silenceFor(intent)
+            is AssistantIntent.NextQuietTime -> nextQuietTime(intent)
             is AssistantIntent.Help -> help(intent)
             is AssistantIntent.Unknown -> unknown(intent)
         }
@@ -257,6 +259,45 @@ class RuleBasedAssistantEngine(
         )
     }
 
+    private fun silenceFor(intent: AssistantIntent.SilenceFor): AssistantResponse {
+        val until = now() + intent.minutes * 60_000L
+        return AssistantResponse(
+            text = phrasebook.withAddress(
+                "Going quiet for ${Formatting.plural(intent.minutes, "minute")} — " +
+                    "back at ${Formatting.time(until)}"
+            ),
+            intent = intent,
+            action = AssistantAction.SilenceRequested(intent.minutes),
+            sources = listOf(AssistantSource("Quiet until", Formatting.time(until)))
+        )
+    }
+
+    private suspend fun nextQuietTime(intent: AssistantIntent): AssistantResponse {
+        data.activeQuietWindow()?.let { active ->
+            return AssistantResponse(
+                text = "${active.label} — your phone is quiet until " +
+                    Formatting.time(active.endMillis),
+                intent = intent,
+                sources = listOf(AssistantSource("Running now", active.label))
+            )
+        }
+        val next = data.nextQuietWindow()
+            ?: return AssistantResponse(
+                phrasebook.withAddress(
+                    "Nothing scheduled. Set prayer times or your own quiet period in Settings"
+                ),
+                intent
+            )
+        return AssistantResponse(
+            text = phrasebook.withAddress(
+                "${next.label} at ${Formatting.time(next.anchorMillis)} — quiet from " +
+                    "${Formatting.time(next.startMillis)} to ${Formatting.time(next.endMillis)}"
+            ),
+            intent = intent,
+            sources = listOf(AssistantSource("Next quiet time", next.label))
+        )
+    }
+
     private fun help(intent: AssistantIntent): AssistantResponse = AssistantResponse(
         text = "I read your own call log, contacts and saved notes. Try:\n" +
             "• Who called me?\n" +
@@ -265,14 +306,17 @@ class RuleBasedAssistantEngine(
             "• When did I last talk to Ahmed?\n" +
             "• Who called me most this week?\n" +
             "• Remind me to call Ali tomorrow at 5pm\n" +
-            "• What did Ahmed say about the deployment?",
+            "• What did Ahmed say about the deployment?\n" +
+            "• Silence my phone for 30 minutes\n" +
+            "• When is the next prayer?",
         intent = intent
     )
 
     private fun unknown(intent: AssistantIntent): AssistantResponse = AssistantResponse(
         text = phrasebook.withAddress(
-            "Didn't catch that one. Ask me about missed calls, VIPs, recent callers, " +
-                "how many calls today, or say \"remind me to…\""
+            "Didn't catch that one. Try: missed calls, VIPs, recent callers, calls today, " +
+                "\"silence my phone for 20 minutes\", \"when is the next prayer\", " +
+                "or \"remind me to…\""
         ),
         intent = intent
     )

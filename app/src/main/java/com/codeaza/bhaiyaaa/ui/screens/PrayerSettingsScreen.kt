@@ -121,6 +121,56 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
+            SectionCard(
+                title = "Your own quiet times",
+                action = { TextButton(onClick = { creatingSchedule = true }) { Text("Add") } }
+            ) {
+                if (schedules.isEmpty()) {
+                    Text(
+                        "Set a quiet period for anything — a meeting, a class, sleep. These " +
+                            "work whether or not prayer silence is on.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = { creatingSchedule = true }) { Text("Add a quiet time") }
+                } else {
+                    schedules.forEach { schedule ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { editingSchedule = schedule }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(schedule.label, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    buildString {
+                                        append(formatClock(schedule.startMinutesFromMidnight))
+                                        append(" · ${schedule.durationMinutes} min")
+                                        append(" · ${Weekdays.describe(schedule.daysMask)}")
+                                        append(
+                                            " · ${PrayerSilenceMode.from(schedule.silenceMode).label}"
+                                        )
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = schedule.enabled,
+                                onCheckedChange = {
+                                    viewModel.setScheduleEnabled(schedule.id, it)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
             SettingsSwitchRow(
                 title = "Silence during prayer",
                 subtitle = "Turns on Do Not Disturb for each prayer, then puts your phone " +
@@ -404,56 +454,6 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-        }
-
-        item {
-            SectionCard(
-                title = "Your own quiet times",
-                action = { TextButton(onClick = { creatingSchedule = true }) { Text("Add") } }
-            ) {
-                if (schedules.isEmpty()) {
-                    Text(
-                        "Set a quiet period for anything — a meeting, a class, sleep. These " +
-                            "work whether or not prayer silence is on.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = { creatingSchedule = true }) { Text("Add a quiet time") }
-                } else {
-                    schedules.forEach { schedule ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { editingSchedule = schedule }
-                                .padding(vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(schedule.label, style = MaterialTheme.typography.bodyLarge)
-                                Text(
-                                    buildString {
-                                        append(formatClock(schedule.startMinutesFromMidnight))
-                                        append(" · ${schedule.durationMinutes} min")
-                                        append(" · ${Weekdays.describe(schedule.daysMask)}")
-                                        append(
-                                            " · ${PrayerSilenceMode.from(schedule.silenceMode).label}"
-                                        )
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = schedule.enabled,
-                                onCheckedChange = {
-                                    viewModel.setScheduleEnabled(schedule.id, it)
-                                }
-                            )
-                        }
-                    }
-                }
             }
         }
 

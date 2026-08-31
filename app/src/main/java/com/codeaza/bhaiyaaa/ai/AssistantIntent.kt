@@ -24,6 +24,10 @@ sealed interface AssistantIntent {
     data class RecallMemory(val query: String) : AssistantIntent
     data class ContactLookup(val name: String) : AssistantIntent
     data object PendingReminders : AssistantIntent
+    /** "silence for 30 minutes", "quiet for an hour" - an ad-hoc quiet window. */
+    data class SilenceFor(val minutes: Int) : AssistantIntent
+    /** "when is the next prayer", "when does my phone go quiet". */
+    data object NextQuietTime : AssistantIntent
     data object Help : AssistantIntent
     data object Unknown : AssistantIntent
 }

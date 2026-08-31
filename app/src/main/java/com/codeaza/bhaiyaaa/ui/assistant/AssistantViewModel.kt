@@ -17,6 +17,8 @@ import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import com.codeaza.bhaiyaaa.data.repository.RoomAssistantDataSource
+import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
+import com.codeaza.bhaiyaaa.prayer.SilenceController
 import com.codeaza.bhaiyaaa.service.ReminderScheduler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -106,6 +108,27 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                 // The engine creates the reminder row; arming its alarm is a
                 // platform concern, so it happens here rather than inside the
                 // engine (which stays pure and unit-testable).
+                (response.action as? AssistantAction.SilenceRequested)?.let { request ->
+                    val applied = SilenceController.enterSilence(
+                        getApplication(),
+                        "Quiet time",
+                        settingsRepo.settings.first().prayer.silenceMode
+                    )
+                    if (applied) {
+                        PrayerScheduler.scheduleSilenceEnd(
+                            getApplication(),
+                            System.currentTimeMillis() + request.minutes * 60_000L
+                        )
+                    } else {
+                        _messages.value = _messages.value + ChatMessage(
+                            nextId++,
+                            "I couldn't change the ringer. Grant Do Not Disturb access in " +
+                                "Settings → Quiet times, or choose Vibrate only.",
+                            fromUser = false
+                        )
+                    }
+                }
+
                 (response.action as? AssistantAction.ReminderCreated)?.let { created ->
                     val dueAt = created.dueAt
                     if (dueAt != null && dueAt > System.currentTimeMillis()) {
@@ -127,7 +150,7 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
     private suspend fun engine(): RuleBasedAssistantEngine {
         val personality = settingsRepo.settings.first().personality
         return RuleBasedAssistantEngine(
-            data = RoomAssistantDataSource(db, repository),
+            data = RoomAssistantDataSource(getApplication(), db, repository),
             phrasebook = ResourcePhrasebook(getApplication(), personality)
         )
     }

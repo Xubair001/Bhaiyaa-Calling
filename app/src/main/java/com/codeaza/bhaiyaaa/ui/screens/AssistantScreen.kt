@@ -57,12 +57,19 @@ import com.codeaza.bhaiyaaa.ui.components.InfoBanner
 import com.codeaza.bhaiyaaa.util.Permissions
 import kotlinx.coroutines.launch
 
+/**
+ * Shown on an empty Assistant screen.
+ *
+ * Deliberately a mix of question and command: the first thing someone learns
+ * here should be that it can act, not only answer.
+ */
 private val SUGGESTIONS = listOf(
-    "Who called me?",
+    "Silence my phone for 30 minutes",
+    "When is the next prayer?",
     "Any missed calls today?",
-    "Show my VIP contacts",
     "Who called me most this week?",
-    "Remind me to call Ali tomorrow at 5pm"
+    "Remind me to call Ali tomorrow at 5pm",
+    "Show my VIP contacts"
 )
 
 /**

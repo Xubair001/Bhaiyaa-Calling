@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -50,37 +50,37 @@ fun ReliabilityCard(
         modifier = modifier.fillMaxWidth(),
         shape = CardShape,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        // Deliberately not the error colour. This card is an invitation to
+        // grant something, not a report that something broke - red primes
+        // people to dismiss rather than to act, and nothing here is wrong yet.
         colors = CardDefaults.cardColors(
-            containerColor = if (batteryOk) MaterialTheme.colorScheme.surfaceContainer
-            else MaterialTheme.colorScheme.errorContainer
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
         )
     ) {
         Column(Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    if (batteryOk) Icons.Filled.Check else Icons.Filled.PriorityHigh,
+                    if (batteryOk) Icons.Filled.Check else Icons.Outlined.Bolt,
                     contentDescription = null,
-                    tint = if (batteryOk) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onErrorContainer,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    "Working when the app is closed",
+                    if (batteryOk) "Ready to work in the background"
+                    else "Make alerts work when Sukoon is closed",
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (batteryOk) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
             }
             Spacer(Modifier.height(10.dp))
 
             if (!batteryOk) {
                 Text(
-                    "Android won't let Sukoon start its alert while it's in the background " +
-                        "unless battery optimisation is off for it. Alerts will be cut short " +
-                        "or missed entirely until this is allowed.",
+                    "Android needs one permission before Sukoon can alert you while it's " +
+                        "closed. Two taps, and it works from then on.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(onClick = {
@@ -99,8 +99,7 @@ fun ReliabilityCard(
                 Text(
                     BackgroundReliability.autostartInstruction(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (batteryOk) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(onClick = {

@@ -24,6 +24,21 @@ object IntentParser {
         "what was ", "remind me what "
     )
 
+    /**
+     * "silence for 30 minutes", "mute my phone for 2 hours", "quiet for 45 min".
+     *
+     * The gap allowance has to cover the words people actually put between the
+     * verb and the number - "my phone for " alone is fourteen characters.
+     */
+    private val SILENCE_FOR = Regex(
+        """\b(?:silence|silent|mute|quiet)\b[^0-9]{0,25}(\d{1,3})\s*(min|mins|minute|minutes|hour|hours|hr|hrs)\b"""
+    )
+
+    /** A bare "silence my phone", with no duration - defaults to half an hour. */
+    private val SILENCE_SHORTHAND = Regex(
+        """\b(?:silence|mute)\s+(?:my\s+)?phone\b|\bgo\s+quiet\b|\bsilence\s+me\b"""
+    )
+
     fun parse(rawInput: String, now: Long): AssistantIntent {
         val raw = rawInput.trim()
         if (raw.isBlank()) return AssistantIntent.Unknown
@@ -42,6 +57,27 @@ object IntentParser {
             val cleaned = TimeExpressions.stripTimePhrase(body, parsed.matchedText)
             val text = cleaned.ifBlank { body }
             return AssistantIntent.CreateReminder(text, parsed.dueAt)
+        }
+
+        // Silence requests are checked early: "quiet for an hour" contains
+        // "hour", which the time parser would otherwise pull into a reminder.
+        SILENCE_FOR.find(q)?.let { m ->
+            val amount = m.groupValues[1].toIntOrNull()
+            val unit = m.groupValues[2]
+            if (amount != null && amount > 0) {
+                val minutes = if (unit.startsWith("hour") || unit.startsWith("hr")) amount * 60 else amount
+                return AssistantIntent.SilenceFor(minutes.coerceIn(1, 720))
+            }
+        }
+        if (SILENCE_SHORTHAND.containsMatchIn(q)) {
+            return AssistantIntent.SilenceFor(30)
+        }
+
+        if (q.contains("next prayer") || q.contains("next quiet") ||
+            q.contains("when is prayer") || q.contains("when does my phone go quiet") ||
+            q.contains("next namaz") || q.contains("next azan") || q.contains("next adhan")
+        ) {
+            return AssistantIntent.NextQuietTime
         }
 
         if (q.contains("my reminders") || q.contains("pending reminders") ||

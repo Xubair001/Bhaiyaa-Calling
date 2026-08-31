@@ -44,43 +44,44 @@ fun MoreScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        SettingsSectionHeader("Your data")
+        SettingsSectionHeader("Your people and notes")
         SettingsLinkRow(
             title = "VIP contacts",
-            subtitle = if (vips.isEmpty()) "None set yet" else "${vips.size} marked VIP",
+            subtitle = if (vips.isEmpty()) "Nobody marked VIP yet"
+            else "${vips.size} people get special alerts",
             icon = Icons.Filled.Star,
             onClick = onOpenVip
         )
         SettingsLinkRow(
-            title = "Memory",
+            title = "Saved notes",
             subtitle = if (memories.isEmpty()) "Nothing saved yet"
-            else "${memories.size} saved",
+            else "${memories.size} notes you wrote about people",
             icon = Icons.Outlined.Lightbulb,
             onClick = onOpenMemory
         )
         SettingsLinkRow(
             title = "Reminders",
-            subtitle = "Everything you asked Sukoon to remember for you",
+            subtitle = "Things you asked Sukoon to remind you about",
             icon = Icons.Filled.Notifications,
             onClick = onOpenReminders
         )
         SettingsLinkRow(
-            title = "Insights",
-            subtitle = "Your calling patterns, from real data",
+            title = "Call insights",
+            subtitle = "Who you talk to, and when",
             icon = Icons.Filled.Insights,
             onClick = onOpenInsights
         )
 
         SettingsSectionHeader("App")
         SettingsLinkRow(
-            title = "Privacy Center",
-            subtitle = "What's stored, what's granted, what to delete",
+            title = "Privacy",
+            subtitle = "What Sukoon stores, and what it can see",
             icon = Icons.Filled.Security,
             onClick = onOpenPrivacyCenter
         )
         SettingsLinkRow(
             title = "Settings",
-            subtitle = "Appearance, alerts, personality, AI models",
+            subtitle = "Alerts, quiet times, appearance, app lock",
             icon = Icons.Filled.Settings,
             onClick = onOpenSettings
         )

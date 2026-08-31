@@ -7,6 +7,9 @@ import com.codeaza.bhaiyaaa.data.db.entity.ContactEntity
 import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.projection.ContactCallCount
+import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
+import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
+import com.codeaza.bhaiyaaa.prayer.SilencePlan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -16,6 +19,7 @@ import kotlinx.coroutines.withContext
  * only ever sees rows that actually exist.
  */
 class RoomAssistantDataSource(
+    private val context: android.content.Context,
     private val db: AppDatabase,
     private val repository: SukoonRepository
 ) : AssistantDataSource {
@@ -57,4 +61,32 @@ class RoomAssistantDataSource(
         withContext(Dispatchers.IO) {
             db.callRecordDao().observeForContact(matchKey).first().take(limit)
         }
+
+    override suspend fun activeQuietWindow(): SilenceWindow? = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        SilencePlan.activeWindow(windowsForToday(now), now)
+    }
+
+    override suspend fun nextQuietWindow(): SilenceWindow? = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        // Today and tomorrow, so "when is the next prayer" asked late at night
+        // answers with tomorrow's Fajr rather than with nothing.
+        SilencePlan.nextWindow(windowsForToday(now) + windowsForTomorrow(now), now)
+    }
+
+    private suspend fun windowsForToday(now: Long) = plan(now)
+
+    private suspend fun windowsForTomorrow(now: Long) =
+        plan(now + 24L * 60 * 60 * 1000)
+
+    private suspend fun plan(dayMillis: Long): List<SilenceWindow> {
+        val settings = SettingsRepository(context).settings.first().prayer
+        return SilencePlan.windowsForDay(
+            settings = settings,
+            prayers = db.prayerDao().allOnce(),
+            schedules = db.silenceScheduleDao().allOnce(),
+            dayStartMillis = dayMillis,
+            zone = settings.zone
+        )
+    }
 }
