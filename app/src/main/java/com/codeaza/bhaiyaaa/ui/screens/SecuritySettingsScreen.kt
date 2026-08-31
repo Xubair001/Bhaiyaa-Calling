@@ -24,7 +24,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.InfoBanner
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.ui.components.SettingsSwitchRow
@@ -32,7 +32,7 @@ import com.codeaza.bhaiyaaa.util.BiometricAuth
 import com.codeaza.bhaiyaaa.util.SecurePrefs
 
 @Composable
-fun SecuritySettingsScreen(viewModel: BhaiyaaaViewModel) {
+fun SecuritySettingsScreen(viewModel: SukoonViewModel) {
     val context = LocalContext.current
 
     // Bumped after each change so the rows re-read the Keystore-backed prefs.
@@ -52,7 +52,7 @@ fun SecuritySettingsScreen(viewModel: BhaiyaaaViewModel) {
         if (!secureStorageAvailable) {
             InfoBanner(
                 text = "Secure storage isn't available on this device, so the privacy lock " +
-                    "can't be switched on. BHAIYAAA won't fall back to storing a PIN unprotected.",
+                    "can't be switched on. Sukoon won't fall back to storing a PIN unprotected.",
                 modifier = Modifier.padding(16.dp)
             )
         }
@@ -61,7 +61,7 @@ fun SecuritySettingsScreen(viewModel: BhaiyaaaViewModel) {
         SettingsSwitchRow(
             title = "Require a PIN",
             subtitle = if (lockEnabled) {
-                "BHAIYAAA locks when you leave the app"
+                "Sukoon locks when you leave the app"
             } else {
                 "Your VIP list and private notes are visible to anyone holding the phone"
             },
@@ -95,7 +95,7 @@ fun SecuritySettingsScreen(viewModel: BhaiyaaaViewModel) {
         }
 
         Text(
-            "Your PIN is never stored. BHAIYAAA keeps a salted SHA-256 hash of it inside " +
+            "Your PIN is never stored. Sukoon keeps a salted SHA-256 hash of it inside " +
                 "encrypted storage whose key lives in the Android Keystore and never leaves it. " +
                 "This protects your data from someone picking up your unlocked phone — it is " +
                 "not full-disk encryption.",

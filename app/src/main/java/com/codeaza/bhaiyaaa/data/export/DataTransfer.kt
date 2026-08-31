@@ -24,7 +24,7 @@ sealed interface TransferResult {
 }
 
 /**
- * Export and import of everything BHAIYAAA knows, as plain JSON.
+ * Export and import of everything Sukoon knows, as plain JSON.
  *
  * Design decisions worth stating:
  *  - Only ever runs from an explicit user action through the system file picker
@@ -81,7 +81,7 @@ class DataTransfer(private val context: Context) {
      * Merges a previously exported file back in.
      *
      * Import is additive and never destructive: contacts are matched by number
-     * and only their BHAIYAAA-owned fields are restored, so importing an old
+     * and only their Sukoon-owned fields are restored, so importing an old
      * backup can't delete contacts or wipe newer notes with blank ones.
      */
     suspend fun import(uri: Uri): TransferResult = withContext(Dispatchers.IO) {
@@ -97,12 +97,12 @@ class DataTransfer(private val context: Context) {
             }
 
             if (root.optString(KEY_FORMAT) != FORMAT_NAME) {
-                return@withContext TransferResult.Failure("That doesn't look like a BHAIYAAA export")
+                return@withContext TransferResult.Failure("That doesn't look like a Sukoon export")
             }
             val version = root.optInt(KEY_VERSION, 0)
             if (version > FORMAT_VERSION) {
                 return@withContext TransferResult.Failure(
-                    "That file was written by a newer version of BHAIYAAA (format $version)"
+                    "That file was written by a newer version of Sukoon (format $version)"
                 )
             }
 

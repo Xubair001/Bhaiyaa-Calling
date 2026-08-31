@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.Bar
 import com.codeaza.bhaiyaaa.ui.components.BarChart
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
@@ -41,7 +41,7 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
  * empty state rather than a demo chart.
  */
 @Composable
-fun InsightsScreen(viewModel: BhaiyaaaViewModel) {
+fun InsightsScreen(viewModel: SukoonViewModel) {
     val insights by viewModel.insights.collectAsStateWithLifecycle()
 
     // Recompute on entry so figures are current after a sync elsewhere.

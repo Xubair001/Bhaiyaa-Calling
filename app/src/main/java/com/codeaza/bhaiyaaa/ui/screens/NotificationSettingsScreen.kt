@@ -23,14 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.service.CallAlertManager
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.InfoBanner
 import com.codeaza.bhaiyaaa.ui.components.SettingsLinkRow
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.ui.components.SettingsSwitchRow
 
 @Composable
-fun NotificationSettingsScreen(viewModel: BhaiyaaaViewModel) {
+fun NotificationSettingsScreen(viewModel: SukoonViewModel) {
     val context = LocalContext.current
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
@@ -48,7 +48,7 @@ fun NotificationSettingsScreen(viewModel: BhaiyaaaViewModel) {
     ) {
         if (!canPost) {
             InfoBanner(
-                text = "Notifications are blocked for BHAIYAAA, so VIP alerts can't reach you.",
+                text = "Notifications are blocked for Sukoon, so VIP alerts can't reach you.",
                 modifier = Modifier.padding(16.dp),
                 actionLabel = "Allow",
                 onAction = {
@@ -114,7 +114,7 @@ fun NotificationSettingsScreen(viewModel: BhaiyaaaViewModel) {
         Text(
             "Some phones (Xiaomi, Oppo, and Samsung in aggressive battery modes) delay or drop " +
                 "the ringing broadcast for background apps. If VIP alerts are unreliable, allow " +
-                "BHAIYAAA unrestricted battery use in your phone's settings. This is a platform " +
+                "Sukoon unrestricted battery use in your phone's settings. This is a platform " +
                 "restriction, not something the app can work around.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

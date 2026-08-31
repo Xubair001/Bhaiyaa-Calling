@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.ai.TimeExpressions
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.util.Formatting
 
@@ -43,7 +43,7 @@ import com.codeaza.bhaiyaaa.util.Formatting
  * same way.
  */
 @Composable
-fun RemindersScreen(viewModel: BhaiyaaaViewModel) {
+fun RemindersScreen(viewModel: SukoonViewModel) {
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf("") }
 

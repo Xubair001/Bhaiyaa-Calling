@@ -1,7 +1,7 @@
 package com.codeaza.bhaiyaaa.domain.model
 
 /**
- * Where a memory came from. This matters for honesty: BHAIYAAA must never
+ * Where a memory came from. This matters for honesty: Sukoon must never
  * present something it inferred as something it was told, so every memory
  * carries its provenance and the UI shows it.
  */

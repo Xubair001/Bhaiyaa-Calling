@@ -76,7 +76,7 @@ fun ReliabilityCard(
 
             if (!batteryOk) {
                 Text(
-                    "Android won't let BHAIYAAA start its alert while it's in the background " +
+                    "Android won't let Sukoon start its alert while it's in the background " +
                         "unless battery optimisation is off for it. Alerts will be cut short " +
                         "or missed entirely until this is allowed.",
                     style = MaterialTheme.typography.bodySmall,

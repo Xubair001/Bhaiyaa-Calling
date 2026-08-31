@@ -19,7 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.SettingsLinkRow
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.util.Formatting
@@ -27,7 +27,7 @@ import com.codeaza.bhaiyaaa.util.Formatting
 /** Hub for the four top-level screens that don't fit in the bottom bar. */
 @Composable
 fun MoreScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenVip: () -> Unit,
     onOpenMemory: () -> Unit,
     onOpenReminders: () -> Unit,
@@ -60,7 +60,7 @@ fun MoreScreen(
         )
         SettingsLinkRow(
             title = "Reminders",
-            subtitle = "Everything you asked BHAIYAAA to remember for you",
+            subtitle = "Everything you asked Sukoon to remember for you",
             icon = Icons.Filled.Notifications,
             onClick = onOpenReminders
         )

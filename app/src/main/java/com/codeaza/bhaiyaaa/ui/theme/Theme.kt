@@ -82,7 +82,7 @@ private val DarkColors = darkColorScheme(
  *   setting says as much.
  */
 @Composable
-fun BhaiyaaaTheme(
+fun SukoonTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
@@ -115,8 +115,8 @@ fun BhaiyaaaTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = BhaiyaaaTypography,
-        shapes = BhaiyaaaShapes,
+        typography = SukoonTypography,
+        shapes = SukoonShapes,
         content = content
     )
 }

@@ -27,7 +27,7 @@ enum class ModelStatus(val storageValue: String, val label: String) {
 }
 
 /**
- * The models BHAIYAAA can install, all of them free and open-source with
+ * The models Sukoon can install, all of them free and open-source with
  * licences that permit redistribution and commercial use.
  *
  * Nothing here is bundled in the APK and nothing downloads on its own: each
@@ -41,7 +41,7 @@ object ModelCatalog {
 
     /**
      * Vosk small English. Apache-2.0, runs fully offline via the Vosk Android
-     * runtime, and is the reason BHAIYAAA can do speech without Google's
+     * runtime, and is the reason Sukoon can do speech without Google's
      * network recognizer.
      */
     const val VOSK_EN_SMALL = "vosk-model-small-en-us-0.15"

@@ -36,7 +36,7 @@ import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.notifications.NotificationChannels
 import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.service.CallAlertManager
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.ReliabilityCard
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import kotlin.math.roundToInt
@@ -46,7 +46,7 @@ import kotlin.math.roundToInt
  * and flashlight pattern - so what you configure is what you actually get.
  */
 @Composable
-fun VipAlertSettingsScreen(viewModel: BhaiyaaaViewModel) {
+fun VipAlertSettingsScreen(viewModel: SukoonViewModel) {
     val context = LocalContext.current
     val rules by viewModel.notificationRules.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()

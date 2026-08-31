@@ -15,7 +15,7 @@ import com.codeaza.bhaiyaaa.ai.speech.SpeechRecognizerEngine
 import com.codeaza.bhaiyaaa.ai.speech.VoskSpeechRecognizer
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
-import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import com.codeaza.bhaiyaaa.data.repository.RoomAssistantDataSource
 import com.codeaza.bhaiyaaa.service.ReminderScheduler
 import kotlinx.coroutines.Job
@@ -44,7 +44,7 @@ data class SpeechUiState(
 class AssistantViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
-    private val repository = BhaiyaaaRepository(application)
+    private val repository = SukoonRepository(application)
     private val settingsRepo = SettingsRepository(application)
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())

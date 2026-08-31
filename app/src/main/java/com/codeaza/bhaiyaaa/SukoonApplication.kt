@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.work.Configuration
 import com.codeaza.bhaiyaaa.ai.model.ModelCatalog
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
-import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.notifications.NotificationChannels
 import com.codeaza.bhaiyaaa.prayer.PrayerScheduler
@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class BhaiyaaaApplication : Application(), Configuration.Provider {
+class SukoonApplication : Application(), Configuration.Provider {
 
     /** Application-scoped: outlives any screen, cancelled only with the process. */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -36,7 +36,7 @@ class BhaiyaaaApplication : Application(), Configuration.Provider {
         // it blocks first paint: the UI renders from empty Flows until it lands.
         appScope.launch {
             runCatching {
-                val repo = BhaiyaaaRepository(applicationContext)
+                val repo = SukoonRepository(applicationContext)
                 repo.seedDefaults()
                 // Register the model catalogue as NOT_INSTALLED rows. Listing a
                 // model is not downloading it - nothing is fetched until the

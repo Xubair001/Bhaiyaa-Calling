@@ -13,7 +13,7 @@ import com.codeaza.bhaiyaaa.ui.components.CallRow
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.ui.components.StatTile
 import com.codeaza.bhaiyaaa.ui.components.VipBadge
-import com.codeaza.bhaiyaaa.ui.theme.BhaiyaaaTheme
+import com.codeaza.bhaiyaaa.ui.theme.SukoonTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +32,7 @@ class ComponentUiTest {
     fun emptyState_showsTitleBodyAndAction() {
         var clicked = false
         composeRule.setContent {
-            BhaiyaaaTheme {
+            SukoonTheme {
                 EmptyState(
                     icon = Icons.Filled.Star,
                     title = "No VIPs yet",
@@ -52,7 +52,7 @@ class ComponentUiTest {
     @Test
     fun vipBadge_announcesTierToScreenReaders() {
         composeRule.setContent {
-            BhaiyaaaTheme { VipBadge(VipLevel.SUPER_VIP) }
+            SukoonTheme { VipBadge(VipLevel.SUPER_VIP) }
         }
         // Colour must never be the only signal of tier.
         composeRule.onNodeWithContentDescription("Super VIP contact").assertExists()
@@ -62,7 +62,7 @@ class ComponentUiTest {
     @Test
     fun vipBadge_rendersNothingForNonVip() {
         composeRule.setContent {
-            BhaiyaaaTheme { VipBadge(VipLevel.NONE) }
+            SukoonTheme { VipBadge(VipLevel.NONE) }
         }
         composeRule.onNodeWithText("NONE").assertDoesNotExist()
     }
@@ -79,7 +79,7 @@ class ComponentUiTest {
             durationSeconds = 0
         )
         composeRule.setContent {
-            BhaiyaaaTheme { CallRow(call = call, vipLevel = VipLevel.VIP) }
+            SukoonTheme { CallRow(call = call, vipLevel = VipLevel.VIP) }
         }
 
         composeRule.onNodeWithText("Ahmed Khan").assertIsDisplayed()
@@ -99,7 +99,7 @@ class ComponentUiTest {
             durationSeconds = 45
         )
         composeRule.setContent {
-            BhaiyaaaTheme { CallRow(call = call) }
+            SukoonTheme { CallRow(call = call) }
         }
         composeRule.onNodeWithText("+923009999999").assertIsDisplayed()
         composeRule.onNodeWithText("45s").assertIsDisplayed()
@@ -108,7 +108,7 @@ class ComponentUiTest {
     @Test
     fun statTile_showsValueAndLabel() {
         composeRule.setContent {
-            BhaiyaaaTheme { StatTile(value = "7", label = "Calls today") }
+            SukoonTheme { StatTile(value = "7", label = "Calls today") }
         }
         composeRule.onNodeWithText("7").assertIsDisplayed()
         composeRule.onNodeWithText("Calls today").assertIsDisplayed()

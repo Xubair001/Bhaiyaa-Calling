@@ -7,7 +7,7 @@ import com.codeaza.bhaiyaaa.util.TimeRanges
 import java.util.Locale
 
 /**
- * BHAIYAAA's default assistant: intent matching over the user's own local data.
+ * Sukoon's default assistant: intent matching over the user's own local data.
  *
  * It is not a language model, and it does not pretend to be one. Every sentence
  * it returns is built from rows it just read out of Room, which is what makes
@@ -25,7 +25,7 @@ class RuleBasedAssistantEngine(
 ) : AssistantEngine {
 
     override val id: String = ENGINE_ID
-    override val displayName: String = "BHAIYAAA local rules"
+    override val displayName: String = "Sukoon local rules"
 
     /** Always true: this engine has no model to install and no service to reach. */
     override suspend fun isAvailable(): Boolean = true
@@ -194,14 +194,14 @@ class RuleBasedAssistantEngine(
 
     /**
      * Memory recall. Critically, this only ever returns text the user themselves
-     * saved - BHAIYAAA does not transcribe or infer what was said on a call, so
+     * saved - Sukoon does not transcribe or infer what was said on a call, so
      * if nothing was written down it says exactly that.
      */
     private suspend fun recallMemory(intent: AssistantIntent.RecallMemory): AssistantResponse {
         val hits = data.searchMemories(intent.query, 3)
         if (hits.isEmpty()) {
             return AssistantResponse(
-                text = "I've got nothing saved about that. BHAIYAAA only remembers notes you " +
+                text = "I've got nothing saved about that. Sukoon only remembers notes you " +
                     "saved yourself — it can't hear or record your calls.",
                 intent = intent
             )

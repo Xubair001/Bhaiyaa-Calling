@@ -112,7 +112,7 @@ fun AssistantScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    "Ask BHAIYAAA",
+                    "Ask Sukoon",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )

@@ -41,7 +41,7 @@ object NotificationChannels {
     private val LEGACY_CHANNEL_IDS = listOf("vip_calls", "super_vip_calls", "emergency_calls")
 
     /**
-     * Whether the user has given BHAIYAAA permission to override Do Not Disturb.
+     * Whether the user has given Sukoon permission to override Do Not Disturb.
      *
      * This is not a runtime permission and cannot be requested with a dialog -
      * the user grants it in a dedicated system settings screen, so the UI links

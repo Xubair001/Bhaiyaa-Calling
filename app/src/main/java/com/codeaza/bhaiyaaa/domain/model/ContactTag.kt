@@ -2,7 +2,7 @@ package com.codeaza.bhaiyaaa.domain.model
 
 /**
  * Built-in categories. Users can also create their own tags, which are stored
- * in the `tags` table - these are just the ones BHAIYAAA ships with so the
+ * in the `tags` table - these are just the ones Sukoon ships with so the
  * picker is never empty on first run.
  */
 object ContactTag {

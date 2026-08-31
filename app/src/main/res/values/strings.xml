@@ -2,12 +2,12 @@
 <!--
   All user-facing copy lives here so a future Urdu / Roman-Urdu locale is a
   drop-in values-ur/ (or values-b+ur+Latn/) folder with no code changes.
-  BHAIYAAA's personality lines are grouped by tone: professional / friendly /
+  Sukoon's personality lines are grouped by tone: professional / friendly /
   bhai. PersonalityEngine picks the tone at runtime from user settings.
 -->
 <resources>
-    <string name="app_name">BHAIYAAA</string>
-    <string name="app_tagline">Apna banda, phone ke andar.</string>
+    <string name="app_name">Sukoon</string>
+    <string name="app_tagline">Your people. Your quiet.</string>
 
     <!-- Navigation -->
     <string name="nav_home">Home</string>
@@ -21,15 +21,15 @@
     <string name="nav_more">More</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_1_title">BHAIYAAA</string>
-    <string name="onboarding_1_body">Apna banda, phone ke andar.</string>
+    <string name="onboarding_1_title">Sukoon</string>
+    <string name="onboarding_1_body">The people who matter get through. Everything else waits.</string>
     <string name="onboarding_2_title">Your private call companion</string>
-    <string name="onboarding_2_body">BHAIYAAA keeps track of who matters, what they said, and what you promised to do.</string>
+    <string name="onboarding_2_body">Sukoon keeps track of who matters, what they said, and what you promised to do.</string>
     <string name="onboarding_3_title">VIP callers get VIP treatment</string>
     <string name="onboarding_3_body">Mark someone VIP and their call gets its own vibration, flashlight pattern and heads-up alert.</string>
     <string name="onboarding_4_title">Your data stays on your phone</string>
     <string name="onboarding_4_body">No cloud, no account, no API key. Everything is stored locally and encrypted where it counts.</string>
-    <string name="onboarding_5_title">Let\'s set up your BHAIYAAA</string>
+    <string name="onboarding_5_title">Let\'s set up your Sukoon</string>
     <string name="onboarding_5_body">We\'ll ask for a few permissions. Each one is explained, and you can say no to any of them.</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_back">Back</string>
@@ -38,11 +38,11 @@
 
     <!-- Permissions -->
     <string name="perm_contacts_title">Contacts</string>
-    <string name="perm_contacts_why">So BHAIYAAA can show names instead of bare numbers, and let you tag people.</string>
+    <string name="perm_contacts_why">So Sukoon can show names instead of bare numbers, and let you tag people.</string>
     <string name="perm_call_log_title">Call log</string>
     <string name="perm_call_log_why">So your call history, insights and \"who called me\" answers use your real calls.</string>
     <string name="perm_phone_state_title">Phone state</string>
-    <string name="perm_phone_state_why">So BHAIYAAA can spot a VIP the moment their call starts ringing.</string>
+    <string name="perm_phone_state_why">So Sukoon can spot a VIP the moment their call starts ringing.</string>
     <string name="perm_notifications_title">Notifications</string>
     <string name="perm_notifications_why">So VIP alerts can actually reach you.</string>
     <string name="perm_mic_title">Microphone</string>
@@ -62,7 +62,7 @@
     <string name="action_done">Done</string>
     <string name="loading">Loading…</string>
 
-    <!-- BHAIYAAA personality: professional -->
+    <!-- Sukoon personality: professional -->
     <string name="persona_pro_greeting_morning">Good morning</string>
     <string name="persona_pro_greeting_afternoon">Good afternoon</string>
     <string name="persona_pro_greeting_evening">Good evening</string>
@@ -70,7 +70,7 @@
     <string name="persona_pro_reminder_created">Reminder created.</string>
     <string name="persona_pro_no_missed">No missed calls.</string>
 
-    <!-- BHAIYAAA personality: friendly -->
+    <!-- Sukoon personality: friendly -->
     <string name="persona_friendly_greeting_morning">Good morning 👋</string>
     <string name="persona_friendly_greeting_afternoon">Good afternoon 👋</string>
     <string name="persona_friendly_greeting_evening">Good evening 🌙</string>
@@ -78,7 +78,7 @@
     <string name="persona_friendly_reminder_created">Got it, reminder saved.</string>
     <string name="persona_friendly_no_missed">Nothing missed. You\'re all caught up.</string>
 
-    <!-- BHAIYAAA personality: bhai mode -->
+    <!-- Sukoon personality: bhai mode -->
     <string name="persona_bhai_greeting_morning">Assalam o Alaikum, boss 👋</string>
     <string name="persona_bhai_greeting_afternoon">What\'s up, bhai?</string>
     <string name="persona_bhai_greeting_evening">Good evening, bhai 🌙</string>
@@ -88,19 +88,19 @@
 
     <!-- Empty states -->
     <string name="empty_calls">No calls yet</string>
-    <string name="empty_calls_body">Once BHAIYAAA can read your call log, your history shows up here.</string>
+    <string name="empty_calls_body">Once Sukoon can read your call log, your history shows up here.</string>
     <string name="empty_contacts">No contacts yet</string>
-    <string name="empty_contacts_body">Grant the Contacts permission and BHAIYAAA will pull them in.</string>
+    <string name="empty_contacts_body">Grant the Contacts permission and Sukoon will pull them in.</string>
     <string name="empty_vip">No VIPs yet</string>
     <string name="empty_vip_body">Open a contact and set them to VIP to get special alerts when they call.</string>
     <string name="empty_memory">No memories yet</string>
-    <string name="empty_memory_body">Save a note after a call and BHAIYAAA will remember it for you.</string>
+    <string name="empty_memory_body">Save a note after a call and Sukoon will remember it for you.</string>
     <string name="empty_reminders">No pending reminders</string>
     <string name="empty_search">Nothing matched</string>
 
     <!-- Accessibility -->
     <string name="cd_vip_badge">VIP level indicator</string>
-    <string name="cd_mic_button">Hold to speak to BHAIYAAA</string>
+    <string name="cd_mic_button">Hold to speak to Sukoon</string>
     <string name="cd_back">Back</string>
     <string name="cd_call_direction_incoming">Incoming call</string>
     <string name="cd_call_direction_outgoing">Outgoing call</string>
@@ -114,7 +114,7 @@
     <string name="channel_emergency_name">Emergency calls</string>
     <string name="channel_emergency_desc">Maximum-urgency alerts for Emergency contacts.</string>
     <string name="channel_reminders_name">Reminders</string>
-    <string name="channel_reminders_desc">Your BHAIYAAA reminders when they come due.</string>
+    <string name="channel_reminders_desc">Your Sukoon reminders when they come due.</string>
     <string name="channel_missed_name">Missed important calls</string>
     <string name="channel_missed_desc">A nudge when you miss a call from someone important.</string>
 </resources>

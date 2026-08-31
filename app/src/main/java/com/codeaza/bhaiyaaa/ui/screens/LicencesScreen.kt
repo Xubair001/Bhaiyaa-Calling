@@ -31,7 +31,7 @@ fun LicencesScreen() {
     ) {
         Column(Modifier.padding(20.dp)) {
             Text(
-                "BHAIYAAA is built on open-source work by others. " +
+                "Sukoon is built on open-source work by others. " +
                     "Each component is used under the licence shown.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

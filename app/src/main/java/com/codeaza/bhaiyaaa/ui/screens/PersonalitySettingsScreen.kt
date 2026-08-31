@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.ai.ResourcePhrasebook
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 
 /**
@@ -35,7 +35,7 @@ import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
  * is visible before choosing rather than described.
  */
 @Composable
-fun PersonalitySettingsScreen(viewModel: BhaiyaaaViewModel) {
+fun PersonalitySettingsScreen(viewModel: SukoonViewModel) {
     val context = LocalContext.current
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
@@ -44,7 +44,7 @@ fun PersonalitySettingsScreen(viewModel: BhaiyaaaViewModel) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        SettingsSectionHeader("How BHAIYAAA talks")
+        SettingsSectionHeader("How Sukoon talks")
 
         PersonalityMode.entries.forEach { mode ->
             Row(
@@ -99,7 +99,7 @@ fun PersonalitySettingsScreen(viewModel: BhaiyaaaViewModel) {
         }
 
         Text(
-            "Tone only changes the wording. The facts BHAIYAAA reports come from your data " +
+            "Tone only changes the wording. The facts Sukoon reports come from your data " +
                 "either way.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

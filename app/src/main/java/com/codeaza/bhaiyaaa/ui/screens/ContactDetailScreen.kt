@@ -45,7 +45,7 @@ import com.codeaza.bhaiyaaa.domain.model.Importance
 import com.codeaza.bhaiyaaa.domain.model.Lookup
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.CallRow
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
 import com.codeaza.bhaiyaaa.ui.components.LoadingState
@@ -65,7 +65,7 @@ import kotlinx.coroutines.flow.map
 @Composable
 fun ContactDetailScreen(
     phoneNumber: String,
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenCall: (Long) -> Unit
 ) {
     val context = LocalContext.current
@@ -291,7 +291,7 @@ fun ContactDetailScreen(
                     Column(Modifier.weight(1f)) {
                         Text("Mark as spam", style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "Hides them from suggestions. BHAIYAAA never blocks calls itself.",
+                            "Hides them from suggestions. Sukoon never blocks calls itself.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

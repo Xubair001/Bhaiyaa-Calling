@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Backup is disabled at the manifest level (android:allowBackup="false").
-     This file exists so the intent is explicit and reviewable: BHAIYAAA's
+     This file exists so the intent is explicit and reviewable: Sukoon's
      database holds call metadata, private notes and memories, and none of it
      should ever be copied off-device by the platform backup transport. -->
 <full-backup-content>

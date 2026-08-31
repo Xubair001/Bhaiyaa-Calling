@@ -29,7 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.ui.components.InfoBanner
@@ -46,7 +46,7 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
  */
 @Composable
 fun VipScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenContact: (String) -> Unit,
     onOpenAlertSettings: () -> Unit
 ) {
@@ -78,7 +78,7 @@ fun VipScreen(
         item {
             InfoBanner(
                 text = "Alerts depend on Android delivering the ringing broadcast. Some phones " +
-                    "restrict this for background apps — allow BHAIYAAA unrestricted battery use " +
+                    "restrict this for background apps — allow Sukoon unrestricted battery use " +
                     "if VIP alerts are unreliable.",
                 actionLabel = "Alert settings",
                 onAction = onOpenAlertSettings

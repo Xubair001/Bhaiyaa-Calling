@@ -28,7 +28,7 @@ enum class SpeechEngineKind(val label: String) {
 }
 
 /**
- * A dictation source. Two implementations exist so BHAIYAAA degrades honestly:
+ * A dictation source. Two implementations exist so Sukoon degrades honestly:
  * Vosk when the user has installed a model, the platform recognizer otherwise,
  * and the Assistant screen always shows which one is in use.
  */

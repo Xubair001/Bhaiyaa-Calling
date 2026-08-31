@@ -16,7 +16,7 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Works out when each prayer falls and how long BHAIYAAA should stay quiet.
+ * Works out when each prayer falls and how long Sukoon should stay quiet.
  *
  * Prayer times are astronomy, not a web service: given coordinates and a date,
  * the sun's position is computable on the device, forever, with no network.

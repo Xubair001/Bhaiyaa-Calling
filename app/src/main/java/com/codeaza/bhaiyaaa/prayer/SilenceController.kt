@@ -32,7 +32,7 @@ object SilenceController {
     private const val KEY_PREVIOUS_RINGER = "previous_ringer"
     private const val KEY_ACTIVE = "silence_active"
     private const val KEY_ACTIVE_PRAYER = "active_prayer"
-    private const val TAG = "BhaiyaaaSilence"
+    private const val TAG = "SukoonSilence"
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

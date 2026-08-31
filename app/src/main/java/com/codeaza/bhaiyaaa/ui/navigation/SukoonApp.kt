@@ -35,7 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.LockState
 import com.codeaza.bhaiyaaa.ui.assistant.AssistantViewModel
 import com.codeaza.bhaiyaaa.ui.models.ModelManagerViewModel
@@ -74,8 +74,8 @@ import com.codeaza.bhaiyaaa.ui.screens.VipScreen
  * the privacy lock (if enabled), then the navigation host itself.
  */
 @Composable
-fun BhaiyaaaApp(
-    viewModel: BhaiyaaaViewModel = viewModel(),
+fun SukoonApp(
+    viewModel: SukoonViewModel = viewModel(),
     assistantViewModel: AssistantViewModel = viewModel(),
     modelViewModel: ModelManagerViewModel = viewModel(),
     prayerViewModel: PrayerViewModel = viewModel()
@@ -113,7 +113,7 @@ fun BhaiyaaaApp(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScaffold(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     assistantViewModel: AssistantViewModel,
     modelViewModel: ModelManagerViewModel,
     prayerViewModel: PrayerViewModel
@@ -214,15 +214,15 @@ private fun MainScaffold(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            BhaiyaaaNavHost(navController, viewModel, assistantViewModel, modelViewModel, prayerViewModel)
+            SukoonNavHost(navController, viewModel, assistantViewModel, modelViewModel, prayerViewModel)
         }
     }
 }
 
 @Composable
-private fun BhaiyaaaNavHost(
+private fun SukoonNavHost(
     navController: NavHostController,
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     assistantViewModel: AssistantViewModel,
     modelViewModel: ModelManagerViewModel,
     prayerViewModel: PrayerViewModel
@@ -359,8 +359,8 @@ private fun BhaiyaaaNavHost(
 }
 
 private fun titleFor(route: String?): String = when {
-    route == null -> "BHAIYAAA"
-    route == Routes.HOME -> "BHAIYAAA"
+    route == null -> "Sukoon"
+    route == Routes.HOME -> "Sukoon"
     route == Routes.CALLS -> "Calls"
     route == Routes.CONTACTS -> "Contacts"
     route == Routes.ASSISTANT -> "Assistant"
@@ -384,5 +384,5 @@ private fun titleFor(route: String?): String = when {
     route == Routes.SETTINGS_LICENCES -> "Licences"
     route.startsWith("contact/") -> "Contact"
     route.startsWith("call/") -> "Call"
-    else -> "BHAIYAAA"
+    else -> "Sukoon"
 }

@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.CallRow
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 
@@ -49,7 +49,7 @@ enum class CallFilter(val label: String) {
 
 @Composable
 fun CallsScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenCall: (Long) -> Unit
 ) {
     val calls by viewModel.calls.collectAsStateWithLifecycle()

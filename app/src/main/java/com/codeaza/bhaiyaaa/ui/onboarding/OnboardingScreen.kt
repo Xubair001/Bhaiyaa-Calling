@@ -218,7 +218,7 @@ private fun PermissionSetupPage(onPermissionsChanged: () -> Unit) {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Each one is optional. BHAIYAAA works with whatever you allow, " +
+            text = "Each one is optional. Sukoon works with whatever you allow, " +
                 "and tells you what's missing rather than nagging.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant

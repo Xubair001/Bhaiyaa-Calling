@@ -5,13 +5,13 @@ import com.codeaza.bhaiyaaa.data.db.entity.ContactEntity
 import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
-import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
-/** One search across everything BHAIYAAA stores locally. */
+/** One search across everything Sukoon stores locally. */
 data class SearchResults(
     val query: String = "",
     val contacts: List<ContactEntity> = emptyList(),
@@ -36,7 +36,7 @@ data class SearchResults(
  */
 class GlobalSearch(
     private val db: AppDatabase,
-    private val repository: BhaiyaaaRepository
+    private val repository: SukoonRepository
 ) {
 
     suspend fun search(rawQuery: String, limitPerSection: Int = 20): SearchResults {

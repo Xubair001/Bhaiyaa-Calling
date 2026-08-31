@@ -9,7 +9,7 @@ import android.os.PowerManager
 import android.provider.Settings
 
 /**
- * The two settings that decide whether BHAIYAAA works with the app closed.
+ * The two settings that decide whether Sukoon works with the app closed.
  *
  * Neither can be granted from code, and neither is a normal runtime permission,
  * so the only honest thing an app can do is detect them and send the user to
@@ -102,12 +102,12 @@ object BackgroundReliability {
     /** Plain-language instruction for this device, when there is no intent to fire. */
     fun autostartInstruction(): String = when {
         isMiui() ->
-            "Open Security → Permissions → Autostart and switch BHAIYAAA on. " +
+            "Open Security → Permissions → Autostart and switch Sukoon on. " +
                 "Without it, this phone stops the app hearing incoming calls once it's closed."
         hasAggressiveBackgroundPolicy() ->
-            "Open your phone's battery or app-management settings and allow BHAIYAAA to " +
+            "Open your phone's battery or app-management settings and allow Sukoon to " +
                 "start in the background."
         else ->
-            "Allow BHAIYAAA to run in the background in your phone's battery settings."
+            "Allow Sukoon to run in the background in your phone's battery settings."
     }
 }

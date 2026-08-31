@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.codeaza.bhaiyaaa.data.export.DataTransfer
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.SettingsLinkRow
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.ui.components.SettingsSwitchRow
@@ -33,11 +33,11 @@ private data class Confirmation(
 )
 
 @Composable
-fun DataSettingsScreen(viewModel: BhaiyaaaViewModel) {
+fun DataSettingsScreen(viewModel: SukoonViewModel) {
     var includeCallHistory by remember { mutableStateOf(false) }
     var confirmation by remember { mutableStateOf<Confirmation?>(null) }
 
-    // Storage Access Framework: the user picks the file, so BHAIYAAA never
+    // Storage Access Framework: the user picks the file, so Sukoon never
     // needs broad storage permissions and never writes anywhere unasked.
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -76,7 +76,7 @@ fun DataSettingsScreen(viewModel: BhaiyaaaViewModel) {
         SettingsSectionHeader("Delete")
         SettingsLinkRow(
             title = "Reset VIP tiers, tags and notes",
-            subtitle = "Keeps your contacts, clears what you set in BHAIYAAA",
+            subtitle = "Keeps your contacts, clears what you set in Sukoon",
             onClick = {
                 confirmation = Confirmation(
                     "Reset VIP and annotations?",
@@ -92,7 +92,7 @@ fun DataSettingsScreen(viewModel: BhaiyaaaViewModel) {
             onClick = {
                 confirmation = Confirmation(
                     "Clear local call history?",
-                    "BHAIYAAA's copy is deleted. Your phone's call log is not touched, so a " +
+                    "Sukoon's copy is deleted. Your phone's call log is not touched, so a " +
                         "future sync will pull it back in.",
                     "Clear"
                 ) { viewModel.clearCallHistory() }
@@ -111,7 +111,7 @@ fun DataSettingsScreen(viewModel: BhaiyaaaViewModel) {
         )
         SettingsLinkRow(
             title = "Delete everything",
-            subtitle = "Wipe BHAIYAAA back to a fresh install",
+            subtitle = "Wipe Sukoon back to a fresh install",
             onClick = {
                 confirmation = Confirmation(
                     "Delete everything?",

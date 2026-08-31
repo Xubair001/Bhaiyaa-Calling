@@ -8,10 +8,10 @@ import androidx.room.PrimaryKey
 
 /**
  * Something worth remembering: a note from a call, an action item, or a fact
- * the user asked BHAIYAAA to keep.
+ * the user asked Sukoon to keep.
  *
  * `source` records provenance so the UI can always say where a memory came
- * from. BHAIYAAA never writes a memory the user did not actually give it.
+ * from. Sukoon never writes a memory the user did not actually give it.
  */
 @Entity(
     tableName = "memories",

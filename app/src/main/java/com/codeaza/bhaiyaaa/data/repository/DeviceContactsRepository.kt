@@ -46,7 +46,7 @@ class DeviceContactsRepository(private val context: Context) {
         } catch (e: Exception) {
             // Class name only - never the row data, which is personal.
             lastError = "${e.javaClass.simpleName}: ${e.message}"
-            android.util.Log.w("BhaiyaaaContacts", "Contacts query failed: ${e.javaClass.simpleName}")
+            android.util.Log.w("SukoonContacts", "Contacts query failed: ${e.javaClass.simpleName}")
             null
         }
 

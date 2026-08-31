@@ -28,7 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.SettingsInfoRow
 import com.codeaza.bhaiyaaa.util.Formatting
@@ -41,7 +41,7 @@ import com.codeaza.bhaiyaaa.util.SecurePrefs
  */
 @Composable
 fun PrivacyCenterScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenData: () -> Unit
 ) {
     val context = LocalContext.current
@@ -63,7 +63,7 @@ fun PrivacyCenterScreen(
         item {
             SectionCard(title = "Network use") {
                 Text(
-                    "BHAIYAAA makes exactly one kind of network request: downloading an AI model, " +
+                    "Sukoon makes exactly one kind of network request: downloading an AI model, " +
                         "and only when you tap download. Your contacts, calls, notes and memories " +
                         "are never uploaded anywhere.",
                     style = MaterialTheme.typography.bodyMedium

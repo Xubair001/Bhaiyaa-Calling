@@ -1,6 +1,6 @@
-# BHAIYAAA
+# Sukoon
 
-> *Apna banda, phone ke andar.*
+> *Your people. Your quiet.*
 
 A privacy-first, offline-first personal call companion for Android. Native
 Kotlin, Jetpack Compose, Material 3. No account, no cloud, no API key, no paid
@@ -27,7 +27,7 @@ size, take the first one:
 
 | Artifact | Contains | Use it when |
 |---|---|---|
-| **`bhaiyaaa-apk`** | `BHAIYAAA-install-this.apk` (~56 MB) | **Almost always.** One file, installs on any phone |
+| **`bhaiyaaa-apk`** | `Sukoon-install-this.apk` (~56 MB) | **Almost always.** One file, installs on any phone |
 | `bhaiyaaa-apk-per-architecture` | three ~29 MB APKs | You want a smaller download and know your CPU |
 
 The split exists because Vosk ships a native library per CPU architecture.
@@ -128,7 +128,7 @@ icon; VIP tiers never signalled by colour alone.
 These are stated in-app under **Settings → About**, not hidden.
 
 - **No call recording or transcription.** Modern Android blocks non-system apps
-  from capturing call audio, and consent law varies by jurisdiction. BHAIYAAA
+  from capturing call audio, and consent law varies by jurisdiction. Sukoon
   stores what *you* write down and never implies it heard a call.
 - **Not a dialer or call screener.** It listens for the system `PHONE_STATE`
   broadcast — the mechanism caller-ID apps use — and takes no privileged role.

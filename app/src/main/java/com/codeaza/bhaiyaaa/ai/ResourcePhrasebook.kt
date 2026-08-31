@@ -6,7 +6,7 @@ import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 
 /**
  * Resource-backed phrasing. Same contract as [DefaultPhrasebook], but every
- * line comes from strings.xml - so translating BHAIYAAA into Urdu or Roman
+ * line comes from strings.xml - so translating Sukoon into Urdu or Roman
  * Urdu is a values-ur/ folder and nothing else.
  */
 class ResourcePhrasebook(

@@ -16,9 +16,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
-import com.codeaza.bhaiyaaa.ui.navigation.BhaiyaaaApp
-import com.codeaza.bhaiyaaa.ui.theme.BhaiyaaaTheme
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
+import com.codeaza.bhaiyaaa.ui.navigation.SukoonApp
+import com.codeaza.bhaiyaaa.ui.theme.SukoonTheme
 
 /**
  * FragmentActivity rather than ComponentActivity: BiometricPrompt requires a
@@ -35,7 +35,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val viewModel: BhaiyaaaViewModel = viewModel()
+            val viewModel: SukoonViewModel = viewModel()
             val settings by viewModel.settings.collectAsStateWithLifecycle()
 
             // Re-lock when the app leaves the foreground, so returning to it
@@ -49,7 +49,7 @@ class MainActivity : FragmentActivity() {
                 onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
             }
 
-            BhaiyaaaTheme(
+            SukoonTheme(
                 themeMode = settings.themeMode,
                 dynamicColor = settings.dynamicColor
             ) {
@@ -57,7 +57,7 @@ class MainActivity : FragmentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    BhaiyaaaApp(viewModel = viewModel)
+                    SukoonApp(viewModel = viewModel)
                 }
             }
         }

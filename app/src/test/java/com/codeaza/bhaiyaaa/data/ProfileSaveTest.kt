@@ -4,7 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.db.entity.ContactEntity
-import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import com.codeaza.bhaiyaaa.data.repository.DeviceCallLogRepository
 import com.codeaza.bhaiyaaa.data.repository.DeviceContactsRepository
 import com.codeaza.bhaiyaaa.domain.model.ContactTag
@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config
 class ProfileSaveTest {
 
     private lateinit var db: AppDatabase
-    private lateinit var repo: BhaiyaaaRepository
+    private lateinit var repo: SukoonRepository
     private val now = 1_756_000_000_000L
     private val number = "+923001234567"
 
@@ -51,7 +51,7 @@ class ProfileSaveTest {
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        repo = BhaiyaaaRepository(
+        repo = SukoonRepository(
             context = context,
             db = db,
             deviceContacts = DeviceContactsRepository(context),

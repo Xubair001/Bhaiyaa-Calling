@@ -46,7 +46,7 @@ import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.prayer.PrayerTimeCalculator
 import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
 import com.codeaza.bhaiyaaa.ui.theme.CardShape
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.domain.model.CallType
 import com.codeaza.bhaiyaaa.ui.components.CallTypeIcon
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
@@ -67,7 +67,7 @@ import java.util.Calendar
  */
 @Composable
 fun HomeScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     prayerViewModel: PrayerViewModel,
     onOpenPrayer: () -> Unit,
     onOpenCalls: () -> Unit,
@@ -123,7 +123,7 @@ fun HomeScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Apna banda, phone ke andar.",
+                        text = "Your people. Your quiet.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -142,7 +142,7 @@ fun HomeScreen(
             item {
                 val missing = remember(hasPermissions) { Permissions.missingCore(context) }
                 InfoBanner(
-                    text = "BHAIYAAA needs ${missing.joinToString(", ") { context.getString(it.titleRes) }} " +
+                    text = "Sukoon needs ${missing.joinToString(", ") { context.getString(it.titleRes) }} " +
                         "to show your real data.",
                     actionLabel = "Allow",
                     onAction = { permissionLauncher.launch(Permissions.coreRequestArray()) }
@@ -378,7 +378,7 @@ fun HomeScreen(
 /**
  * Prayer silence, surfaced on the dashboard.
  *
- * This is the feature people install BHAIYAAA for, and burying it three taps
+ * This is the feature people install Sukoon for, and burying it three taps
  * deep in Settings would mean most of them never find it. Until it is set up
  * the card invites; once it is, it earns its place by answering the only
  * question that matters at a glance - when does my phone go quiet next.
@@ -441,7 +441,7 @@ private fun PrayerCard(
                         active != null ->
                             "Until ${Formatting.time(active.endMillis)}"
                         !enabled ->
-                            "Set your prayer times and BHAIYAAA silences your phone for each " +
+                            "Set your prayer times and Sukoon silences your phone for each " +
                                 "one, then puts it back exactly as it was."
                         needsLocation ->
                             "Set a location, or enter the times yourself."

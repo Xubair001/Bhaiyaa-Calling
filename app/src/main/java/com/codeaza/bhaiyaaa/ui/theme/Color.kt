@@ -3,7 +3,7 @@ package com.codeaza.bhaiyaaa.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * BHAIYAAA's palette: royal violet, with rose and periwinkle supporting it.
+ * Sukoon's palette: royal violet, with rose and periwinkle supporting it.
  *
  * Violet does something no other hue here could. This app's whole job is
  * private: a VIP list you don't want on show, notes about people, a lock over

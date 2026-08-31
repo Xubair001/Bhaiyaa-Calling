@@ -22,12 +22,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.domain.model.ThemeMode
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.ui.components.SettingsSwitchRow
 
 @Composable
-fun AppearanceSettingsScreen(viewModel: BhaiyaaaViewModel) {
+fun AppearanceSettingsScreen(viewModel: SukoonViewModel) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
     Column(
@@ -58,9 +58,9 @@ fun AppearanceSettingsScreen(viewModel: BhaiyaaaViewModel) {
         SettingsSwitchRow(
             title = "Use wallpaper colours",
             subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                "Replaces BHAIYAAA's saffron palette with colours from your wallpaper"
+                "Replaces Sukoon's saffron palette with colours from your wallpaper"
             } else {
-                "Needs Android 12 or newer — this device uses BHAIYAAA's own palette"
+                "Needs Android 12 or newer — this device uses Sukoon's own palette"
             },
             checked = settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
             // Hidden capability, not a dead switch: below API 31 the platform

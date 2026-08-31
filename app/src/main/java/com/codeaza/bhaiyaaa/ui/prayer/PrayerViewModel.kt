@@ -217,7 +217,7 @@ class PrayerViewModel(application: Application) : AndroidViewModel(application) 
         }
         val applied = SilenceController.enterSilence(getApplication(), "TEST", mode)
         if (!applied) {
-            _message.value = "This phone wouldn't let BHAIYAAA change the ringer."
+            _message.value = "This phone wouldn't let Sukoon change the ringer."
             return@launch
         }
         // The exit is an alarm, not a delay, so the phone comes back even if

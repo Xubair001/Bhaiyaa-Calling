@@ -60,7 +60,7 @@ fun ModelManagerScreen(viewModel: ModelManagerViewModel) {
     ) {
         item {
             InfoBanner(
-                text = "BHAIYAAA works fully without any of these. Installing a speech model " +
+                text = "Sukoon works fully without any of these. Installing a speech model " +
                     "only makes voice input run entirely on-device instead of through your " +
                     "phone's recognizer."
             )
@@ -102,7 +102,7 @@ fun ModelManagerScreen(viewModel: ModelManagerViewModel) {
                     Text("Licence: ${model.license}", style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Downloads only over Wi-Fi. This is the only network request BHAIYAAA " +
+                        "Downloads only over Wi-Fi. This is the only network request Sukoon " +
                             "ever makes.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -25,7 +25,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * Reacts to the system PHONE_STATE broadcast.
  *
  * This is the same mechanism caller-ID and call-blocker apps use, and it needs
- * neither the default-dialer nor the call-screening role - BHAIYAAA deliberately
+ * neither the default-dialer nor the call-screening role - Sukoon deliberately
  * does not take over the dialer or interfere with the native call UI (brief §37).
  *
  * Known platform limits, surfaced to the user in the app rather than hidden:

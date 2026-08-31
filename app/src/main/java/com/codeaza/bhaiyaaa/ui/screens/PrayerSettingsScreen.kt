@@ -126,7 +126,7 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
         if (settings.enabled && !hasDnd) {
             item {
                 InfoBanner(
-                    text = "BHAIYAAA can't silence your phone without Do Not Disturb access.",
+                    text = "Sukoon can't silence your phone without Do Not Disturb access.",
                     actionLabel = "Allow",
                     onAction = {
                         runCatching {
@@ -388,7 +388,7 @@ fun PrayerSettingsScreen(viewModel: PrayerViewModel) {
 
             item {
                 Text(
-                    "Alarms still ring during a prayer window — BHAIYAAA uses Do Not Disturb's " +
+                    "Alarms still ring during a prayer window — Sukoon uses Do Not Disturb's " +
                         "alarms-only mode, never total silence.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

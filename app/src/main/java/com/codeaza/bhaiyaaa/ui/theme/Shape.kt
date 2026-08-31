@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
  * (8 / 14 / 20 / 28 / 36) so that nesting a chip inside a card inside a sheet
  * still reads as three distinct levels rather than one soft blur.
  */
-val BhaiyaaaShapes = Shapes(
+val SukoonShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(14.dp),
     medium = RoundedCornerShape(20.dp),

@@ -73,7 +73,7 @@ class NavigationUiTest {
         composeRule.waitForIdle()
 
         listOf("Notifications", "VIP alerts", "Appearance", "Assistant personality", "AI models",
-            "Security", "Data", "About BHAIYAAA").forEach { row ->
+            "Security", "Data", "About Sukoon").forEach { row ->
             composeRule.onNodeWithText(row).assertExists()
         }
     }
@@ -125,7 +125,7 @@ class NavigationUiTest {
         composeRule.onNodeWithText("Assistant").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Ask BHAIYAAA").assertIsDisplayed()
+        composeRule.onNodeWithText("Ask Sukoon").assertIsDisplayed()
         composeRule.onNodeWithText("Who called me?").assertExists()
     }
 }

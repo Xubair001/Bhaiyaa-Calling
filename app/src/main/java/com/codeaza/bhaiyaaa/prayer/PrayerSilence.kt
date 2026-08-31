@@ -16,7 +16,7 @@ object PrayerSilence {
      * The flag is what the start alarm set, and is the cheap answer. But an
      * alarm delayed by Doze - or dropped entirely by an aggressive OEM - would
      * leave the flag false during a window that has genuinely begun, and
-     * BHAIYAAA would then blare through someone's prayer. Recomputing costs one
+     * Sukoon would then blare through someone's prayer. Recomputing costs one
      * small query and removes that failure.
      */
     suspend fun isActiveNow(context: Context, now: Long = System.currentTimeMillis()): Boolean {

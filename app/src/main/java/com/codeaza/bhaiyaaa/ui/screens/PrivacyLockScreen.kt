@@ -119,7 +119,7 @@ fun PrivacyLockScreen(
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            "Enter your PIN to unlock BHAIYAAA",
+            "Enter your PIN to unlock Sukoon",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

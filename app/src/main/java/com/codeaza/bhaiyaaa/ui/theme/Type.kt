@@ -13,7 +13,7 @@ import com.codeaza.bhaiyaaa.R
  * Manrope, bundled rather than downloaded.
  *
  * Chosen over the platform default because Roboto is what every Android app
- * looks like by default, and BHAIYAAA should not. Manrope is a semi-geometric
+ * looks like by default, and Sukoon should not. Manrope is a semi-geometric
  * grotesque: open counters keep names and numbers legible at list sizes, while
  * its heavier weights have enough personality to carry a screen title without a
  * second display face - so the whole app runs on one family at four weights,
@@ -45,7 +45,7 @@ private val Trim = LineHeightStyle(
  * reads loose and dated; body sizes keep positive tracking for legibility at a
  * glance. Every size is in sp, so it all scales with the user's font setting.
  */
-val BhaiyaaaTypography = Typography(
+val SukoonTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = Manrope,
         fontWeight = FontWeight.ExtraBold,

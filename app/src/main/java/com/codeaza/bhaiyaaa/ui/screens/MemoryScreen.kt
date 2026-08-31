@@ -43,18 +43,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.util.Formatting
 
 /**
- * Everything BHAIYAAA remembers, all of it typed by the user.
+ * Everything Sukoon remembers, all of it typed by the user.
  *
  * The empty state says so explicitly - it is the single most likely place for
  * someone to assume the app has been listening to their calls, and it hasn't.
  */
 @Composable
-fun MemoryScreen(viewModel: BhaiyaaaViewModel) {
+fun MemoryScreen(viewModel: SukoonViewModel) {
     val memories by viewModel.memories.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
 
@@ -110,7 +110,7 @@ fun MemoryScreen(viewModel: BhaiyaaaViewModel) {
                     icon = Icons.Outlined.Lightbulb,
                     title = if (query.isBlank()) "No memories yet" else "Nothing matched",
                     body = if (query.isBlank()) {
-                        "Save a note after a call and BHAIYAAA can find it later. " +
+                        "Save a note after a call and Sukoon can find it later. " +
                             "It only ever remembers what you write down — it can't hear your calls."
                     } else {
                         "No memory matches \"$query\"."
@@ -212,7 +212,7 @@ private fun AddMemoryDialog(
                     value = body,
                     onValueChange = { body = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("What should BHAIYAAA remember?") },
+                    placeholder = { Text("What should Sukoon remember?") },
                     minLines = 3
                 )
                 Spacer(Modifier.height(12.dp))

@@ -34,13 +34,13 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
     ) {
         Column(Modifier.padding(20.dp)) {
             Text(
-                "BHAIYAAA",
+                "Sukoon",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Apna banda, phone ke andar.",
+                "Your people. Your quiet.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -73,7 +73,7 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
             )
         }
 
-        SettingsSectionHeader("What BHAIYAAA will not do")
+        SettingsSectionHeader("What Sukoon will not do")
         Column(Modifier.padding(horizontal = 20.dp)) {
             Limitation(
                 "Record or listen to your calls",
@@ -90,14 +90,14 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
             Limitation(
                 "Promise an alert every time",
                 "Some phones restrict apps in the background. If VIP alerts or prayer " +
-                    "silence are ever late, allow BHAIYAAA unrestricted battery use."
+                    "silence are ever late, allow Sukoon unrestricted battery use."
             )
         }
 
         SettingsSectionHeader("Legal")
         SettingsLinkRow(
             title = "Open-source licences",
-            subtitle = "Acknowledgements for the components BHAIYAAA is built on",
+            subtitle = "Acknowledgements for the components Sukoon is built on",
             onClick = onOpenLicences
         )
 

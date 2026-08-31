@@ -13,7 +13,7 @@ sealed interface AssistantAction {
 
 /**
  * Where an answer's facts came from. Surfaced in the UI so the user can always
- * check BHAIYAAA's working rather than taking a sentence on trust.
+ * check Sukoon's working rather than taking a sentence on trust.
  */
 data class AssistantSource(val label: String, val detail: String)
 

@@ -1,6 +1,6 @@
 package com.codeaza.bhaiyaaa.domain.model
 
-/** How BHAIYAAA talks. Affects wording only - never what the data says. */
+/** How Sukoon talks. Affects wording only - never what the data says. */
 enum class PersonalityMode(val storageValue: String, val label: String, val description: String) {
     PROFESSIONAL("PROFESSIONAL", "Professional", "Plain, neutral wording."),
     FRIENDLY("FRIENDLY", "Friendly", "Warm and casual, light emoji."),

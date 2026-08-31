@@ -8,7 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
-import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
@@ -30,7 +30,7 @@ class CallSyncWorker(
         if (!settings.autoSyncEnabled) {
             Result.success()
         } else {
-            val repo = BhaiyaaaRepository(applicationContext)
+            val repo = SukoonRepository(applicationContext)
             repo.syncFromDevice()
             SettingsRepository(applicationContext).setLastSyncAt(System.currentTimeMillis())
             Result.success()

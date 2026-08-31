@@ -36,7 +36,7 @@ import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
 import com.codeaza.bhaiyaaa.domain.model.CallType
 import com.codeaza.bhaiyaaa.domain.model.Lookup
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.CallTypeIcon
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
 import com.codeaza.bhaiyaaa.ui.components.LoadingState
@@ -51,13 +51,13 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
  *
  * There is deliberately no transcript or recording here. Android blocks
  * non-system apps from capturing call audio on modern versions, and recording
- * consent law varies by country - so BHAIYAAA stores what you write down about
+ * consent law varies by country - so Sukoon stores what you write down about
  * a call, and never pretends to have heard it.
  */
 @Composable
 fun CallDetailScreen(
     callId: Long,
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenContact: (String) -> Unit
 ) {
     val context = LocalContext.current

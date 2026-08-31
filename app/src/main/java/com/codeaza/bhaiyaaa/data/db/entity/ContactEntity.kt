@@ -5,7 +5,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * A contact as BHAIYAAA knows it. Keyed by the normalised phone number so a
+ * A contact as Sukoon knows it. Keyed by the normalised phone number so a
  * device re-sync always lands on the same row.
  *
  * Deliberately holds only *user-owned* data (VIP tier, tag, notes, per-contact

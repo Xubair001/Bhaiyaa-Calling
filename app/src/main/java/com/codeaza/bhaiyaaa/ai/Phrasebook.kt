@@ -3,11 +3,11 @@ package com.codeaza.bhaiyaaa.ai
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 
 /**
- * BHAIYAAA's tone, isolated behind an interface.
+ * Sukoon's tone, isolated behind an interface.
  *
  * Two reasons it is not just hard-coded strings:
  *  - localisation: [ResourcePhrasebook] reads the same phrases out of
- *    strings.xml, so a values-ur/ folder translates BHAIYAAA without touching
+ *    strings.xml, so a values-ur/ folder translates Sukoon without touching
  *    a line of logic.
  *  - testability: [DefaultPhrasebook] is pure Kotlin, so the assistant's
  *    behaviour can be unit-tested on the JVM with no Android context.

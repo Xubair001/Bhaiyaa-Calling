@@ -142,6 +142,6 @@ class DeviceCallLogRepository(private val context: Context) {
     }
 
     private companion object {
-        const val TAG = "BhaiyaaaCallLog"
+        const val TAG = "SukoonCallLog"
     }
 }

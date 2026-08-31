@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
 import com.codeaza.bhaiyaaa.ui.components.VipBadge
@@ -44,7 +44,7 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
 
 @Composable
 fun ContactsScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenContact: (String) -> Unit
 ) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
@@ -109,7 +109,7 @@ fun ContactsScreen(
                 icon = Icons.Filled.People,
                 title = if (contacts.isEmpty()) "No contacts yet" else "Nothing matched",
                 body = if (!hasPermissions) {
-                    "Grant the Contacts permission and BHAIYAAA will pull them in."
+                    "Grant the Contacts permission and Sukoon will pull them in."
                 } else if (contacts.isEmpty()) {
                     "Tap refresh to sync your phone's address book."
                 } else {

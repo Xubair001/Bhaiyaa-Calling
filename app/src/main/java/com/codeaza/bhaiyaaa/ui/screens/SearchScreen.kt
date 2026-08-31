@@ -31,7 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.CallRow
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
 import com.codeaza.bhaiyaaa.ui.components.EmptyState
@@ -41,7 +41,7 @@ import com.codeaza.bhaiyaaa.util.PhoneNumbers
 /** One search across contacts, calls, memories and reminders (brief §30). */
 @Composable
 fun SearchScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenContact: (String) -> Unit,
     onOpenCall: (Long) -> Unit
 ) {

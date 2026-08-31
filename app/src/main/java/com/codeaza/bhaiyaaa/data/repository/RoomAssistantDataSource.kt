@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
  */
 class RoomAssistantDataSource(
     private val db: AppDatabase,
-    private val repository: BhaiyaaaRepository
+    private val repository: SukoonRepository
 ) : AssistantDataSource {
 
     override suspend fun allContacts(): List<ContactEntity> = withContext(Dispatchers.IO) {

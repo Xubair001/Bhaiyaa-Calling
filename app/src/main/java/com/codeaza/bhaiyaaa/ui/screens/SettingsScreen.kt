@@ -19,7 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.codeaza.bhaiyaaa.ui.BhaiyaaaViewModel
+import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.components.SettingsLinkRow
 import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.util.SecurePrefs
@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun SettingsScreen(
-    viewModel: BhaiyaaaViewModel,
+    viewModel: SukoonViewModel,
     onOpenNotifications: () -> Unit,
     onOpenVipAlerts: () -> Unit,
     onOpenPrayer: () -> Unit,
@@ -113,7 +113,7 @@ fun SettingsScreen(
 
         SettingsSectionHeader("About")
         SettingsLinkRow(
-            title = "About BHAIYAAA",
+            title = "About Sukoon",
             subtitle = "Version, licences, what it can and can't do",
             icon = Icons.Filled.Info,
             onClick = onOpenAbout

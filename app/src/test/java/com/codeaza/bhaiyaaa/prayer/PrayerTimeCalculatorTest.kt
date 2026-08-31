@@ -17,7 +17,7 @@ import java.util.TimeZone
  *
  * Exact minute values are deliberately not asserted - those belong to the Adhan
  * library, and pinning them here would just re-test someone else's arithmetic.
- * What is asserted is everything BHAIYAAA is responsible for: ordering, the
+ * What is asserted is everything Sukoon is responsible for: ordering, the
  * override rules, the silence window, and never inventing a time it doesn't have.
  */
 class PrayerTimeCalculatorTest {

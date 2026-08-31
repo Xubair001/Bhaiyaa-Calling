@@ -67,7 +67,7 @@ object BiometricAuth {
         )
 
         val info = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock BHAIYAAA")
+            .setTitle("Unlock Sukoon")
             .setSubtitle("Your VIP list and private notes are locked")
             .setNegativeButtonText("Use PIN")
             .setAllowedAuthenticators(AUTHENTICATORS)

@@ -15,7 +15,7 @@ import com.codeaza.bhaiyaaa.data.db.projection.ContactStats
 import com.codeaza.bhaiyaaa.data.export.DataTransfer
 import com.codeaza.bhaiyaaa.data.export.TransferResult
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
-import com.codeaza.bhaiyaaa.data.repository.BhaiyaaaRepository
+import com.codeaza.bhaiyaaa.data.repository.SukoonRepository
 import com.codeaza.bhaiyaaa.domain.model.AppSettings
 import com.codeaza.bhaiyaaa.domain.model.Lookup
 import com.codeaza.bhaiyaaa.domain.model.MemorySource
@@ -55,9 +55,9 @@ enum class LockState { NOT_SET, LOCKED, UNLOCKED }
  * Screens observe, they don't compute: every list here is a Room Flow, so the
  * UI updates itself when data changes rather than needing manual refreshes.
  */
-class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application) {
+class SukoonViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = BhaiyaaaRepository(application)
+    private val repository = SukoonRepository(application)
     private val settingsRepo = SettingsRepository(application)
     private val db = AppDatabase.getInstance(application)
     private val insightsCalculator = InsightsCalculator(db.callRecordDao())
@@ -174,7 +174,7 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
                 refreshDerived()
                 when {
                     !result.contactsPermission && !result.callLogPermission ->
-                        showMessage("Grant Contacts and Call log so BHAIYAAA has something to work with.")
+                        showMessage("Grant Contacts and Call log so Sukoon has something to work with.")
 
                     // A granted permission that still reads nothing means the
                     // provider refused - say so rather than showing an empty
@@ -186,7 +186,7 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
                                     "contacts".takeIf { result.contactsError != null },
                                     "call log".takeIf { result.callLogError != null }
                                 ).joinToString(" and ") +
-                                ". Check BHAIYAAA's permissions in system settings."
+                                ". Check Sukoon's permissions in system settings."
                         )
 
                     result.storedContacts == 0 && result.callLogPermission && result.storedCalls == 0 ->
@@ -361,7 +361,7 @@ class BhaiyaaaViewModel(application: Application) : AndroidViewModel(application
             val rule = repository.ruleForOrCreate(level)
             repository.saveRule(rule.copy(bypassDnd = applied))
             if (enabled && !applied) {
-                showMessage("This device wouldn't allow BHAIYAAA past Do Not Disturb.")
+                showMessage("This device wouldn't allow Sukoon past Do Not Disturb.")
             }
             onResult(applied)
         }

@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
  * The app's single door onto local data. Everything is on-device: there is no
  * network call anywhere in this class, and no data leaves the phone.
  */
-class BhaiyaaaRepository(
+class SukoonRepository(
     private val context: Context,
     private val db: AppDatabase = AppDatabase.getInstance(context),
     private val deviceContacts: DeviceContactsRepository = DeviceContactsRepository(context),
@@ -146,7 +146,7 @@ class BhaiyaaaRepository(
         val storedCalls: Int = 0
     ) {
         /**
-         * True when BHAIYAAA holds the permission but still ended up with
+         * True when Sukoon holds the permission but still ended up with
          * nothing - the case worth telling the user about, because it means
          * something other than a missing permission went wrong.
          */
