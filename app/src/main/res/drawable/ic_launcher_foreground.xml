@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Sukoon's mark: a crescent with a single point of light.
+  Sukoon's mark: a pointed arch standing on a threshold.
 
-  The crescent says what the name says - night, stillness, quiet - rather than
-  enumerating features, and nods to the lunar calendar behind prayer times
-  without becoming a flag motif. The point of light is what separates it from
-  Android's own Do Not Disturb glyph, which is a bare crescent; a circle rather
-  than a five-pointed star, so it reads as a mark and not as a flag.
+  The arch is the two-centred form of Islamic architecture, and it says what
+  the app does without listing features - a doorway holds the noise out, and
+  the few who matter walk through it. The opening is deliberately empty: the
+  quiet is the point, so nothing fills it.
 
-  The crescent is one path of two subpaths with evenOdd fill, so the second
-  circle punches the shape out of the first. The dot is a SEPARATE path on
-  purpose: inside that same evenOdd path it would sit within the cutout circle,
-  giving it an even crossing count, and it would render as a hole rather than a
-  dot.
+  Shapes were chosen by elimination. A crescent is Android's own Do Not
+  Disturb glyph. A ring above a bar reads as a profile avatar, a ring in a
+  bowl reads as a smiley, descending bars read as a music equaliser, and a
+  ROUND arch reads as a lowercase "n". The pointed arch collides with none of
+  them and still resolves at 48px.
 
-  Everything sits inside x 23..79, y 26..84 of the 108 viewport, within the
-  66dp safe zone an adaptive launcher may crop to.
+  Geometry is a real two-centred arch: each side is an arc struck from a
+  centre on the opposite side of the springing line. The inner curve uses its
+  own, wider centres (d=29.46 against the outer 25.25) so the stroke stays
+  6.8 wide at the apex instead of ballooning the way concentric arcs do.
+
+  evenOdd is required, not decorative: both subpaths wind the same way, so
+  under nonZero the inner arch would fill solid instead of cutting the
+  opening. The plinth is a separate path - inside the evenOdd path it would
+  punch a hole - and overlaps the feet by 0.5 so no seam shows.
+
+  Everything sits within x 31.95..76.05, y 28.93..80.90, inside the 66dp
+  circle an adaptive launcher may crop to.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -25,9 +34,9 @@
     <path
         android:fillColor="#E9DDFF"
         android:fillType="evenOdd"
-        android:pathData="M23,55 A29,29 0 1,0 81,55 A29,29 0 1,0 23,55 Z
-                          M39,46 A25,25 0 1,0 89,46 A25,25 0 1,0 39,46 Z" />
+        android:pathData="M34.60,75.10 L34.60,65.75 A44.65,44.65 0 0,1 54.00,28.93 A44.65,44.65 0 0,1 73.40,65.75 L73.40,75.10 Z
+                          M41.40,75.10 L41.40,65.75 A42.06,42.06 0 0,1 54.00,35.73 A42.06,42.06 0 0,1 66.60,65.75 L66.60,75.10 Z" />
     <path
         android:fillColor="#E9DDFF"
-        android:pathData="M69,36 A5,5 0 1,0 79,36 A5,5 0 1,0 69,36 Z" />
+        android:pathData="M35.10,74.60 L72.90,74.60 A3.15,3.15 0 0,1 72.90,80.90 L35.10,80.90 A3.15,3.15 0 0,1 35.10,74.60 Z" />
 </vector>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Status bar icon. Android masks this to a silhouette, so it is the mark
+  alone in flat white - the launcher's violet field would be discarded.
+  Scaled to a 21dp box inside the 24dp viewport per the status bar spec.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M4.16,20.16 L4.16,16.38 A18.04,18.04 0 0,1 12.00,1.50 A18.04,18.04 0 0,1 19.84,16.38 L19.84,20.16 Z
+                          M6.91,20.16 L6.91,16.38 A16.99,16.99 0 0,1 12.00,4.25 A16.99,16.99 0 0,1 17.09,16.38 L17.09,20.16 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M4.36,19.95 L19.64,19.95 A1.27,1.27 0 0,1 19.64,22.50 L4.36,22.50 A1.27,1.27 0 0,1 4.36,19.95 Z" />
+</vector>

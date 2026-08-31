@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Themed-icon variant for Android 13+. Same shape; the system supplies the
-  colour, so the fill here is only a placeholder it will replace.
+  Themed-icon variant for Android 13+: same mark, and the system replaces
+  the fill with the wallpaper-derived colour.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -11,9 +11,9 @@
     <path
         android:fillColor="#FFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M23,55 A29,29 0 1,0 81,55 A29,29 0 1,0 23,55 Z
-                          M39,46 A25,25 0 1,0 89,46 A25,25 0 1,0 39,46 Z" />
+        android:pathData="M34.60,75.10 L34.60,65.75 A44.65,44.65 0 0,1 54.00,28.93 A44.65,44.65 0 0,1 73.40,65.75 L73.40,75.10 Z
+                          M41.40,75.10 L41.40,65.75 A42.06,42.06 0 0,1 54.00,35.73 A42.06,42.06 0 0,1 66.60,65.75 L66.60,75.10 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M69,36 A5,5 0 1,0 79,36 A5,5 0 1,0 69,36 Z" />
+        android:pathData="M35.10,74.60 L72.90,74.60 A3.15,3.15 0 0,1 72.90,80.90 L35.10,80.90 A3.15,3.15 0 0,1 35.10,74.60 Z" />
 </vector>

@@ -51,7 +51,7 @@ object Notifier {
         }
 
         val builder = NotificationCompat.Builder(context, NotificationChannels.channelFor(level))
-            .setSmallIcon(android.R.drawable.sym_call_incoming)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -80,7 +80,7 @@ object Notifier {
     fun notifyTestAlert(context: Context, level: VipLevel) {
         if (!canPost(context)) return
         val builder = NotificationCompat.Builder(context, NotificationChannels.channelFor(level))
-            .setSmallIcon(android.R.drawable.sym_call_incoming)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("${level.label} test alert")
             .setContentText("This is how a ${level.label} call will reach you.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -95,7 +95,7 @@ object Notifier {
     fun notifyReminder(context: Context, reminderId: Long, text: String) {
         if (!canPost(context)) return
         val builder = NotificationCompat.Builder(context, NotificationChannels.REMINDERS)
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Reminder")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
@@ -109,7 +109,7 @@ object Notifier {
         if (!canPost(context)) return
         val text = if (count > 1) "$contactName called $count times" else "$contactName tried to reach you"
         val builder = NotificationCompat.Builder(context, NotificationChannels.MISSED)
-            .setSmallIcon(android.R.drawable.sym_call_missed)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Missed an important call")
             .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

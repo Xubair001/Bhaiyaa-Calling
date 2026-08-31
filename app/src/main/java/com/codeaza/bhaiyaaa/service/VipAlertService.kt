@@ -1,5 +1,6 @@
 package com.codeaza.bhaiyaaa.service
 
+import com.codeaza.bhaiyaaa.R
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -98,7 +99,7 @@ class VipAlertService : Service() {
             this,
             NotificationChannels.channelFor(level)
         )
-            .setSmallIcon(android.R.drawable.sym_call_incoming)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(if (name.isBlank()) "${level.label} calling" else name)
             .setContentText(message.ifBlank { "${level.label} caller" })
             .setPriority(NotificationCompat.PRIORITY_HIGH)

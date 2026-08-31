@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Deep violet, lifted slightly toward the top so the crescent sits in the
-  lighter part of the field rather than on flat colour.
+  Deep violet field. Two layers: a linear gradient top to bottom, then a soft
+  radial lift centred behind the arch's opening so the mark sits in light
+  rather than on flat colour, and the eye is drawn through the doorway.
+
+  The radial's outer stop is the same hue at zero alpha, not transparent
+  black - fading to black would grey the midtones into a dirty halo.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -15,7 +19,18 @@
                 android:endX="54" android:endY="108"
                 android:type="linear">
                 <item android:offset="0.0" android:color="#3B2A6B" />
-                <item android:offset="1.0" android:color="#1A1230" />
+                <item android:offset="1.0" android:color="#150E28" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M0,0 L108,0 L108,108 L0,108 Z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:centerX="54" android:centerY="44"
+                android:gradientRadius="60"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#59745AD6" />
+                <item android:offset="1.0" android:color="#00745AD6" />
             </gradient>
         </aapt:attr>
     </path>
