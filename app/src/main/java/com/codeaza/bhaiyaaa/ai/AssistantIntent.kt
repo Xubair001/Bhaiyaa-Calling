@@ -28,6 +28,20 @@ sealed interface AssistantIntent {
     data class SilenceFor(val minutes: Int) : AssistantIntent
     /** "when is the next prayer", "when does my phone go quiet". */
     data object NextQuietTime : AssistantIntent
+
+    /**
+     * "when is Asr", "what time is Fajr today".
+     *
+     * Distinct from [NextQuietTime] because they are different questions: one
+     * asks what is coming, the other asks about a named prayer that may
+     * already have passed. Answering the second with the first would be
+     * confidently wrong.
+     */
+    data class PrayerTimeToday(val prayer: com.codeaza.bhaiyaaa.domain.model.Prayer) :
+        AssistantIntent
+
+    /** "turn the adhan on", "stop playing the azan". */
+    data class SetAdhan(val enabled: Boolean) : AssistantIntent
     data object Help : AssistantIntent
     data object Unknown : AssistantIntent
 }

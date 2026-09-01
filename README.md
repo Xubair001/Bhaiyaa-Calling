@@ -45,12 +45,14 @@ com.codeaza.bhaiyaaa
 │   ├── model/          Model catalogue, storage, download worker
 │   └── speech/         Vosk (offline) and platform recognizers behind one interface
 ├── data/
+│   ├── content/        Hadith content layer (assets JSON, rotation)
 │   ├── db/             Room entities, DAOs, migrations, FTS
 │   ├── prefs/          DataStore settings
 │   ├── export/         JSON export / import
-│   └── repository/     Device contacts, call log, aggregate repository
+│   └── repository/     Device contacts, call log, recordings, aggregate repository
 ├── domain/             Models and use cases (insights, search)
 ├── notifications/      Channels and notification posting
+├── prayer/             Prayer times, periods, silence windows, adhan, scheduling
 ├── service/            Call receiver, alert manager, alarms, WorkManager sync
 ├── ui/                 Compose screens, components, navigation, theme
 └── util/               Phone numbers, permissions, secure prefs, biometrics
@@ -58,6 +60,10 @@ com.codeaza.bhaiyaaa
 
 `AssistantEngine` and `SpeechRecognizerEngine` are interfaces, so a different
 local model can be dropped in without touching the UI.
+
+`PrayerTimeCalculator.timesForDay` is the single place a prayer becomes an
+instant. Silencing, the adhan, the dashboard and the Hadith rotation all read
+from it, so there is no second definition of "when is Asr" anywhere.
 
 ---
 
@@ -88,9 +94,43 @@ provenance on each entry. Optional private memories hidden behind the lock.
 
 **Assistant** — a local rule-based engine over your own data. It answers missed
 calls, VIP lists, call counts, most-contacted, last call with a person, memory
-recall, and creates real reminders from natural language ("remind me to call Ali
-tomorrow at 5pm"). Answers carry their sources. When it can't parse a question
+recall, when a named prayer is, and creates real reminders from natural language
+("remind me to call Ali tomorrow at 5pm"). It can silence the phone and switch
+the adhan on or off. Answers carry their sources, a failed turn offers a retry,
+and the thread survives the process being killed. When it can't parse a question
 it says so rather than guessing.
+
+**Prayer times** — calculated from coordinates or typed in, per prayer. Each
+prayer can only hold a time in its own half of the clock: Fajr is AM, everything
+after it is PM. That is enforced in the picker (which has no meridiem toggle to
+get wrong), in the DAO (so an import or the assistant cannot write an invalid
+one), and by a migration that corrects rows saved before the rule existed. A
+time you enter always wins over the calculation, and changing your location
+never overwrites one.
+
+**Adhan** — optional, off until you turn it on. Armed from the same prayer times
+as everything else, played by a short foreground service on the alarm stream so
+it survives Sukoon's own Do Not Disturb window. It cannot play twice for one
+prayer, will not play for a prayer you switched off, and stays silent if its
+alarm arrives more than fifteen minutes late. **No recording ships in the APK** —
+there is no licence to redistribute one. Choose a sound already on the phone, or
+record your own.
+
+**Recordings** — record or import a sound, use it as the adhan, or file it
+against a specific call from that call's detail screen. Audio is copied into the
+app's private storage, so it is not backed up, not readable by other apps, and
+goes when the app does. **Not call recording** — see the limitations below for
+why that is a platform gate rather than a choice.
+
+**Hadith** — a narration for the current prayer period on the dashboard,
+rotating every five minutes with no immediate repeats. Content lives in
+`assets/hadith/hadith.json` so it can be reviewed and corrected without touching
+code. Every entry names its collection **and hadith number** — one that could
+not be confirmed against sunnah.com was dropped rather than cited vaguely — and
+anything outside Bukhari and Muslim carries its grading (al-Albani for Abu
+Dawud, Darussalam for Tirmidhi and an-Nasa'i). Where two collections are graded
+differently the lower grade is recorded, and nothing graded weak is included:
+`HadithGrade` has no value for it, so the content file cannot express one.
 
 **Personality** — Professional / Friendly / Bhai Mode, applied through a
 `Phrasebook` interface backed by `strings.xml`.
@@ -127,9 +167,14 @@ icon; VIP tiers never signalled by colour alone.
 
 These are stated in-app under **Settings → About**, not hidden.
 
-- **No call recording or transcription.** Modern Android blocks non-system apps
-  from capturing call audio, and consent law varies by jurisdiction. Sukoon
-  stores what *you* write down and never implies it heard a call.
+- **No call recording or transcription.** `AudioSource.VOICE_CALL` requires
+  `CAPTURE_AUDIO_OUTPUT`, which Android grants only to privileged, pre-installed
+  apps; becoming the default dialer does not earn it, and Play policy has barred
+  the accessibility-service workaround since May 2022. Tools that do manage it —
+  BCR, for instance — require root or Magisk to install as a system app. Consent
+  law also varies by jurisdiction. So Sukoon does the achievable half: a voice
+  note recorded *after* a call, or a file the phone's own dialer produced and you
+  imported, filed against that call. It never implies it heard anything.
 - **Not a dialer or call screener.** It listens for the system `PHONE_STATE`
   broadcast — the mechanism caller-ID apps use — and takes no privileged role.
 - **No call blocking.** "Spam" is a label for your own reference.
@@ -139,6 +184,14 @@ These are stated in-app under **Settings → About**, not hidden.
 - **Reminders are inexact.** They use `setAndAllowWhileIdle` rather than
   requesting `SCHEDULE_EXACT_ALARM`, so deep Doze can delay one by minutes.
 - **Exports are plain JSON**, not encrypted backups.
+- **No adhan recording is bundled.** Sukoon has no licence to redistribute one,
+  and an unattributed recording in an app about prayer would be worse than none.
+  The adhan plays a sound you chose or recorded, and defaults to the phone's own
+  alarm tone.
+- **Isha cannot be set past midnight.** Every prayer after Fajr is PM-only,
+  which is right everywhere the app is usable and wrong at extreme latitudes.
+- **Recordings are not call recordings.** The microphone opens only while you
+  hold Record.
 - **The assistant is not an LLM.** It's intent matching over direct database
   queries — which is what makes "never invents an answer" a property of the
   design rather than a hope. `AssistantEngine` is an interface, so a local model
@@ -149,14 +202,23 @@ These are stated in-app under **Settings → About**, not hidden.
 ## Testing
 
 ```bash
-./gradlew test                      # 91 unit tests, JVM + Robolectric
+./gradlew testDebugUnitTest         # 313 unit tests, JVM + Robolectric
 ./gradlew connectedDebugAndroidTest # instrumented UI tests (needs a device)
 ```
 
 Unit tests cover phone-number reconciliation, time-expression parsing, intent
-parsing, assistant behaviour (including that it *refuses* to invent answers),
-Room DAOs, sync idempotency, FTS index consistency, insight aggregation, and the
-v3→v4 migration against a real v3 database.
+parsing, assistant behaviour (including that it *refuses* to invent answers or a
+prayer time it does not have), the AM/PM rule at the domain, DAO and migration
+layers, optimistic prayer-time edits and their rollback, the Quiet times section
+ordering, prayer periods, when the adhan is allowed to sound, the Hadith content
+file's integrity and its no-repeat rotation, Room DAOs, sync idempotency, FTS
+index consistency, insight aggregation, and the v3→v4 and v7→v8 migrations
+against real databases of those versions.
+
+`./gradlew test` also runs the release variant, where `ReminderUiTest` fails:
+Robolectric cannot resolve the launcher activity in the minified build. That is
+a known limitation of running Compose UI tests against R8 output, not a product
+defect — the same six tests pass in `testDebugUnitTest`.
 
 Instrumented tests cover navigation across all destinations, settings, the
 personality preview, and component rendering/accessibility.
@@ -173,7 +235,7 @@ Requested progressively, each with an in-context explanation, and all optional.
 | `READ_CALL_LOG` | History, insights, assistant answers | Those screens stay empty |
 | `READ_PHONE_STATE` | Detect a ringing VIP in time | No VIP alerts |
 | `POST_NOTIFICATIONS` | Deliver alerts | Vibration/flash still fire |
-| `RECORD_AUDIO` | Voice input — asked only at the mic button | Type instead |
+| `RECORD_AUDIO` | Voice input, and recording an adhan | Type instead; import a file |
 | `INTERNET` | Model downloads only | Everything else works |
 
 Torch control uses `CameraManager.setTorchMode()`, which needs no `CAMERA`
@@ -184,7 +246,7 @@ permission — so it isn't requested. Cloud backup is disabled in the manifest.
 ## Stack
 
 Kotlin 2.0.21 · AGP 8.7.3 · Gradle 8.9 · compileSdk 35 · minSdk 26 ·
-Compose BOM 2024.10.01 · Room 2.6.1 (KSP) · WorkManager · DataStore ·
+Compose BOM 2024.10.01 · Room 2.6.1 (KSP, schema v8) · WorkManager · DataStore ·
 Biometric · Security-Crypto · Vosk 0.3.47 (Apache-2.0)
 
 All dependencies are free and open source.

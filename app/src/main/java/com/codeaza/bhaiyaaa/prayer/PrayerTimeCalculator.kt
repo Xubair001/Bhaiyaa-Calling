@@ -16,6 +16,15 @@ import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import java.util.Calendar
 import java.util.TimeZone
 
+/** One prayer resolved to an instant on a particular day. */
+data class ResolvedPrayerTime(
+    val prayer: Prayer,
+    /** The adhan itself - not the start of the quiet window, which may be earlier. */
+    val atMillis: Long,
+    /** True when a time the user typed replaced the calculation. */
+    val isOverridden: Boolean
+)
+
 /**
  * Works out when each prayer falls and how long Sukoon should stay quiet.
  *
@@ -26,12 +35,68 @@ import java.util.TimeZone
  * A calculation is still a model, and the masjid down the road is the actual
  * answer - the two routinely differ by a few minutes. So any prayer can carry a
  * manual override that wins over the calculation, and the UI marks which times
- * were overridden.
+ * were overridden. An override is never rewritten by a later location change:
+ * the calculation supplies the prayers the user has not spoken about, and
+ * nothing else.
+ *
+ * [timesForDay] is the single place a prayer becomes an instant. Silencing,
+ * the adhan, the dashboard and the Hadith rotation all read from it, so there
+ * is no second definition of "when is Asr" anywhere in the app.
  *
  * Pure and side-effect free, taking its date and zone as parameters, so the
  * whole thing is testable without a device or a clock.
  */
 object PrayerTimeCalculator {
+
+    /** The window offset may shift a window this far either side of the adhan. */
+    private val OFFSET_RANGE = -60..60
+
+    /** A quiet window this long is neither pointless nor a whole afternoon. */
+    private val SILENCE_MINUTES_RANGE = 1..180
+
+    /**
+     * Every prayer that has a time on this day, resolved to an instant.
+     *
+     * Deliberately *not* gated on [PrayerSettings.enabled]: knowing when Asr is
+     * and choosing to silence the phone for it are different questions, and the
+     * Hadith card and the adhan both need the first without the second.
+     * Silencing applies its own gate in [windowsForDay].
+     *
+     * @param dayStartMillis any instant within the local day being calculated.
+     */
+    fun timesForDay(
+        settings: PrayerSettings,
+        prayers: List<PrayerEntity>,
+        dayStartMillis: Long,
+        zone: TimeZone = TimeZone.getDefault()
+    ): List<ResolvedPrayerTime> {
+        val calculated = calculatedTimes(settings, dayStartMillis, zone)
+
+        return prayers.mapNotNull { entity ->
+            val prayer = Prayer.from(entity.name)
+            val override = entity.manualMinutesFromMidnight
+                ?.let { localTimeToMillis(dayStartMillis, it, zone) }
+
+            // Manual mode uses only what the user typed. Automatic prefers
+            // the override when there is one, and falls back to the sky.
+            val at = when (settings.mode) {
+                PrayerMode.MANUAL -> override
+                PrayerMode.AUTOMATIC -> override ?: calculated[prayer]
+            } ?: return@mapNotNull null
+
+            ResolvedPrayerTime(prayer, at, isOverridden = override != null)
+        }.sortedBy { it.atMillis }
+    }
+
+    /** [timesForDay] keyed by prayer, for callers asking about one at a time. */
+    fun anchorsForDay(
+        settings: PrayerSettings,
+        prayers: List<PrayerEntity>,
+        dayStartMillis: Long,
+        zone: TimeZone = TimeZone.getDefault()
+    ): Map<Prayer, Long> =
+        timesForDay(settings, prayers, dayStartMillis, zone)
+            .associate { it.prayer to it.atMillis }
 
     /**
      * @param dayStartMillis any instant within the local day being calculated.
@@ -46,35 +111,26 @@ object PrayerTimeCalculator {
     ): List<SilenceWindow> {
         if (!settings.isUsable) return emptyList()
 
-        val calculated = calculatedTimes(settings, dayStartMillis, zone)
+        val byName = prayers.associateBy { it.name }
 
-        return prayers
-            .mapNotNull { entity ->
-                val prayer = Prayer.from(entity.name)
-                val override = entity.manualMinutesFromMidnight
-                    ?.let { localTimeToMillis(dayStartMillis, it, zone) }
-
-                // Manual mode uses only what the user typed. Automatic prefers
-                // the override when there is one, and falls back to the sky.
-                val start = when (settings.mode) {
-                    PrayerMode.MANUAL -> override
-                    PrayerMode.AUTOMATIC -> override ?: calculated[prayer]
-                } ?: return@mapNotNull null
+        return timesForDay(settings, prayers, dayStartMillis, zone)
+            .mapNotNull { resolved ->
+                val entity = byName[resolved.prayer.storageValue] ?: return@mapNotNull null
 
                 // The offset shifts the window, it does not extend it: a
                 // 15-minute window opening 3 minutes early runs from T-3 to
                 // T+12, so "silent for 15 minutes" stays literally true.
-                val offset = entity.startOffsetMinutes.coerceIn(-60, 60)
+                val offset = entity.startOffsetMinutes.coerceIn(OFFSET_RANGE)
                 SilenceWindow(
-                    key = SilenceWindow.prayerKey(prayer),
-                    label = prayer.label,
+                    key = SilenceWindow.prayerKey(resolved.prayer),
+                    label = resolved.prayer.label,
                     source = SilenceSource.PRAYER,
-                    anchorMillis = start,
-                    startMillis = start + offset * 60_000L,
-                    durationMinutes = entity.silenceMinutes.coerceIn(1, 180),
+                    anchorMillis = resolved.atMillis,
+                    startMillis = resolved.atMillis + offset * 60_000L,
+                    durationMinutes = entity.silenceMinutes.coerceIn(SILENCE_MINUTES_RANGE),
                     enabled = entity.enabled,
                     mode = settings.silenceMode,
-                    isOverridden = override != null
+                    isOverridden = resolved.isOverridden
                 )
             }
             .sortedBy { it.startMillis }

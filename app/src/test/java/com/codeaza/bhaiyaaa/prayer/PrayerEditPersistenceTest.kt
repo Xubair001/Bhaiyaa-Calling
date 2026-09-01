@@ -69,7 +69,7 @@ class PrayerEditPersistenceTest {
 
     @Test
     fun `setting a manual time persists to the database`() = runTest {
-        db.prayerDao().setManualTime(Prayer.DHUHR.storageValue, 12 * 60 + 30)
+        db.prayerDao().setManualTime(Prayer.DHUHR, 12 * 60 + 30)
 
         val row = db.prayerDao().find(Prayer.DHUHR.storageValue)
         assertThat(row?.manualMinutesFromMidnight).isEqualTo(750)
@@ -77,7 +77,7 @@ class PrayerEditPersistenceTest {
 
     @Test
     fun `a saved manual time reaches the computed window`() = runTest {
-        db.prayerDao().setManualTime(Prayer.DHUHR.storageValue, 12 * 60 + 30)
+        db.prayerDao().setManualTime(Prayer.DHUHR, 12 * 60 + 30)
 
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
@@ -97,7 +97,7 @@ class PrayerEditPersistenceTest {
             Prayer.MAGHRIB to (18 * 60 + 55),
             Prayer.ISHA to (20 * 60 + 20)
         )
-        wanted.forEach { (p, m) -> db.prayerDao().setManualTime(p.storageValue, m) }
+        wanted.forEach { (p, m) -> db.prayerDao().setManualTime(p, m) }
 
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic.copy(mode = PrayerMode.MANUAL), db.prayerDao().allOnce(), day, zone
@@ -111,8 +111,8 @@ class PrayerEditPersistenceTest {
 
     @Test
     fun `editing a time a second time replaces the first`() = runTest {
-        db.prayerDao().setManualTime(Prayer.ASR.storageValue, 16 * 60)
-        db.prayerDao().setManualTime(Prayer.ASR.storageValue, 17 * 60 + 5)
+        db.prayerDao().setManualTime(Prayer.ASR, 16 * 60)
+        db.prayerDao().setManualTime(Prayer.ASR, 17 * 60 + 5)
 
         val windows = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
@@ -127,8 +127,8 @@ class PrayerEditPersistenceTest {
             automatic, db.prayerDao().allOnce(), day, zone
         ).first { it.key == SilenceWindow.prayerKey(Prayer.MAGHRIB) }.anchorMillis
 
-        db.prayerDao().setManualTime(Prayer.MAGHRIB.storageValue, 19 * 60)
-        db.prayerDao().setManualTime(Prayer.MAGHRIB.storageValue, null)
+        db.prayerDao().setManualTime(Prayer.MAGHRIB, 19 * 60)
+        db.prayerDao().setManualTime(Prayer.MAGHRIB, null)
 
         val after = PrayerTimeCalculator.windowsForDay(
             automatic, db.prayerDao().allOnce(), day, zone
@@ -139,7 +139,7 @@ class PrayerEditPersistenceTest {
 
     @Test
     fun `editing the silence length and offset persists and shifts the window`() = runTest {
-        db.prayerDao().setManualTime(Prayer.ISHA.storageValue, 20 * 60)
+        db.prayerDao().setManualTime(Prayer.ISHA, 20 * 60)
         db.prayerDao().setSilenceMinutes(Prayer.ISHA.storageValue, 30)
         val row = requireNotNull(db.prayerDao().find(Prayer.ISHA.storageValue))
         db.prayerDao().upsert(row.copy(startOffsetMinutes = -10))
@@ -200,7 +200,7 @@ class PrayerEditPersistenceTest {
     @Test
     fun `a time typed at midnight is stored, not treated as unset`() = runTest {
         // 00:00 is minute zero, which must not be confused with "no override".
-        db.prayerDao().setManualTime(Prayer.FAJR.storageValue, 0)
+        db.prayerDao().setManualTime(Prayer.FAJR, 0)
 
         val row = db.prayerDao().find(Prayer.FAJR.storageValue)
         assertThat(row?.manualMinutesFromMidnight).isEqualTo(0)

@@ -13,6 +13,7 @@ import com.codeaza.bhaiyaaa.data.db.dao.PrayerDao
 import com.codeaza.bhaiyaaa.data.db.dao.SilenceScheduleDao
 import com.codeaza.bhaiyaaa.data.db.dao.ReminderDao
 import com.codeaza.bhaiyaaa.data.db.dao.TagDao
+import com.codeaza.bhaiyaaa.data.db.dao.VoiceRecordingDao
 import com.codeaza.bhaiyaaa.data.db.entity.AiModelEntity
 import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ContactEntity
@@ -23,6 +24,7 @@ import com.codeaza.bhaiyaaa.data.db.entity.PrayerEntity
 import com.codeaza.bhaiyaaa.data.db.entity.SilenceScheduleEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.entity.TagEntity
+import com.codeaza.bhaiyaaa.data.db.entity.VoiceRecordingEntity
 
 @Database(
     entities = [
@@ -35,9 +37,10 @@ import com.codeaza.bhaiyaaa.data.db.entity.TagEntity
         AiModelEntity::class,
         NotificationRuleEntity::class,
         PrayerEntity::class,
-        SilenceScheduleEntity::class
+        SilenceScheduleEntity::class,
+        VoiceRecordingEntity::class
     ],
-    version = 7,
+    version = 9,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -50,6 +53,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationRuleDao(): NotificationRuleDao
     abstract fun prayerDao(): PrayerDao
     abstract fun silenceScheduleDao(): SilenceScheduleDao
+    abstract fun voiceRecordingDao(): VoiceRecordingDao
 
     companion object {
         private const val DB_NAME = "bhaiyaaa.db"

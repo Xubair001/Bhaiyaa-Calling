@@ -281,8 +281,90 @@ internal val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
-internal val ALL_MIGRATIONS: Array<Migration> =
-    arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+/**
+ * v8 does two things a prayer app has to get right.
+ *
+ * **It fixes prayer times stored in the wrong half of the clock.** Until now
+ * the editor offered a bare AM/PM picker with nothing stopping Fajr being
+ * saved at 5 PM or Asr at 4 AM. A row like that is not a slightly wrong
+ * setting - the phone silences twelve hours from when it was meant, which
+ * looks exactly like the feature not working. The correction flips the
+ * meridiem rather than clamping to noon or midnight, because 5 PM entered for
+ * Fajr was 5 AM meant, and clamping would replace it with a time nobody typed.
+ * Rows with no manual time are untouched: NULL means "use the calculation" and
+ * must stay NULL.
+ *
+ * **It adds voice recordings.** Metadata only - the audio lives in the app's
+ * private files directory. See [com.codeaza.bhaiyaaa.data.db.entity.VoiceRecordingEntity].
+ */
+internal val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Fajr is before dawn: anything at or after noon is twelve hours out.
+        db.execSQL(
+            """
+            UPDATE prayers
+            SET manualMinutesFromMidnight = manualMinutesFromMidnight - 720
+            WHERE name = 'FAJR'
+              AND manualMinutesFromMidnight IS NOT NULL
+              AND manualMinutesFromMidnight >= 720
+            """.trimIndent()
+        )
+        // Every prayer after Fajr is after noon.
+        db.execSQL(
+            """
+            UPDATE prayers
+            SET manualMinutesFromMidnight = manualMinutesFromMidnight + 720
+            WHERE name IN ('DHUHR', 'ASR', 'MAGHRIB', 'ISHA')
+              AND manualMinutesFromMidnight IS NOT NULL
+              AND manualMinutesFromMidnight < 720
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS voice_recordings (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                label TEXT NOT NULL,
+                fileName TEXT NOT NULL,
+                durationMillis INTEGER NOT NULL,
+                createdAt INTEGER NOT NULL,
+                source TEXT NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_voice_recordings_fileName " +
+                "ON voice_recordings (fileName)"
+        )
+    }
+}
+
+/**
+ * v9 lets a recording belong to a call.
+ *
+ * Sukoon cannot capture call audio - Android reserves that for privileged,
+ * pre-installed apps - so this is the achievable half of the same need: a
+ * voice note made just after a call, or a recording the phone's own dialer
+ * produced and the user imported, filed against the call it belongs to.
+ *
+ * `callId` is the device call-log row id, which `call_records` also uses as its
+ * primary key. Deliberately not a foreign key: clearing the phone's call log
+ * removes the call row, and a note the user made by hand should survive that
+ * rather than being deleted along with it.
+ */
+internal val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE voice_recordings ADD COLUMN callId INTEGER")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_voice_recordings_callId " +
+                "ON voice_recordings (callId)"
+        )
+    }
+}
+
+internal val ALL_MIGRATIONS: Array<Migration> = arrayOf(
+    MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9
+)
 
 /**
  * Test seam. The migration is the one piece of this app that can destroy data

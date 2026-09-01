@@ -146,6 +146,19 @@
             android:foregroundServiceType="shortService" />
 
         <!--
+          Plays the adhan. Same shortService type and same reasoning as the VIP
+          alert: a broadcast's goAsync() window is about ten seconds and an
+          adhan outlasts it, so the playback needs a service to hold the
+          process up. It is genuinely short and genuinely time-critical, which
+          is what the type is for - and AdhanSettings caps playback below the
+          platform's three-minute budget for it.
+        -->
+        <service
+            android:name=".service.AdhanService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
+
+        <!--
           SukoonApplication implements Configuration.Provider, i.e. WorkManager
           is initialised on demand. The library still merges its own
           WorkManagerInitializer into the manifest, which would initialise

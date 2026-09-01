@@ -8,14 +8,32 @@ import android.os.Build
 import android.provider.Settings
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
+import com.codeaza.bhaiyaaa.domain.model.Prayer
+import com.codeaza.bhaiyaaa.domain.model.SilenceSource
 import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.service.PrayerAlarmReceiver
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 
 /**
+ * The moments an alarm is armed for.
+ *
+ * START and END bracket a quiet window. ADHAN is the prayer itself, which is
+ * not the same instant: the window usually opens a few minutes early, and an
+ * adhan that sounded then would be early by exactly that much.
+ */
+private enum class AlarmEdge(val requestCodeBit: Int) {
+    END(0x00000000),
+    START(0x40000000),
+    ADHAN(0x20000000)
+}
+
+/**
  * Arms the alarms that open and close every quiet window - prayers and custom
- * schedules alike, since [SilencePlan] has already merged them.
+ * schedules alike, since [SilencePlan] has already merged them - and the adhan,
+ * when the user has asked for one.
  *
  * Timing is the whole point of this class, so it asks for exact alarms and uses
  * them whenever the platform allows. A window that opens two minutes late has
@@ -25,7 +43,16 @@ import java.util.Calendar
  *
  * Today and tomorrow are both planned. Alarms do not survive a reboot, and the
  * last window of the day re-arms the next, so covering two days means an
- * overnight gap can never leave the phone unscheduled.
+ * overnight gap can never leave the phone unscheduled. It is also why a day
+ * boundary or a time-zone change needs no special handling: the next
+ * reschedule plans from whatever "today" has become.
+ *
+ * Everything here is binder traffic and disk I/O - `AlarmManager`, `PendingIntent`
+ * and `SharedPreferences` are all synchronous calls into another process or onto
+ * the filesystem - so [reschedule] moves itself off whichever thread called it.
+ * It used to inherit the caller's, which for every settings change was the main
+ * thread, and a single edit could fire sixty binder transactions between two
+ * frames.
  */
 object PrayerScheduler {
 
@@ -55,7 +82,10 @@ object PrayerScheduler {
         }
 
     /** Recomputes today's and tomorrow's windows and re-arms every alarm. */
-    suspend fun reschedule(context: Context, now: Long = System.currentTimeMillis()) {
+    suspend fun reschedule(
+        context: Context,
+        now: Long = System.currentTimeMillis()
+    ) = withContext(Dispatchers.IO) {
         cancelAll(context)
 
         val settings = SettingsRepository(context).settings.first().prayer
@@ -82,16 +112,33 @@ object PrayerScheduler {
             // A window already under way has a start in the past, so only its
             // end is armed - the start is applied directly below instead.
             if (window.startMillis > now) {
-                schedule(context, window, start = true)?.let { armed += it.toString() }
+                schedule(context, window, AlarmEdge.START)?.let { armed += it.toString() }
             }
-            schedule(context, window, start = false)?.let { armed += it.toString() }
+            schedule(context, window, AlarmEdge.END)?.let { armed += it.toString() }
         }
+
+        // The adhan is armed separately, at the prayer rather than at the start
+        // of the quiet window, and only for prayers - a custom quiet time is
+        // not a prayer and has nothing to call.
+        if (settings.adhan.enabled) {
+            windows
+                .filter { it.enabled && it.source == SilenceSource.PRAYER && it.anchorMillis > now }
+                .forEach { window ->
+                    schedule(context, window, AlarmEdge.ADHAN)?.let { armed += it.toString() }
+                }
+        }
+
         prefs(context).edit().putStringSet(KEY_ARMED, armed).apply()
 
         // A window that has already begun gets no start alarm, so it is applied
         // here. Setting a time to the current minute lands inside one
         // immediately, and so does any head start on a window starting soon.
         // Without this the app displayed an active window while the phone rang.
+        //
+        // Deliberately no adhan for a prayer already past: arriving late is
+        // what a missed alarm looks like, and an adhan sounding at a random
+        // moment because the app happened to be opened would be worse than
+        // silence.
         if (active != null && !SilenceController.isSilenceActive(context)) {
             SilenceController.enterSilence(context, active.label, active.mode)
         }
@@ -117,22 +164,41 @@ object PrayerScheduler {
         fire(context, alarmManager, at, pending)
     }
 
-    private fun schedule(context: Context, window: SilenceWindow, start: Boolean): Int? {
+    private fun schedule(context: Context, window: SilenceWindow, edge: AlarmEdge): Int? {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             ?: return null
-        val code = requestCode(window.key, start)
+        val code = requestCode(window.key, edge)
         val intent = Intent(context, PrayerAlarmReceiver::class.java).apply {
-            action = if (start) PrayerAlarmReceiver.ACTION_START else PrayerAlarmReceiver.ACTION_END
+            action = when (edge) {
+                AlarmEdge.START -> PrayerAlarmReceiver.ACTION_START
+                AlarmEdge.END -> PrayerAlarmReceiver.ACTION_END
+                AlarmEdge.ADHAN -> PrayerAlarmReceiver.ACTION_ADHAN
+            }
             putExtra(PrayerAlarmReceiver.EXTRA_PRAYER, window.label)
             putExtra(PrayerAlarmReceiver.EXTRA_MODE, window.mode.storageValue)
+            // The prayer's storage value, not its label: the receiver keys
+            // "already played today" off it, and a label is a display string
+            // that could be translated out from under that key.
+            prayerFor(window)?.let {
+                putExtra(PrayerAlarmReceiver.EXTRA_PRAYER_KEY, it.storageValue)
+            }
         }
         val pending = PendingIntent.getBroadcast(
             context, code, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        fire(context, alarmManager, if (start) window.startMillis else window.endMillis, pending)
+        val at = when (edge) {
+            AlarmEdge.START -> window.startMillis
+            AlarmEdge.END -> window.endMillis
+            AlarmEdge.ADHAN -> window.anchorMillis
+        }
+        fire(context, alarmManager, at, pending)
         return code
     }
+
+    private fun prayerFor(window: SilenceWindow): Prayer? =
+        if (window.source != SilenceSource.PRAYER) null
+        else Prayer.entries.firstOrNull { SilenceWindow.prayerKey(it) == window.key }
 
     private fun fire(context: Context, alarmManager: AlarmManager, at: Long, pending: PendingIntent) {
         try {
@@ -176,6 +242,6 @@ object PrayerScheduler {
     }
 
     /** Stable per window and edge, so re-arming replaces rather than duplicates. */
-    private fun requestCode(key: String, start: Boolean): Int =
-        (key.hashCode() and 0x0FFFFFFF) or (if (start) 0x40000000 else 0)
+    private fun requestCode(key: String, edge: AlarmEdge): Int =
+        (key.hashCode() and 0x0FFFFFFF) or edge.requestCodeBit
 }

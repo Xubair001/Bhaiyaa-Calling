@@ -46,6 +46,8 @@ class RuleBasedAssistantEngine(
             is AssistantIntent.PendingReminders -> pendingReminders(intent)
             is AssistantIntent.SilenceFor -> silenceFor(intent)
             is AssistantIntent.NextQuietTime -> nextQuietTime(intent)
+            is AssistantIntent.PrayerTimeToday -> prayerTimeToday(intent)
+            is AssistantIntent.SetAdhan -> setAdhan(intent)
             is AssistantIntent.Help -> help(intent)
             is AssistantIntent.Unknown -> unknown(intent)
         }
@@ -298,6 +300,73 @@ class RuleBasedAssistantEngine(
         )
     }
 
+    /**
+     * "When is Asr?"
+     *
+     * Answers about the prayer that was named, and says plainly when there is
+     * no time for it rather than reaching for the next prayer instead - which
+     * would be a confident answer to a different question.
+     */
+    private suspend fun prayerTimeToday(intent: AssistantIntent.PrayerTimeToday): AssistantResponse {
+        val times = data.prayerTimesToday()
+        val at = times[intent.prayer]
+            ?: return AssistantResponse(
+                phrasebook.withAddress(
+                    "I don't have a time for ${intent.prayer.label} yet. Set your location, " +
+                        "or enter the times yourself in Settings → Quiet times"
+                ),
+                intent
+            )
+
+        val minutesAway = (at - now()) / 60_000L
+        val relative = when {
+            minutesAway > MINUTES_IN_HOUR ->
+                " — in ${minutesAway / MINUTES_IN_HOUR}h ${minutesAway % MINUTES_IN_HOUR}m"
+            minutesAway > 0 -> " — in ${Formatting.plural(minutesAway.toInt(), "minute")}"
+            else -> " — that has passed today"
+        }
+        return AssistantResponse(
+            text = phrasebook.withAddress(
+                "${intent.prayer.label} is at ${Formatting.time(at)}$relative"
+            ),
+            intent = intent,
+            sources = listOf(
+                AssistantSource("Prayer time", "${intent.prayer.label} today")
+            )
+        )
+    }
+
+    /**
+     * Turning the adhan on or off by asking.
+     *
+     * The engine decides, the caller applies - the same split as silencing.
+     * It also reports when nothing needs to change, rather than claiming to
+     * have done something it did not do.
+     */
+    private suspend fun setAdhan(intent: AssistantIntent.SetAdhan): AssistantResponse {
+        val already = data.adhanEnabled()
+        if (already == intent.enabled) {
+            return AssistantResponse(
+                text = phrasebook.withAddress(
+                    if (intent.enabled) "The adhan is already on"
+                    else "The adhan is already off"
+                ),
+                intent = intent
+            )
+        }
+        return AssistantResponse(
+            text = phrasebook.withAddress(
+                if (intent.enabled) "Adhan on — it will sound at each prayer you have switched on"
+                else "Adhan off — nothing will play"
+            ),
+            intent = intent,
+            action = AssistantAction.AdhanPreference(intent.enabled),
+            sources = listOf(
+                AssistantSource("Setting changed", if (intent.enabled) "Adhan on" else "Adhan off")
+            )
+        )
+    }
+
     private fun help(intent: AssistantIntent): AssistantResponse = AssistantResponse(
         text = "I read your own call log, contacts and saved notes. Try:\n" +
             "• Who called me?\n" +
@@ -308,14 +377,16 @@ class RuleBasedAssistantEngine(
             "• Remind me to call Ali tomorrow at 5pm\n" +
             "• What did Ahmed say about the deployment?\n" +
             "• Silence my phone for 30 minutes\n" +
-            "• When is the next prayer?",
+            "• When is the next prayer?\n" +
+            "• When is Asr?\n" +
+            "• Turn the adhan on",
         intent = intent
     )
 
     private fun unknown(intent: AssistantIntent): AssistantResponse = AssistantResponse(
         text = phrasebook.withAddress(
             "Didn't catch that one. Try: missed calls, VIPs, recent callers, calls today, " +
-                "\"silence my phone for 20 minutes\", \"when is the next prayer\", " +
+                "\"silence my phone for 20 minutes\", \"when is Asr\", \"turn the adhan on\", " +
                 "or \"remind me to…\""
         ),
         intent = intent
@@ -354,5 +425,7 @@ class RuleBasedAssistantEngine(
 
     companion object {
         const val ENGINE_ID = "rule-based-local"
+
+        private const val MINUTES_IN_HOUR = 60L
     }
 }

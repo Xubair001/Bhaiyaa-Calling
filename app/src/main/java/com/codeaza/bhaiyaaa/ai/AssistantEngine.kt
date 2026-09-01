@@ -5,6 +5,7 @@ import com.codeaza.bhaiyaaa.data.db.entity.ContactEntity
 import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.projection.ContactCallCount
+import com.codeaza.bhaiyaaa.domain.model.Prayer
 import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 
 /** An action the assistant actually carried out, so the UI can reflect it. */
@@ -19,6 +20,13 @@ sealed interface AssistantAction {
      * applies it, exactly as it does for a reminder's alarm.
      */
     data class SilenceRequested(val minutes: Int) : AssistantAction
+
+    /**
+     * The engine decided the adhan preference should change, but did not
+     * change it - same separation as [SilenceRequested]. Writing a preference
+     * and re-arming alarms are both outside what a pure engine should do.
+     */
+    data class AdhanPreference(val enabled: Boolean) : AssistantAction
 }
 
 /**
@@ -72,4 +80,15 @@ interface AssistantDataSource {
 
     /** The next window due to start, prayer or custom. */
     suspend fun nextQuietWindow(): SilenceWindow?
+
+    /**
+     * Today's prayer instants, whether or not silencing is switched on.
+     *
+     * Empty when no times are configured, which is the only honest answer to
+     * "when is Asr" from an app that has not been told.
+     */
+    suspend fun prayerTimesToday(): Map<Prayer, Long>
+
+    /** Whether the adhan is currently set to play. */
+    suspend fun adhanEnabled(): Boolean
 }

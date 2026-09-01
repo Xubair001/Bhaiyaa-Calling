@@ -50,6 +50,7 @@ import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.domain.model.CallType
 import com.codeaza.bhaiyaaa.ui.components.CallTypeIcon
 import com.codeaza.bhaiyaaa.ui.components.ContactAvatar
+import com.codeaza.bhaiyaaa.ui.components.HadithCard
 import com.codeaza.bhaiyaaa.ui.components.InfoBanner
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.StatTile
@@ -89,6 +90,7 @@ fun HomeScreen(
 
     val prayerSettings by prayerViewModel.settings.collectAsStateWithLifecycle()
     val prayerWindows by prayerViewModel.todayWindows.collectAsStateWithLifecycle()
+    val prayerAnchors by prayerViewModel.prayerAnchors.collectAsStateWithLifecycle()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -188,6 +190,14 @@ fun HomeScreen(
                 windows = prayerWindows,
                 onOpen = onOpenPrayer
             )
+        }
+
+        // Directly under the prayer card, because it is about the prayer
+        // period that card names - and nowhere near the top, because it is
+        // informational and must not push the day's actual figures down.
+        // Renders nothing at all when no prayer times are configured.
+        item {
+            HadithCard(anchors = prayerAnchors)
         }
 
         item {

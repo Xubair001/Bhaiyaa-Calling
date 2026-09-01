@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.codeaza.bhaiyaaa.R
+import com.codeaza.bhaiyaaa.ui.prayer.QuietTimesFocus
 
 /**
  * Every route in the app.
@@ -23,6 +24,9 @@ import com.codeaza.bhaiyaaa.R
  * readable without hiding anything more than one tap deep.
  */
 object Routes {
+
+    const val ARG_FOCUS = "focus"
+
     const val ONBOARDING = "onboarding"
 
     const val HOME = "home"
@@ -44,7 +48,22 @@ object Routes {
     const val SETTINGS_PERSONALITY = "settings/personality"
     const val SETTINGS_SECURITY = "settings/security"
     const val SETTINGS_DATA = "settings/data"
-    const val SETTINGS_PRAYER = "settings/prayer"
+    /**
+     * Quiet times.
+     *
+     * Carries an optional focus so a caller can say what it is sending the
+     * user there to do - the dashboard's "Set prayer times" button means
+     * something different from Settings → Quiet times, and the screen
+     * reorders itself accordingly. Optional rather than required so the plain
+     * route keeps working and nothing already linking here had to change.
+     */
+    private const val PRAYER_BASE = "settings/prayer"
+    const val SETTINGS_PRAYER = "$PRAYER_BASE?focus={$ARG_FOCUS}"
+
+    fun prayerSettings(focus: QuietTimesFocus = QuietTimesFocus.NONE): String =
+        "$PRAYER_BASE?focus=${focus.name}"
+
+    const val SETTINGS_RECORDINGS = "settings/recordings"
     const val SETTINGS_MODELS = "settings/models"
     const val SETTINGS_ABOUT = "settings/about"
     const val SETTINGS_LICENCES = "settings/licences"

@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,18 +59,29 @@ import com.codeaza.bhaiyaaa.util.Permissions
 import kotlinx.coroutines.launch
 
 /**
- * Shown on an empty Assistant screen.
+ * Shown on an empty Assistant screen, grouped by what the assistant can do.
  *
- * Deliberately a mix of question and command: the first thing someone learns
- * here should be that it can act, not only answer.
+ * Grouped rather than listed flat because a bare column of six examples reads
+ * as "here are some magic words" - and the point to get across is the shape of
+ * what it handles, so a question nobody thought to put on a chip still gets
+ * asked. Each group deliberately mixes a question with a command: the first
+ * thing to learn here is that it can act, not only answer.
  */
+private data class SuggestionGroup(val title: String, val examples: List<String>)
+
 private val SUGGESTIONS = listOf(
-    "Silence my phone for 30 minutes",
-    "When is the next prayer?",
-    "Any missed calls today?",
-    "Who called me most this week?",
-    "Remind me to call Ali tomorrow at 5pm",
-    "Show my VIP contacts"
+    SuggestionGroup(
+        "Your calls",
+        listOf("Any missed calls today?", "Who called me most this week?", "Show my VIP contacts")
+    ),
+    SuggestionGroup(
+        "Prayer and quiet",
+        listOf("When is the next prayer?", "When is Asr?", "Silence my phone for 30 minutes")
+    ),
+    SuggestionGroup(
+        "Reminders",
+        listOf("Remind me to call Ali tomorrow at 5pm", "What are my reminders?")
+    )
 )
 
 /**
@@ -111,35 +123,65 @@ fun AssistantScreen(
             .imePadding()
     ) {
         if (messages.isEmpty()) {
-            Column(
-                Modifier
+            // A LazyColumn rather than a centred Column: at a large font scale
+            // three groups of chips are taller than the screen, and a centred
+            // column simply clipped them.
+            LazyColumn(
+                modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    "Ask Sukoon",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "I answer from your own call log, contacts and saved notes — nothing " +
-                        "leaves this phone, and I never guess at an answer I can't look up.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(20.dp))
-                SUGGESTIONS.forEach { suggestion ->
-                    AssistChip(
-                        onClick = { viewModel.send(suggestion) },
-                        label = { Text(suggestion) },
-                        modifier = Modifier.padding(vertical = 3.dp)
+                item {
+                    Text(
+                        "Ask Sukoon",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "I answer from your own call log, contacts, saved notes and prayer " +
+                            "times — nothing leaves this phone, and I never guess at an " +
+                            "answer I can't look up.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                SUGGESTIONS.forEach { group ->
+                    item(key = group.title) {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            group.title.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        group.examples.forEach { suggestion ->
+                            AssistChip(
+                                onClick = { viewModel.send(suggestion) },
+                                label = { Text(suggestion) },
+                                modifier = Modifier.padding(vertical = 3.dp)
+                            )
+                        }
+                    }
                 }
             }
         } else {
+            // Clearing is offered here rather than in the app bar, which is
+            // shared by every screen: an action that only applies to one of
+            // them belongs with it. Only shown when there is something to
+            // clear, so it never sits there doing nothing.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = viewModel::clearConversation) {
+                    Text("Clear")
+                }
+            }
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -149,7 +191,11 @@ fun AssistantScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(messages, key = { it.id }) { message ->
-                    ChatBubble(message, Modifier.animateItem())
+                    ChatBubble(
+                        message = message,
+                        onRetry = viewModel::retry,
+                        modifier = Modifier.animateItem()
+                    )
                 }
                 if (isThinking) {
                     item {
@@ -269,12 +315,24 @@ fun AssistantScreen(
 }
 
 @Composable
-private fun ChatBubble(message: ChatMessage, modifier: Modifier = Modifier) {
+private fun ChatBubble(
+    message: ChatMessage,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val alignment = if (message.fromUser) Alignment.CenterEnd else Alignment.CenterStart
-    val background = if (message.fromUser) MaterialTheme.colorScheme.primaryContainer
-    else MaterialTheme.colorScheme.surfaceVariant
-    val textColor = if (message.fromUser) MaterialTheme.colorScheme.onPrimaryContainer
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    // A failure gets the error container, not the ordinary answer surface -
+    // otherwise "something went wrong" reads like an answer.
+    val background = when {
+        message.isError -> MaterialTheme.colorScheme.errorContainer
+        message.fromUser -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val textColor = when {
+        message.isError -> MaterialTheme.colorScheme.onErrorContainer
+        message.fromUser -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Box(modifier.fillMaxWidth(), contentAlignment = alignment) {
         Column(
@@ -296,6 +354,13 @@ private fun ChatBubble(message: ChatMessage, modifier: Modifier = Modifier) {
                         color = textColor.copy(alpha = 0.75f)
                     )
                 }
+            }
+
+            // A failure the user can act on is a hiccup; one they can only
+            // read is a dead end.
+            if (message.isError) {
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onRetry) { Text("Try again") }
             }
         }
     }

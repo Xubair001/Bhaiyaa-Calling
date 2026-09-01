@@ -1,0 +1,375 @@
+{
+  "version": 1,
+  "note": "English renderings of the meaning, not the Arabic wording. Every entry names its collection and hadith number so it can be looked up independently - an entry whose number could not be confirmed is not included at all. Nothing here is paraphrased for effect or attributed loosely. Entries outside Sahih al-Bukhari and Sahih Muslim carry a grading (al-Albani for Sunan Abi Dawud, Darussalam for Jami' at-Tirmidhi and Sunan an-Nasa'i); where two collections are graded differently the lower grade is recorded, and nothing graded weak is included. References were checked against sunnah.com. An entry with no 'prayers' list is about prayer generally and is shown in every period; the rest name the prayer they are actually about, because linking a narration to a prayer it never mentions - only to reach a count - would be the same error as inventing one.",
+  "prayerValues": [
+    "FAJR",
+    "DHUHR",
+    "ASR",
+    "MAGHRIB",
+    "ISHA"
+  ],
+  "hadith": [
+    {
+      "id": "two-cool-prayers",
+      "text": "Whoever prays the two cool prayers will enter Paradise.",
+      "narrator": "Abu Musa al-Ash'ari",
+      "reference": "Sahih al-Bukhari 574; Sahih Muslim 635",
+      "prayers": [
+        "FAJR",
+        "ASR"
+      ]
+    },
+    {
+      "id": "angels-assemble",
+      "text": "Angels take turns among you by night and by day, and they gather together at the dawn prayer and the afternoon prayer.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 555; Sahih Muslim 632",
+      "prayers": [
+        "FAJR",
+        "ASR"
+      ]
+    },
+    {
+      "id": "rakah-before-sunrise-sunset",
+      "text": "Whoever catches one rak'ah of the dawn prayer before sunrise has caught it, and whoever catches one rak'ah of the afternoon prayer before sunset has caught it.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 579; Sahih Muslim 608",
+      "prayers": [
+        "FAJR",
+        "ASR"
+      ]
+    },
+    {
+      "id": "fajr-two-rakah-better-than-world",
+      "text": "The two rak'ah before the dawn prayer are better than the world and everything in it.",
+      "narrator": "A'ishah",
+      "reference": "Sahih Muslim 725",
+      "prayers": [
+        "FAJR"
+      ]
+    },
+    {
+      "id": "fajr-protection",
+      "text": "Whoever prays the dawn prayer is under the protection of Allah.",
+      "narrator": "Jundub ibn Abdullah",
+      "reference": "Sahih Muslim 657",
+      "prayers": [
+        "FAJR"
+      ]
+    },
+    {
+      "id": "fajr-three-knots",
+      "text": "Satan ties three knots at the back of your head when you sleep. Each is undone: by remembering Allah on waking, by wudu, and by prayer.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 1142; Sahih Muslim 776",
+      "prayers": [
+        "FAJR"
+      ]
+    },
+    {
+      "id": "fajr-blessed-mornings",
+      "text": "O Allah, bless my ummah in its early mornings.",
+      "narrator": "Sakhr al-Ghamidi",
+      "reference": "Sunan Abi Dawud 2606; Jami' at-Tirmidhi 1212",
+      "grade": "hasan",
+      "prayers": [
+        "FAJR"
+      ]
+    },
+    {
+      "id": "fajr-isha-hypocrites",
+      "text": "No prayer is heavier upon the hypocrites than the night prayer and the dawn prayer. If they knew what is in them, they would come even crawling.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 657; Sahih Muslim 651",
+      "prayers": [
+        "FAJR",
+        "ISHA"
+      ]
+    },
+    {
+      "id": "isha-fajr-night-prayer",
+      "text": "Whoever prays the night prayer in congregation, it is as though he prayed half the night; and whoever prays the dawn prayer in congregation, as though he prayed the whole night.",
+      "narrator": "Uthman ibn Affan",
+      "reference": "Sahih Muslim 656",
+      "prayers": [
+        "FAJR",
+        "ISHA"
+      ]
+    },
+    {
+      "id": "walking-in-darkness",
+      "text": "Give glad tidings to those who walk to the mosques in darkness: a complete light on the Day of Resurrection.",
+      "narrator": "Buraydah",
+      "reference": "Sunan Abi Dawud 561; Jami' at-Tirmidhi 223",
+      "grade": "sahih",
+      "prayers": [
+        "FAJR",
+        "ISHA"
+      ]
+    },
+    {
+      "id": "dhuhr-heat",
+      "text": "When the heat is intense, wait for it to cool before praying, for the fierceness of the heat is from the breath of the Fire.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 536; Sahih Muslim 615",
+      "prayers": [
+        "DHUHR"
+      ]
+    },
+    {
+      "id": "dhuhr-four-and-four",
+      "text": "Whoever keeps to four rak'ah before the midday prayer and four after it, Allah will forbid him to the Fire.",
+      "narrator": "Umm Habibah",
+      "reference": "Sunan Abi Dawud 1269; Jami' at-Tirmidhi 428",
+      "grade": "sahih",
+      "prayers": [
+        "DHUHR"
+      ]
+    },
+    {
+      "id": "dhuhr-gates-of-heaven",
+      "text": "The gates of heaven are opened when the sun passes its zenith, and he liked a good deed of his to rise then.",
+      "narrator": "Abdullah ibn as-Sa'ib",
+      "reference": "Jami' at-Tirmidhi 478",
+      "grade": "sahih",
+      "prayers": [
+        "DHUHR"
+      ]
+    },
+    {
+      "id": "asr-lost-family-and-property",
+      "text": "Whoever misses the afternoon prayer, it is as though he lost his family and his property.",
+      "narrator": "Ibn Umar",
+      "reference": "Sahih al-Bukhari 552; Sahih Muslim 626",
+      "prayers": [
+        "ASR"
+      ]
+    },
+    {
+      "id": "asr-deeds-annulled",
+      "text": "Whoever abandons the afternoon prayer, his deeds are annulled.",
+      "narrator": "Buraydah",
+      "reference": "Sahih al-Bukhari 553",
+      "prayers": [
+        "ASR"
+      ]
+    },
+    {
+      "id": "asr-middle-prayer",
+      "text": "On the day of the Trench he said: they kept us from the middle prayer, the afternoon prayer.",
+      "narrator": "Ali ibn Abi Talib",
+      "reference": "Sahih Muslim 627",
+      "prayers": [
+        "ASR"
+      ]
+    },
+    {
+      "id": "maghrib-before-stars",
+      "text": "My ummah will remain upon the natural way as long as they do not delay the sunset prayer until the stars come out.",
+      "narrator": "Abu Ayyub al-Ansari",
+      "reference": "Sunan Abi Dawud 418",
+      "grade": "hasan sahih",
+      "prayers": [
+        "MAGHRIB"
+      ]
+    },
+    {
+      "id": "maghrib-two-rakah-before",
+      "text": "Pray two rak'ah before the sunset prayer. He said it three times, adding the third time: for whoever wishes.",
+      "narrator": "Abdullah ibn Mughaffal",
+      "reference": "Sahih al-Bukhari 1183",
+      "prayers": [
+        "MAGHRIB"
+      ]
+    },
+    {
+      "id": "maghrib-arrow-light",
+      "text": "We would pray the sunset prayer with him, and one of us could leave and still see where his arrow fell.",
+      "narrator": "Rafi' ibn Khadij",
+      "reference": "Sahih al-Bukhari 559",
+      "prayers": [
+        "MAGHRIB"
+      ]
+    },
+    {
+      "id": "isha-sleep-before-talk-after",
+      "text": "He disliked sleeping before the night prayer, and talking after it.",
+      "narrator": "Abu Barzah al-Aslami",
+      "reference": "Sahih al-Bukhari 568",
+      "prayers": [
+        "ISHA"
+      ]
+    },
+    {
+      "id": "isha-third-of-night",
+      "text": "Were it not too hard on my ummah, I would have ordered them to delay the night prayer until a third of the night had passed.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Jami' at-Tirmidhi 167",
+      "grade": "sahih",
+      "prayers": [
+        "ISHA"
+      ]
+    },
+    {
+      "id": "isha-end-with-witr",
+      "text": "Make the last of your prayer at night an odd number.",
+      "narrator": "Ibn Umar",
+      "reference": "Sahih al-Bukhari 998; Sahih Muslim 751",
+      "prayers": [
+        "ISHA"
+      ]
+    },
+    {
+      "id": "first-thing-accounted",
+      "text": "The first thing a servant will be brought to account for on the Day of Resurrection is his prayer. If it is sound, he has succeeded.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sunan Abi Dawud 864; Jami' at-Tirmidhi 413",
+      "grade": "sahih",
+      "prayers": []
+    },
+    {
+      "id": "key-to-prayer",
+      "text": "The key to prayer is purification, its opening is the takbir, and its closing is the taslim.",
+      "narrator": "Ali ibn Abi Talib",
+      "reference": "Sunan Abi Dawud 61; Jami' at-Tirmidhi 3",
+      "grade": "hasan",
+      "prayers": []
+    },
+    {
+      "id": "between-a-man-and-disbelief",
+      "text": "Between a man and disbelief and paganism stands the abandonment of prayer.",
+      "narrator": "Jabir ibn Abdullah",
+      "reference": "Sahih Muslim 82",
+      "prayers": []
+    },
+    {
+      "id": "covenant-is-prayer",
+      "text": "The covenant between us and them is prayer; whoever abandons it has disbelieved.",
+      "narrator": "Buraydah",
+      "reference": "Jami' at-Tirmidhi 2621; Sunan an-Nasa'i 463",
+      "grade": "sahih",
+      "prayers": []
+    },
+    {
+      "id": "congregation-degrees",
+      "text": "Prayer in congregation is twenty-seven times better than a prayer offered alone.",
+      "narrator": "Ibn Umar",
+      "reference": "Sahih al-Bukhari 645; Sahih Muslim 650",
+      "prayers": []
+    },
+    {
+      "id": "river-at-the-door",
+      "text": "If there were a river at your door and you bathed in it five times a day, would any dirt remain? That is the likeness of the five prayers: by them Allah wipes away sins.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 528; Sahih Muslim 667",
+      "prayers": []
+    },
+    {
+      "id": "five-prayers-expiation",
+      "text": "The five daily prayers, and one Friday to the next, are an expiation for what lies between them, so long as the major sins are avoided.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih Muslim 233",
+      "prayers": []
+    },
+    {
+      "id": "morning-and-evening-to-mosque",
+      "text": "Whoever goes to the mosque morning and evening, Allah prepares for him a welcome in Paradise every time he goes.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 662; Sahih Muslim 669",
+      "prayers": []
+    },
+    {
+      "id": "walk-with-tranquillity",
+      "text": "When the prayer is called, do not come to it running. Come walking, with calm and dignity; pray what you catch, and complete what you missed.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 636; Sahih Muslim 602",
+      "prayers": []
+    },
+    {
+      "id": "most-beloved-deed",
+      "text": "I asked which deed is most beloved to Allah. He said: prayer at its proper time.",
+      "narrator": "Abdullah ibn Mas'ud",
+      "reference": "Sahih al-Bukhari 527; Sahih Muslim 85",
+      "prayers": []
+    },
+    {
+      "id": "whoever-forgets-a-prayer",
+      "text": "Whoever forgets a prayer should pray it as soon as he remembers. There is no expiation for it but that.",
+      "narrator": "Anas ibn Malik",
+      "reference": "Sahih al-Bukhari 597; Sahih Muslim 684",
+      "prayers": []
+    },
+    {
+      "id": "pray-as-you-have-seen",
+      "text": "Pray as you have seen me praying.",
+      "narrator": "Malik ibn al-Huwayrith",
+      "reference": "Sahih al-Bukhari 631",
+      "prayers": []
+    },
+    {
+      "id": "nearest-in-prostration",
+      "text": "The nearest a servant comes to his Lord is while prostrating, so make much supplication then.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih Muslim 482",
+      "prayers": []
+    },
+    {
+      "id": "straighten-the-rows",
+      "text": "Straighten your rows, for straightening the rows is part of the completeness of prayer.",
+      "narrator": "Anas ibn Malik",
+      "reference": "Sahih al-Bukhari 723; Sahih Muslim 433",
+      "prayers": []
+    },
+    {
+      "id": "erases-sins-raises-ranks",
+      "text": "Shall I tell you what erases sins and raises ranks? Completing the wudu despite discomfort, many steps to the mosque, and waiting for the next prayer after a prayer.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih Muslim 251",
+      "prayers": []
+    },
+    {
+      "id": "covenant-five-prayers",
+      "text": "Allah has enjoined five prayers. Whoever observes them, neglecting none of their due, has a covenant with Allah that He will admit him to Paradise.",
+      "narrator": "Ubadah ibn as-Samit",
+      "reference": "Sunan Abi Dawud 1420; Sunan an-Nasa'i 461",
+      "grade": "hasan",
+      "prayers": []
+    },
+    {
+      "id": "teach-children-at-seven",
+      "text": "Instruct your children to pray when they are seven years old.",
+      "narrator": "Abdullah ibn Amr",
+      "reference": "Sunan Abi Dawud 495",
+      "grade": "hasan sahih",
+      "prayers": []
+    },
+    {
+      "id": "twelve-rakah-house",
+      "text": "There is no servant who prays twelve voluntary rak'ah each day but that Allah builds for him a house in Paradise.",
+      "narrator": "Umm Habibah",
+      "reference": "Sahih Muslim 728",
+      "prayers": []
+    },
+    {
+      "id": "between-two-calls",
+      "text": "Between every call to prayer and the call to stand there is a prayer, for whoever wishes.",
+      "narrator": "Abdullah ibn Mughaffal",
+      "reference": "Sahih al-Bukhari 627",
+      "prayers": []
+    },
+    {
+      "id": "angels-at-your-place",
+      "text": "The angels ask forgiveness for one of you as long as he stays in the place where he prayed and has not broken his wudu.",
+      "narrator": "Abu Hurayrah",
+      "reference": "Sahih al-Bukhari 445",
+      "prayers": []
+    },
+    {
+      "id": "two-rakah-on-entering",
+      "text": "When one of you enters the mosque, let him pray two rak'ah before he sits down.",
+      "narrator": "Abu Qatadah",
+      "reference": "Sahih al-Bukhari 444; Sahih Muslim 714",
+      "prayers": []
+    }
+  ]
+}

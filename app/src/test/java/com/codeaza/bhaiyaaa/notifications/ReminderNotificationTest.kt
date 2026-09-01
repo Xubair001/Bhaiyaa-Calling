@@ -38,11 +38,24 @@ class ReminderNotificationTest {
     private val manager
         get() = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    /**
+     * The reminder alerts, without the group summary.
+     *
+     * Posting a reminder also posts a summary, which is what makes several due
+     * at once collapse into one card in the shade instead of burying
+     * everything else. It is not itself a reminder, so these assertions are
+     * about the children.
+     */
+    private fun reminderAlerts() =
+        shadowOf(manager).allNotifications.filterNot {
+            it.flags and android.app.Notification.FLAG_GROUP_SUMMARY != 0
+        }
+
     @Test
     fun `a reminder alert carries snooze and done`() {
         Notifier.notifyReminder(context, 42L, "Call the bank")
 
-        val posted = shadowOf(manager).allNotifications.single()
+        val posted = reminderAlerts().single()
         assertThat(posted.actions.map { it.title.toString() })
             .containsExactly("Snooze 10 min", "Done").inOrder()
     }
@@ -50,17 +63,17 @@ class ReminderNotificationTest {
     @Test
     fun `the alert says what the reminder is`() {
         Notifier.notifyReminder(context, 42L, "Call the bank")
-        val posted = shadowOf(manager).allNotifications.single()
+        val posted = reminderAlerts().single()
         assertThat(posted.extras.getString("android.text")).isEqualTo("Call the bank")
     }
 
     @Test
     fun `handling it in the app clears the alert`() {
         Notifier.notifyReminder(context, 42L, "Call the bank")
-        assertThat(shadowOf(manager).allNotifications).hasSize(1)
+        assertThat(reminderAlerts()).hasSize(1)
 
         Notifier.cancelReminder(context, 42L)
-        assertThat(shadowOf(manager).allNotifications).isEmpty()
+        assertThat(reminderAlerts()).isEmpty()
     }
 
     @Test
@@ -69,10 +82,10 @@ class ReminderNotificationTest {
         // first, so one of them would vanish before anyone saw it.
         Notifier.notifyReminder(context, 1L, "Call the bank")
         Notifier.notifyReminder(context, 2L, "Buy milk")
-        assertThat(shadowOf(manager).allNotifications).hasSize(2)
+        assertThat(reminderAlerts()).hasSize(2)
 
         Notifier.cancelReminder(context, 1L)
-        assertThat(shadowOf(manager).allNotifications).hasSize(1)
+        assertThat(reminderAlerts()).hasSize(1)
     }
 
     @Test
@@ -81,7 +94,7 @@ class ReminderNotificationTest {
         // by action. Equal request codes would make the second PendingIntent
         // overwrite the first and Snooze would start completing reminders.
         Notifier.notifyReminder(context, 42L, "Call the bank")
-        val posted = shadowOf(manager).allNotifications.single()
+        val posted = reminderAlerts().single()
 
         val actions = posted.actions.map { shadowOf(it.actionIntent).savedIntent }
         assertThat(actions.map { it.action })

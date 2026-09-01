@@ -37,6 +37,18 @@ object NotificationChannels {
     const val REMINDERS = "reminders"
     const val MISSED = "missed_important"
 
+    /**
+     * Prayer times and the adhan.
+     *
+     * Deliberately silent at the channel level. The adhan is played by
+     * [com.codeaza.bhaiyaaa.service.AdhanService] on the alarm stream, and a
+     * channel sound here would produce a notification ping over the top of it.
+     * It is also the reason this channel is separate rather than reusing
+     * REMINDERS: a user who wants reminder pings but no notification sound at
+     * prayer time can only say so if the two are different channels.
+     */
+    const val PRAYER = "prayer_times"
+
     /** Superseded ids, deleted on launch so they stop cluttering system settings. */
     private val LEGACY_CHANNEL_IDS = listOf("vip_calls", "super_vip_calls", "emergency_calls")
 
@@ -142,6 +154,7 @@ object NotificationChannels {
         create(context, manager, EMERGENCY, R.string.channel_emergency_name, R.string.channel_emergency_desc, NotificationManager.IMPORTANCE_HIGH, bypassByChannelId, ringtone = true)
         create(context, manager, REMINDERS, R.string.channel_reminders_name, R.string.channel_reminders_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
         create(context, manager, MISSED, R.string.channel_missed_name, R.string.channel_missed_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
+        create(context, manager, PRAYER, R.string.channel_prayer_name, R.string.channel_prayer_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId, silent = true)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -153,7 +166,8 @@ object NotificationChannels {
         descRes: Int,
         importance: Int,
         bypassByChannelId: Map<String, Boolean>,
-        ringtone: Boolean = false
+        ringtone: Boolean = false,
+        silent: Boolean = false
     ) {
         val existing = manager.getNotificationChannel(id)
         // Stored preference wins; otherwise keep whatever the channel already
@@ -162,9 +176,15 @@ object NotificationChannels {
 
         val channel = NotificationChannel(id, context.getString(nameRes), importance).apply {
             description = context.getString(descRes)
-            enableVibration(true)
+            enableVibration(!silent)
             setShowBadge(true)
             setBypassDnd(bypass)
+
+            if (silent) {
+                // Null sound, not a quiet one: the audio for this channel comes
+                // from elsewhere, and a channel tone would play over it.
+                setSound(null, null)
+            }
 
             if (ringtone) {
                 // A VIP alert should sound like a call, not like an email. The

@@ -42,6 +42,23 @@ class PrayerSchedulerTest {
 
     private val zone: TimeZone = TimeZone.getDefault()
 
+    /**
+     * A fixed "now", at one o'clock this afternoon.
+     *
+     * These tests used to run against the wall clock, which made them depend on
+     * the hour CI happened to start. That was already fragile across midnight,
+     * and it became untenable once a prayer could only hold a time in its own
+     * half of the clock: a suite running at 09:00 would have been asking for
+     * Dhuhr in the morning. Pinning the clock fixes both, and PrayerScheduler
+     * already takes `now` as a parameter precisely so it can be pinned.
+     */
+    private val now: Long = Calendar.getInstance(zone).apply {
+        set(Calendar.HOUR_OF_DAY, 13)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
     @Before
     fun setUp(): Unit = runBlocking {
         db = AppDatabase.getInstance(context)
@@ -67,17 +84,17 @@ class PrayerSchedulerTest {
         SettingsRepository(context).setPrayerEnabled(false)
     }
 
-    /** Minutes past local midnight for an instant [offsetMinutes] from now. */
+    /** Minutes past local midnight for an instant [offsetMinutes] from [now]. */
     private fun minutesFromMidnight(offsetMinutes: Int): Int {
         val cal = Calendar.getInstance(zone).apply {
-            timeInMillis = System.currentTimeMillis() + offsetMinutes * 60_000L
+            timeInMillis = now + offsetMinutes * 60_000L
         }
         return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
     }
 
     private suspend fun configure(prayer: Prayer, atOffsetMinutes: Int, silence: Int, early: Int) {
         db.prayerDao().setEnabled(prayer.storageValue, true)
-        db.prayerDao().setManualTime(prayer.storageValue, minutesFromMidnight(atOffsetMinutes))
+        db.prayerDao().setManualTime(prayer, minutesFromMidnight(atOffsetMinutes))
         db.prayerDao().setSilenceMinutes(prayer.storageValue, silence)
         val row = requireNotNull(db.prayerDao().find(prayer.storageValue))
         db.prayerDao().upsert(row.copy(startOffsetMinutes = -early))
@@ -88,7 +105,7 @@ class PrayerSchedulerTest {
         // Prayer five minutes ago, quiet for thirty: we are inside it right now.
         configure(Prayer.DHUHR, atOffsetMinutes = -5, silence = 30, early = 3)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         // The start alarm is in the past and was never armed, so this only
         // passes if reschedule applies a running window itself.
@@ -101,7 +118,7 @@ class PrayerSchedulerTest {
         // The exact case reported: set the time to the current minute.
         configure(Prayer.ASR, atOffsetMinutes = 0, silence = 15, early = 3)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
     }
@@ -113,7 +130,7 @@ class PrayerSchedulerTest {
         // arrived. Nothing would have applied it before.
         configure(Prayer.MAGHRIB, atOffsetMinutes = 1, silence = 15, early = 3)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
     }
@@ -122,7 +139,7 @@ class PrayerSchedulerTest {
     fun `a window still ahead arms an alarm and does not silence yet`() = runTest {
         configure(Prayer.ISHA, atOffsetMinutes = 30, silence = 15, early = 3)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         // Not silenced now...
         assertThat(SilenceController.isSilenceActive(context)).isFalse()
@@ -134,9 +151,9 @@ class PrayerSchedulerTest {
     @Test
     fun `a window that has finished neither silences nor stays silent`() = runTest {
         // Prayer an hour ago, quiet for fifteen minutes: long over.
-        configure(Prayer.FAJR, atOffsetMinutes = -60, silence = 15, early = 3)
+        configure(Prayer.MAGHRIB, atOffsetMinutes = -60, silence = 15, early = 3)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         assertThat(SilenceController.isSilenceActive(context)).isFalse()
     }
@@ -146,7 +163,7 @@ class PrayerSchedulerTest {
         configure(Prayer.DHUHR, atOffsetMinutes = -2, silence = 15, early = 3)
         db.prayerDao().setEnabled(Prayer.DHUHR.storageValue, false)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         assertThat(SilenceController.isSilenceActive(context)).isFalse()
     }
@@ -154,11 +171,11 @@ class PrayerSchedulerTest {
     @Test
     fun `switching the feature off releases a running window`() = runTest {
         configure(Prayer.DHUHR, atOffsetMinutes = -2, silence = 20, early = 3)
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
 
         SettingsRepository(context).setPrayerEnabled(false)
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         // Turning it off must hand the phone back, not leave it silent.
         assertThat(SilenceController.isSilenceActive(context)).isFalse()
@@ -168,9 +185,9 @@ class PrayerSchedulerTest {
     fun `rescheduling twice inside a window does not double-apply`() = runTest {
         configure(Prayer.ASR, atOffsetMinutes = -1, silence = 20, early = 3)
 
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
         val firstPrayer = SilenceController.activeWindowLabel(context)
-        PrayerScheduler.reschedule(context)
+        PrayerScheduler.reschedule(context, now)
 
         assertThat(SilenceController.isSilenceActive(context)).isTrue()
         assertThat(SilenceController.activeWindowLabel(context)).isEqualTo(firstPrayer)

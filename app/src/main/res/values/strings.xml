@@ -117,4 +117,6 @@
     <string name="channel_reminders_desc">Your Sukoon reminders when they come due.</string>
     <string name="channel_missed_name">Missed important calls</string>
     <string name="channel_missed_desc">A nudge when you miss a call from someone important.</string>
+    <string name="channel_prayer_name">Prayer times</string>
+    <string name="channel_prayer_desc">A quiet card when a prayer time arrives. The adhan itself plays on the alarm stream, so this channel has no sound of its own.</string>
 </resources>

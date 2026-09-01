@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.codeaza.bhaiyaaa.domain.model.AdhanSettings
 import com.codeaza.bhaiyaaa.domain.model.AppSettings
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerMadhab
@@ -51,6 +52,10 @@ class SettingsRepository(private val context: Context) {
         val PRAYER_LOCATION_LABEL = stringPreferencesKey("prayer_location_label")
         val PRAYER_SILENCE_MODE = stringPreferencesKey("prayer_silence_mode")
         val PRAYER_TIME_ZONE = stringPreferencesKey("prayer_time_zone")
+
+        val ADHAN_ENABLED = booleanPreferencesKey("adhan_enabled")
+        val ADHAN_SOUND_URI = stringPreferencesKey("adhan_sound_uri")
+        val ADHAN_SOUND_LABEL = stringPreferencesKey("adhan_sound_label")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data
@@ -80,7 +85,14 @@ class SettingsRepository(private val context: Context) {
                     longitude = p[Keys.PRAYER_LNG]?.toDoubleOrNull(),
                     locationLabel = p[Keys.PRAYER_LOCATION_LABEL].orEmpty(),
                     silenceMode = PrayerSilenceMode.from(p[Keys.PRAYER_SILENCE_MODE]),
-                    timeZoneId = p[Keys.PRAYER_TIME_ZONE]?.takeIf { it.isNotBlank() }
+                    timeZoneId = p[Keys.PRAYER_TIME_ZONE]?.takeIf { it.isNotBlank() },
+                    adhan = AdhanSettings(
+                        // Absent means false, which is the point: an app that
+                        // has never been told to play audio must not.
+                        enabled = p[Keys.ADHAN_ENABLED] ?: false,
+                        soundUri = p[Keys.ADHAN_SOUND_URI]?.takeIf { it.isNotBlank() },
+                        soundLabel = p[Keys.ADHAN_SOUND_LABEL].orEmpty()
+                    )
                 )
             )
         }
@@ -105,6 +117,19 @@ class SettingsRepository(private val context: Context) {
 
     /** Empty string clears the override and returns to the device's own zone. */
     suspend fun setPrayerTimeZone(id: String?) = put(Keys.PRAYER_TIME_ZONE, id.orEmpty())
+
+    suspend fun setAdhanEnabled(value: Boolean) = put(Keys.ADHAN_ENABLED, value)
+
+    /**
+     * @param uri null returns to the device's default alarm tone. No adhan
+     *   recording ships with the app - see [AdhanSettings].
+     */
+    suspend fun setAdhanSound(uri: String?, label: String) {
+        context.dataStore.edit {
+            it[Keys.ADHAN_SOUND_URI] = uri.orEmpty()
+            it[Keys.ADHAN_SOUND_LABEL] = label
+        }
+    }
 
     suspend fun setPrayerLocation(latitude: Double, longitude: Double, label: String) {
         context.dataStore.edit {

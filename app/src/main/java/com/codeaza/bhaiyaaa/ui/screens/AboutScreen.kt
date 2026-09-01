@@ -76,8 +76,20 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
         SettingsSectionHeader("What Sukoon will not do")
         Column(Modifier.padding(horizontal = 20.dp)) {
             Limitation(
-                "Record or listen to your calls",
-                "It remembers what you write down about a call, and nothing else."
+                "Record the call itself",
+                "Capturing call audio needs a permission Android grants only to apps " +
+                    "built into the phone — being your default dialer is not enough, and " +
+                    "the accessibility workaround has been banned since 2022. Consent " +
+                    "rules also differ by country. What Sukoon can do is keep a voice " +
+                    "note you record after a call, or a recording your phone's own dialer " +
+                    "made and you imported, filed against that call. The microphone opens " +
+                    "only while the screen says Recording."
+            )
+            Limitation(
+                "Ship an adhan recording",
+                "There is no licence to pass one on, and an unattributed recording in an " +
+                    "app about prayer would be worse than none. Choose a sound already on " +
+                    "your phone, or record your own — the adhan is off until you do."
             )
             Limitation(
                 "Take over your dialer",
@@ -91,6 +103,19 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
                 "Promise an alert every time",
                 "Some phones restrict apps in the background. If VIP alerts or prayer " +
                     "silence are ever late, allow Sukoon unrestricted battery use."
+            )
+        }
+
+        SettingsSectionHeader("The Hadith shown on your dashboard")
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Text(
+                "Each narration names its collection and hadith number so you can look " +
+                    "it up, and anything outside Sahih al-Bukhari and Sahih Muslim states " +
+                    "the grading scholars gave it. Nothing graded weak is included. The " +
+                    "English conveys the meaning and is not a claim to be the Arabic " +
+                    "wording. Nothing is generated, and nothing is attributed to a prayer " +
+                    "it does not mention.",
+                style = MaterialTheme.typography.bodyMedium
             )
         }
 

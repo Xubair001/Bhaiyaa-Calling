@@ -6,6 +6,7 @@ import com.codeaza.bhaiyaaa.data.db.entity.MemoryEntity
 import com.codeaza.bhaiyaaa.data.db.entity.ReminderEntity
 import com.codeaza.bhaiyaaa.data.db.projection.ContactCallCount
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
+import com.codeaza.bhaiyaaa.domain.model.Prayer
 import com.codeaza.bhaiyaaa.domain.model.PrayerSilenceMode
 import com.codeaza.bhaiyaaa.domain.model.SilenceSource
 import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
@@ -91,6 +92,11 @@ class RuleBasedAssistantEngineTest {
         var next: SilenceWindow? = null
         override suspend fun activeQuietWindow() = active
         override suspend fun nextQuietWindow() = next
+
+        var prayerTimes: Map<Prayer, Long> = emptyMap()
+        var adhanOn = false
+        override suspend fun prayerTimesToday() = prayerTimes
+        override suspend fun adhanEnabled() = adhanOn
     }
 
     private fun engine(data: AssistantDataSource, mode: PersonalityMode = PersonalityMode.FRIENDLY) =
@@ -296,5 +302,67 @@ class RuleBasedAssistantEngineTest {
         )
         val response = engine(data).respond("how many calls today?")
         assertThat(response.text).contains("2 calls")
+    }
+
+    @Test
+    fun `it answers when a named prayer is, from the times it actually has`() = runTest {
+        val data = FakeData().apply {
+            prayerTimes = mapOf(Prayer.ASR to now + 90 * 60_000L)
+        }
+
+        val response = engine(data).respond("when is asr?")
+
+        assertThat(response.text).contains("Asr")
+        assertThat(response.text).contains("1h 30m")
+        assertThat(response.sources).isNotEmpty()
+    }
+
+    @Test
+    fun `it says a prayer has passed rather than pretending it is coming`() = runTest {
+        val data = FakeData().apply {
+            prayerTimes = mapOf(Prayer.DHUHR to now - 60 * 60_000L)
+        }
+
+        val response = engine(data).respond("when is dhuhr?")
+
+        assertThat(response.text).contains("passed")
+    }
+
+    @Test
+    fun `it refuses to invent a prayer time it does not have`() = runTest {
+        // The whole anti-hallucination rule, applied to prayer times: with no
+        // configured time it says so rather than offering a plausible one.
+        val response = engine(FakeData()).respond("when is maghrib?")
+
+        assertThat(response.text).contains("don't have a time")
+        assertThat(response.action).isNull()
+    }
+
+    @Test
+    fun `turning the adhan on asks the caller to apply it`() = runTest {
+        val data = FakeData().apply { adhanOn = false }
+
+        val response = engine(data).respond("turn on the adhan")
+
+        assertThat(response.action).isEqualTo(AssistantAction.AdhanPreference(true))
+    }
+
+    @Test
+    fun `turning the adhan off asks the caller to apply it`() = runTest {
+        val data = FakeData().apply { adhanOn = true }
+
+        val response = engine(data).respond("turn off the azan")
+
+        assertThat(response.action).isEqualTo(AssistantAction.AdhanPreference(false))
+    }
+
+    @Test
+    fun `it does not claim to change a setting that is already what was asked for`() = runTest {
+        val data = FakeData().apply { adhanOn = true }
+
+        val response = engine(data).respond("turn on the adhan")
+
+        assertThat(response.text).contains("already on")
+        assertThat(response.action).isNull()
     }
 }

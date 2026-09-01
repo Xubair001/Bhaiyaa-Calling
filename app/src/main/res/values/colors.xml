@@ -10,4 +10,13 @@
     <color name="window_background_light">#FDF7FF</color>
     <color name="window_background_dark">#121016</color>
     <color name="ic_launcher_background">#1A1230</color>
+
+    <!--
+      Accent for notifications. The system tints the small icon and the app
+      name with this, and it is the one piece of the app's palette that has to
+      be a platform colour rather than a Compose token - a notification is
+      drawn by system_ui, which cannot see MaterialTheme. Matched to the
+      violet primary so the shade looks like the app it came from.
+    -->
+    <color name="notification_accent">#6A3FBF</color>
 </resources>

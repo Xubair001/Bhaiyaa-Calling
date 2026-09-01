@@ -63,6 +63,8 @@ import com.codeaza.bhaiyaaa.ui.screens.MoreScreen
 import com.codeaza.bhaiyaaa.ui.screens.NotificationSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.PersonalitySettingsScreen
 import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
+import com.codeaza.bhaiyaaa.ui.prayer.QuietTimesFocus
+import com.codeaza.bhaiyaaa.ui.recordings.VoiceRecordingViewModel
 import com.codeaza.bhaiyaaa.ui.screens.PrayerSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.PrivacyCenterScreen
 import com.codeaza.bhaiyaaa.ui.screens.PrivacyLockScreen
@@ -72,6 +74,7 @@ import com.codeaza.bhaiyaaa.ui.screens.SecuritySettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.SettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.VipAlertSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.VipScreen
+import com.codeaza.bhaiyaaa.ui.screens.VoiceRecordingsScreen
 
 /**
  * The app shell.
@@ -84,7 +87,8 @@ fun SukoonApp(
     viewModel: SukoonViewModel = viewModel(),
     assistantViewModel: AssistantViewModel = viewModel(),
     modelViewModel: ModelManagerViewModel = viewModel(),
-    prayerViewModel: PrayerViewModel = viewModel()
+    prayerViewModel: PrayerViewModel = viewModel(),
+    recordingViewModel: VoiceRecordingViewModel = viewModel()
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val lockState by viewModel.lockState.collectAsStateWithLifecycle()
@@ -113,7 +117,7 @@ fun SukoonApp(
         return
     }
 
-    MainScaffold(viewModel, assistantViewModel, modelViewModel, prayerViewModel)
+    MainScaffold(viewModel, assistantViewModel, modelViewModel, prayerViewModel, recordingViewModel)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,7 +126,8 @@ private fun MainScaffold(
     viewModel: SukoonViewModel,
     assistantViewModel: AssistantViewModel,
     modelViewModel: ModelManagerViewModel,
-    prayerViewModel: PrayerViewModel
+    prayerViewModel: PrayerViewModel,
+    recordingViewModel: VoiceRecordingViewModel
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -141,6 +146,13 @@ private fun MainScaffold(
         prayerMessage?.let {
             snackbarHostState.showSnackbar(it)
             prayerViewModel.consumeMessage()
+        }
+    }
+    val recordingMessage by recordingViewModel.message.collectAsStateWithLifecycle()
+    LaunchedEffect(recordingMessage) {
+        recordingMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            recordingViewModel.consumeMessage()
         }
     }
     val modelMessage by modelViewModel.message.collectAsStateWithLifecycle()
@@ -220,7 +232,14 @@ private fun MainScaffold(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            SukoonNavHost(navController, viewModel, assistantViewModel, modelViewModel, prayerViewModel)
+            SukoonNavHost(
+                navController,
+                viewModel,
+                assistantViewModel,
+                modelViewModel,
+                prayerViewModel,
+                recordingViewModel
+            )
         }
     }
 }
@@ -231,7 +250,8 @@ private fun SukoonNavHost(
     viewModel: SukoonViewModel,
     assistantViewModel: AssistantViewModel,
     modelViewModel: ModelManagerViewModel,
-    prayerViewModel: PrayerViewModel
+    prayerViewModel: PrayerViewModel,
+    recordingViewModel: VoiceRecordingViewModel
 ) {
     fun openContact(phoneNumber: String) =
         navController.navigate(Routes.contactDetail(phoneNumber))
@@ -303,7 +323,9 @@ private fun SukoonNavHost(
             HomeScreen(
                 viewModel = viewModel,
                 prayerViewModel = prayerViewModel,
-                onOpenPrayer = { navController.navigate(Routes.SETTINGS_PRAYER) },
+                onOpenPrayer = {
+                    navController.navigate(Routes.prayerSettings(QuietTimesFocus.PRAYER_TIMES))
+                },
                 onOpenCalls = { navController.navigate(Routes.CALLS) },
                 onOpenVip = { navController.navigate(Routes.VIP) },
                 onOpenInsights = { navController.navigate(Routes.INSIGHTS) },
@@ -373,7 +395,9 @@ private fun SukoonNavHost(
                 viewModel = viewModel,
                 onOpenNotifications = { navController.navigate(Routes.SETTINGS_NOTIFICATIONS) },
                 onOpenVipAlerts = { navController.navigate(Routes.SETTINGS_VIP_ALERTS) },
-                onOpenPrayer = { navController.navigate(Routes.SETTINGS_PRAYER) },
+                // No stated intent from a settings list: the screen falls back
+                // to its own default order.
+                onOpenPrayer = { navController.navigate(Routes.prayerSettings()) },
                 onOpenAppearance = { navController.navigate(Routes.SETTINGS_APPEARANCE) },
                 onOpenPersonality = { navController.navigate(Routes.SETTINGS_PERSONALITY) },
                 onOpenSecurity = { navController.navigate(Routes.SETTINGS_SECURITY) },
@@ -389,7 +413,27 @@ private fun SukoonNavHost(
         composable(Routes.SETTINGS_PERSONALITY) { PersonalitySettingsScreen(viewModel) }
         composable(Routes.SETTINGS_SECURITY) { SecuritySettingsScreen(viewModel) }
         composable(Routes.SETTINGS_DATA) { DataSettingsScreen(viewModel) }
-        composable(Routes.SETTINGS_PRAYER) { PrayerSettingsScreen(prayerViewModel) }
+        composable(
+            route = Routes.SETTINGS_PRAYER,
+            arguments = listOf(
+                navArgument(Routes.ARG_FOCUS) {
+                    type = NavType.StringType
+                    // Defaulted rather than required: the plain route still
+                    // resolves, and a caller with nothing to say about intent
+                    // does not have to invent one.
+                    defaultValue = QuietTimesFocus.NONE.name
+                }
+            )
+        ) { entry ->
+            PrayerSettingsScreen(
+                viewModel = prayerViewModel,
+                initialFocus = QuietTimesFocus.from(entry.arguments?.getString(Routes.ARG_FOCUS)),
+                onOpenRecordings = { navController.navigate(Routes.SETTINGS_RECORDINGS) }
+            )
+        }
+        composable(Routes.SETTINGS_RECORDINGS) {
+            VoiceRecordingsScreen(viewModel = recordingViewModel)
+        }
         composable(Routes.SETTINGS_MODELS) { ModelManagerScreen(modelViewModel) }
         composable(Routes.SETTINGS_ABOUT) {
             AboutScreen(onOpenLicences = { navController.navigate(Routes.SETTINGS_LICENCES) })
@@ -417,6 +461,7 @@ private fun SukoonNavHost(
             CallDetailScreen(
                 callId = entry.arguments?.getLong(Routes.ARG_CALL_ID) ?: -1L,
                 viewModel = viewModel,
+                recordingViewModel = recordingViewModel,
                 onOpenContact = ::openContact
             )
         }
@@ -443,7 +488,8 @@ private fun titleFor(route: String?): String = when {
     route == Routes.SETTINGS_PERSONALITY -> "Personality"
     route == Routes.SETTINGS_SECURITY -> "Security"
     route == Routes.SETTINGS_DATA -> "Data"
-    route == Routes.SETTINGS_PRAYER -> "Quiet times"
+    route.startsWith("settings/prayer") -> "Quiet times"
+    route == Routes.SETTINGS_RECORDINGS -> "Recordings"
     route == Routes.SETTINGS_MODELS -> "AI models"
     route == Routes.SETTINGS_ABOUT -> "About"
     route == Routes.SETTINGS_LICENCES -> "Licences"

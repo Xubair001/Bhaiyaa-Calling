@@ -1,5 +1,6 @@
 package com.codeaza.bhaiyaaa.ai
 
+import com.codeaza.bhaiyaaa.domain.model.Prayer
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
@@ -91,6 +92,61 @@ class IntentParserTest {
     fun `help is recognised`() {
         assertThat(IntentParser.parse("help", now)).isEqualTo(AssistantIntent.Help)
         assertThat(IntentParser.parse("what can you do?", now)).isEqualTo(AssistantIntent.Help)
+    }
+
+    @Test
+    fun `a named prayer is a question about that prayer`() {
+        assertThat(IntentParser.parse("when is asr?", now))
+            .isEqualTo(AssistantIntent.PrayerTimeToday(Prayer.ASR))
+        assertThat(IntentParser.parse("what time is fajr today", now))
+            .isEqualTo(AssistantIntent.PrayerTimeToday(Prayer.FAJR))
+        assertThat(IntentParser.parse("when is maghrib", now))
+            .isEqualTo(AssistantIntent.PrayerTimeToday(Prayer.MAGHRIB))
+    }
+
+    @Test
+    fun `regional spellings of a prayer are recognised`() {
+        // People type what they say, and what they say differs by region.
+        assertThat(IntentParser.parse("when is zuhr", now))
+            .isEqualTo(AssistantIntent.PrayerTimeToday(Prayer.DHUHR))
+        assertThat(IntentParser.parse("when is fajar", now))
+            .isEqualTo(AssistantIntent.PrayerTimeToday(Prayer.FAJR))
+        assertThat(IntentParser.parse("what time is esha", now))
+            .isEqualTo(AssistantIntent.PrayerTimeToday(Prayer.ISHA))
+    }
+
+    @Test
+    fun `asking what is next is still the next quiet time, not a named prayer`() {
+        // These are different questions and must not collapse into one.
+        assertThat(IntentParser.parse("when is the next prayer?", now))
+            .isEqualTo(AssistantIntent.NextQuietTime)
+    }
+
+    @Test
+    fun `a prayer name without a time question is not a time question`() {
+        // "I prayed asr" is not asking anything.
+        assertThat(IntentParser.parse("i prayed asr", now))
+            .isNotInstanceOf(AssistantIntent.PrayerTimeToday::class.java)
+    }
+
+    @Test
+    fun `the adhan can be switched on and off by asking`() {
+        assertThat(IntentParser.parse("turn on the adhan", now))
+            .isEqualTo(AssistantIntent.SetAdhan(true))
+        assertThat(IntentParser.parse("play the azan at prayer times", now))
+            .isEqualTo(AssistantIntent.SetAdhan(true))
+        assertThat(IntentParser.parse("turn off the azaan", now))
+            .isEqualTo(AssistantIntent.SetAdhan(false))
+        assertThat(IntentParser.parse("stop playing the adhan", now))
+            .isEqualTo(AssistantIntent.SetAdhan(false))
+    }
+
+    @Test
+    fun `asking when the adhan is does not switch it on`() {
+        // "when is the adhan" is a question, and answering it by changing a
+        // setting would be the worst kind of helpful.
+        val intent = IntentParser.parse("when is the next adhan?", now)
+        assertThat(intent).isNotInstanceOf(AssistantIntent.SetAdhan::class.java)
     }
 
     @Test
