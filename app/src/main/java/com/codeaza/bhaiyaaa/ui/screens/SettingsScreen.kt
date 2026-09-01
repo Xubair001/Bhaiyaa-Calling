@@ -16,7 +16,14 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codeaza.bhaiyaaa.ui.SukoonViewModel
@@ -40,6 +47,17 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var grantVersion by remember { mutableIntStateOf(0) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) grantVersion++
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val lockEnabled = remember(grantVersion) { SecurePrefs.isLockEnabled(context) }
 
     Column(
         Modifier
@@ -91,7 +109,10 @@ fun SettingsScreen(
         SettingsSectionHeader("Your data")
         SettingsLinkRow(
             title = "App lock",
-            subtitle = if (SecurePrefs.isLockEnabled(context))
+            // Remembered: the first read opens Keystore-backed prefs, which
+            // is not work to repeat on every recomposition. Re-read on resume
+            // so returning from the security screen shows the new state.
+            subtitle = if (lockEnabled)
                 "PIN required to open Sukoon" else "Anyone can open Sukoon",
             icon = Icons.Filled.Lock,
             onClick = onOpenSecurity

@@ -67,7 +67,4 @@ object RamadanTimes {
         now < day.iftarAt -> RamadanState.Fasting(day.iftarAt - now)
         else -> RamadanState.Complete
     }
-
-    /** How long the fast runs, for the UI to state plainly. */
-    fun lengthMillis(day: RamadanDay): Long = day.iftarAt - day.suhoorEndsAt
 }

@@ -174,9 +174,19 @@ Compose Canvas (no charting dependency).
 **Search** — one query across contacts, calls, memories and reminders, run
 concurrently.
 
-**Privacy lock** — PIN (salted SHA-256, hash held in Keystore-backed
-`EncryptedSharedPreferences`) plus BiometricPrompt. Re-locks when the app
-backgrounds. Rate-limited after repeated failures.
+**Privacy lock** — PIN plus BiometricPrompt, re-locking when the app
+backgrounds. The PIN is stretched with **PBKDF2-HMAC-SHA256 at 200,000 rounds**
+and the result held in Keystore-backed `EncryptedSharedPreferences`. A salted
+single-round hash is not enough here: a PIN is at most a hundred million
+candidates, and a GPU does billions of SHA-256 a second, so anyone who ever got
+the hash would recover a 4-digit PIN in under a second. Stretching makes each
+guess cost a fifth of a second. Hashes written by earlier versions still open
+the app and are re-stretched on the next successful unlock.
+
+The attempt counter and lockout live in secure storage, not in the lock
+screen — they used to be `remember`ed in the composable, so force-stopping the
+app reset them and the lockout was decorative. Five wrong tries costs 30s,
+doubling to a five-minute cap.
 
 **Privacy Center** — what's stored, what's granted, network use, protection
 status, and one-tap routes to export/import/delete.

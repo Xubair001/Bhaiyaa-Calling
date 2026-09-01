@@ -68,7 +68,9 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
             Text(
                 "Everything stays on this phone. There is no account, no cloud and no " +
                     "tracking. Your contacts, call history, notes and prayer times are stored " +
-                    "locally and are never uploaded anywhere.",
+                    "locally and are never uploaded anywhere. If you set a PIN it is never " +
+                    "stored — only a deliberately slow hash of it is, inside storage " +
+                    "encrypted by a key that never leaves this device.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }

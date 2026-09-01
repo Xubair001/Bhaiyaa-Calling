@@ -38,14 +38,4 @@ object PrayerPeriods {
         return begun.maxByOrNull { it.order }
             ?: Prayer.ISHA.takeIf { anchors.containsKey(it) }
     }
-
-    /**
-     * When the current period gives way to the next, or null when the next
-     * prayer is tomorrow's and therefore not in [anchors].
-     *
-     * Lets content that is specific to a period know how long it stays valid
-     * without re-deriving the period on a timer.
-     */
-    fun currentPeriodEnd(anchors: Map<Prayer, Long>, now: Long): Long? =
-        anchors.values.filter { it > now }.minOrNull()
 }

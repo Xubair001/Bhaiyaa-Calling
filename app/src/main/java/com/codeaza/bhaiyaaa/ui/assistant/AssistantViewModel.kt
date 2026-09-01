@@ -8,7 +8,6 @@ import com.codeaza.bhaiyaaa.ai.AssistantAction
 import com.codeaza.bhaiyaaa.ai.AssistantSource
 import com.codeaza.bhaiyaaa.ai.ResourcePhrasebook
 import com.codeaza.bhaiyaaa.ai.RuleBasedAssistantEngine
-import com.codeaza.bhaiyaaa.ai.model.ModelPurpose
 import com.codeaza.bhaiyaaa.ai.speech.AndroidSpeechRecognizer
 import com.codeaza.bhaiyaaa.ai.speech.SpeechEngineKind
 import com.codeaza.bhaiyaaa.ai.speech.SpeechEvent
@@ -148,9 +147,6 @@ class AssistantViewModel(
     suspend fun refreshSpeechAvailability() {
         _availableSpeechEngine.value = pickSpeechEngine()?.kind
     }
-
-    suspend fun offlineModelInstalled(): Boolean =
-        db.aiModelDao().activeForPurpose(ModelPurpose.SPEECH_RECOGNITION.storageValue) != null
 
     // ------------------------------------------------------------ conversation
 
@@ -359,10 +355,6 @@ class AssistantViewModel(
         listenJob?.cancel()
         listenJob = null
         _speech.value = _speech.value.copy(isListening = false, partialText = "")
-    }
-
-    fun dismissSpeechError() {
-        _speech.value = _speech.value.copy(error = null)
     }
 
     override fun onCleared() {

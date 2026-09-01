@@ -104,14 +104,16 @@ class VoiceRecordingRepository(context: Context) {
         val target = newRecordingFile()
         val copied = runCatching {
             appContext.contentResolver.openInputStream(uri)?.use { input ->
-                target.outputStream().use { output -> input.copyTo(output) }
-            } != null
+                target.outputStream().use { output -> input.copyBounded(output) }
+            } ?: false
         }.getOrElse {
             Log.w(TAG, "Import failed: ${it.javaClass.simpleName}")
             false
         }
 
         if (!copied || !target.exists() || target.length() == 0L) {
+            // A partial file from an oversized source is deleted rather than
+            // left behind as a truncated recording.
             runCatching { target.delete() }
             return@withContext null
         }
@@ -164,6 +166,29 @@ class VoiceRecordingRepository(context: Context) {
     }
 
     /**
+     * Copies, refusing anything larger than [MAX_IMPORT_BYTES].
+     *
+     * `copyTo` would happily write a two-gigabyte file into the user's storage
+     * because they mis-tapped in the picker, and nothing would tell them why
+     * the phone was suddenly full. An adhan is a couple of minutes of audio;
+     * the cap is generous for that and ruinous for nothing.
+     *
+     * @return false if the source was too large, having written no more than
+     *   the cap before stopping.
+     */
+    private fun java.io.InputStream.copyBounded(output: java.io.OutputStream): Boolean {
+        val buffer = ByteArray(COPY_BUFFER_BYTES)
+        var total = 0L
+        while (true) {
+            val read = read(buffer)
+            if (read < 0) return true
+            total += read
+            if (total > MAX_IMPORT_BYTES) return false
+            output.write(buffer, 0, read)
+        }
+    }
+
+    /**
      * Length in milliseconds, or zero when it cannot be read.
      *
      * Explicit try/finally rather than `use`: MediaMetadataRetriever only
@@ -189,5 +214,9 @@ class VoiceRecordingRepository(context: Context) {
         const val EXTENSION = "m4a"
         const val DEFAULT_LABEL = "Recording"
         const val TAG = "SukoonRecordings"
+
+        /** Comfortably more than any adhan, far less than a phone's storage. */
+        const val MAX_IMPORT_BYTES = 25L * 1024 * 1024
+        const val COPY_BUFFER_BYTES = 16 * 1024
     }
 }

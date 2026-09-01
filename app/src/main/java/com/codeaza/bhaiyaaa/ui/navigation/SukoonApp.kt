@@ -116,7 +116,7 @@ fun SukoonApp(
     if (lockState == LockState.LOCKED) {
         PrivacyLockScreen(
             onUnlocked = { viewModel.onBiometricSuccess() },
-            verifyPin = { pin -> viewModel.verifyPin(pin) }
+            verifyPin = viewModel::verifyPin
         )
         return
     }

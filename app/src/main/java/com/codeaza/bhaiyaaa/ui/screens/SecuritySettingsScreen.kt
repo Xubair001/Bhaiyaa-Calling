@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +31,7 @@ import com.codeaza.bhaiyaaa.ui.components.SettingsSectionHeader
 import com.codeaza.bhaiyaaa.ui.components.SettingsSwitchRow
 import com.codeaza.bhaiyaaa.util.BiometricAuth
 import com.codeaza.bhaiyaaa.util.SecurePrefs
+import kotlinx.coroutines.launch
 
 @Composable
 fun SecuritySettingsScreen(viewModel: SukoonViewModel) {
@@ -109,13 +111,15 @@ fun SecuritySettingsScreen(viewModel: SukoonViewModel) {
         SetPinDialog(
             onDismiss = { showPinDialog = false },
             onConfirm = { pin ->
-                if (viewModel.setPin(pin)) {
+                // Deriving the hash is deliberately slow, so this is a
+                // suspending call the dialog awaits rather than a blocking
+                // one on the frame thread.
+                val ok = viewModel.setPin(pin)
+                if (ok) {
                     version++
                     showPinDialog = false
-                    true
-                } else {
-                    false
                 }
+                ok
             }
         )
     }
@@ -124,11 +128,13 @@ fun SecuritySettingsScreen(viewModel: SukoonViewModel) {
 @Composable
 private fun SetPinDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Boolean
+    onConfirm: suspend (String) -> Boolean
 ) {
     var pin by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var saving by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -161,17 +167,23 @@ private fun SetPinDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    error = when {
+                    when {
                         pin.length !in SecurePrefs.MIN_PIN_LENGTH..SecurePrefs.MAX_PIN_LENGTH ->
-                            "PIN must be ${SecurePrefs.MIN_PIN_LENGTH}–${SecurePrefs.MAX_PIN_LENGTH} digits."
-                        pin != confirm -> "The two PINs don't match."
-                        else -> {
-                            if (onConfirm(pin)) null else "Couldn't save the PIN on this device."
+                            error = "PIN must be ${SecurePrefs.MIN_PIN_LENGTH}–${SecurePrefs.MAX_PIN_LENGTH} digits."
+                        pin != confirm -> error = "The two PINs don't match."
+                        else -> scope.launch {
+                            // Saving takes a couple of hundred milliseconds by
+                            // design. The button says so rather than the
+                            // dialog appearing to ignore the tap.
+                            saving = true
+                            error = if (onConfirm(pin)) null
+                            else "Couldn't save the PIN on this device."
+                            saving = false
                         }
                     }
                 },
-                enabled = pin.isNotBlank() && confirm.isNotBlank()
-            ) { Text("Save") }
+                enabled = pin.isNotBlank() && confirm.isNotBlank() && !saving
+            ) { Text(if (saving) "Saving…" else "Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )

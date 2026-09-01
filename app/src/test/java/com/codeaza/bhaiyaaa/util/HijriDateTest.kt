@@ -60,9 +60,9 @@ class HijriDateTest {
     }
 
     @Test
-    fun `after maghrib the Hijri day has already turned`() {
-        // The Islamic day begins at sunset, so the evening of one civil day is
-        // already the next Hijri day.
+    fun `consecutive civil days are consecutive Hijri days`() {
+        // Also pins the month rollover, which is where an off-by-one in the
+        // conversion would show first.
         val civil = LocalDate.of(2023, 7, 18)
         assertThat(HijriDate.format(civil)).isEqualTo("30 Dhu al-Hijjah 1444")
         assertThat(HijriDate.format(civil.plusDays(1))).isEqualTo("1 Muharram 1445")

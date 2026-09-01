@@ -93,12 +93,4 @@ class RamadanTimesTest {
 
         assertThat(RamadanTimes.forDay(muddled)).isNull()
     }
-
-    @Test
-    fun `the length of the fast is stated from the same two times`() {
-        val day = requireNotNull(RamadanTimes.forDay(anchors))
-
-        assertThat(RamadanTimes.lengthMillis(day))
-            .isEqualTo(TimeUnit.MINUTES.toMillis(13 * 60 + 25))
-    }
 }

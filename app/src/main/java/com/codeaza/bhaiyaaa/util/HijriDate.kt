@@ -23,8 +23,8 @@ import java.util.Locale
  * **The Islamic day begins at maghrib, not midnight.** After sunset the Hijri
  * date has already advanced while the civil date has not. Showing the plain
  * conversion is what every calendar app does and is what people expect from a
- * date line, so that is what [today] returns - and [afterMaghrib] exists for a
- * caller that knows the sun has set and wants the day that has actually begun.
+ * date line, so that is what [today] returns. A caller that genuinely knows
+ * the sun has set can convert tomorrow's date itself with [format].
  */
 object HijriDate {
 
@@ -44,16 +44,6 @@ object HijriDate {
     /** "12 Rabi' al-Awwal 1447", or null if the platform cannot convert. */
     fun today(zone: ZoneId = ZoneId.systemDefault(), now: Long = System.currentTimeMillis()): String? =
         format(Instant.ofEpochMilli(now).atZone(zone).toLocalDate())
-
-    /**
-     * The Hijri date once the sun has set, which is when the Islamic day turns.
-     *
-     * Only for a caller that actually knows maghrib has passed - the app knows
-     * this from the prayer times it already computes, so it is a real answer
-     * rather than a guess about the time of day.
-     */
-    fun afterMaghrib(zone: ZoneId = ZoneId.systemDefault(), now: Long = System.currentTimeMillis()): String? =
-        format(Instant.ofEpochMilli(now).atZone(zone).toLocalDate().plusDays(1))
 
     fun format(date: java.time.LocalDate): String? = try {
         val hijri = HijrahDate.from(date)

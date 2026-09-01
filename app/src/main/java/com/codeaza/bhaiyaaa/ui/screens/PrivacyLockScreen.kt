@@ -26,7 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.codeaza.bhaiyaaa.util.BiometricAuth
 import com.codeaza.bhaiyaaa.util.BiometricResult
+import com.codeaza.bhaiyaaa.util.PinResult
 import com.codeaza.bhaiyaaa.util.SecurePrefs
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * The gate in front of the whole app when the privacy lock is on.
@@ -53,13 +58,30 @@ import com.codeaza.bhaiyaaa.util.SecurePrefs
 @Composable
 fun PrivacyLockScreen(
     onUnlocked: () -> Unit,
-    verifyPin: (String) -> Boolean
+    verifyPin: suspend (String) -> PinResult
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var entered by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
-    var failedAttempts by remember { mutableStateOf(0) }
-    var lockedUntil by remember { mutableStateOf(0L) }
+    var checking by remember { mutableStateOf(false) }
+
+    /**
+     * How long the lock is still shut for.
+     *
+     * Read from secure storage, not held here. It used to be a `remember` in
+     * this composable, which meant force-stopping the app reset the counter -
+     * an attacker with the phone could retry for ever and the lockout was
+     * decoration. The countdown below is display only; the real check is made
+     * inside SecurePrefs on every attempt.
+     */
+    var lockoutRemaining by remember { mutableLongStateOf(SecurePrefs.lockoutRemainingMillis(context)) }
+    LaunchedEffect(lockoutRemaining > 0) {
+        while (lockoutRemaining > 0) {
+            delay(LOCKOUT_TICK_MILLIS)
+            lockoutRemaining = SecurePrefs.lockoutRemainingMillis(context)
+        }
+    }
 
     val biometricEnabled = remember { SecurePrefs.isBiometricEnabled(context) }
     val canUseBiometric = remember { biometricEnabled && BiometricAuth.canAuthenticate(context) }
@@ -82,18 +104,28 @@ fun PrivacyLockScreen(
     }
 
     fun submit(pin: String) {
-        if (System.currentTimeMillis() < lockedUntil) return
-        if (verifyPin(pin)) {
-            onUnlocked()
-        } else {
-            failedAttempts++
-            entered = ""
-            if (failedAttempts >= MAX_ATTEMPTS_BEFORE_DELAY) {
-                lockedUntil = System.currentTimeMillis() + LOCKOUT_MILLIS
-                error = "Too many tries. Wait ${LOCKOUT_MILLIS / 1000}s."
-            } else {
-                error = "Wrong PIN"
+        if (checking || lockoutRemaining > 0) return
+        scope.launch {
+            checking = true
+            // Suspending: checking a PIN is deliberately slow, and blocking
+            // the frame thread for it would drop the keypad's ripple.
+            when (val result = verifyPin(pin)) {
+                is PinResult.Correct -> onUnlocked()
+                is PinResult.Wrong -> {
+                    entered = ""
+                    error = if (result.remainingAttempts > 0) {
+                        "Wrong PIN — ${result.remainingAttempts} left before a wait"
+                    } else {
+                        "Wrong PIN"
+                    }
+                }
+                is PinResult.LockedOut -> {
+                    entered = ""
+                    lockoutRemaining = result.waitMillis
+                    error = null
+                }
             }
+            checking = false
         }
     }
 
@@ -145,7 +177,11 @@ fun PrivacyLockScreen(
 
         Spacer(Modifier.height(12.dp))
         Text(
-            text = error ?: " ",
+            text = when {
+                lockoutRemaining > 0 ->
+                    "Too many tries. Wait ${(lockoutRemaining / 1000) + 1}s."
+                else -> error ?: " "
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error
         )
@@ -154,8 +190,11 @@ fun PrivacyLockScreen(
 
         Keypad(
             onDigit = { digit ->
+                // The keypad goes dead during a lockout and while a check
+                // is in flight, so a held-down finger cannot queue attempts.
                 if (entered.length < SecurePrefs.MAX_PIN_LENGTH &&
-                    System.currentTimeMillis() >= lockedUntil
+                    lockoutRemaining <= 0 &&
+                    !checking
                 ) {
                     error = null
                     entered += digit
@@ -219,5 +258,10 @@ private fun Keypad(onDigit: (Char) -> Unit, onBackspace: () -> Unit) {
     }
 }
 
-private const val MAX_ATTEMPTS_BEFORE_DELAY = 5
-private const val LOCKOUT_MILLIS = 30_000L
+/**
+ * How often the countdown redraws while a lockout runs.
+ *
+ * Display only - the lockout itself is enforced in SecurePrefs, which is the
+ * one place that survives the app being force-stopped.
+ */
+private const val LOCKOUT_TICK_MILLIS = 1_000L

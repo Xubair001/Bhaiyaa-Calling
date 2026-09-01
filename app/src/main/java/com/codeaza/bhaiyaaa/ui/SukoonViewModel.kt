@@ -31,7 +31,9 @@ import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.service.ReminderScheduler
 import com.codeaza.bhaiyaaa.util.Formatting
 import com.codeaza.bhaiyaaa.util.Permissions
+import com.codeaza.bhaiyaaa.util.PinResult
 import com.codeaza.bhaiyaaa.util.SecurePrefs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -44,6 +46,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** A one-shot message for the UI to show in a snackbar. */
 data class UserMessage(val id: Long, val text: String)
@@ -428,21 +431,44 @@ class SukoonViewModel(application: Application) : AndroidViewModel(application) 
 
     // ---------------------------------------------------------- privacy lock
 
-    fun setPin(pin: String): Boolean {
-        val ok = SecurePrefs.setPin(getApplication(), pin)
+    /**
+     * Sets the PIN.
+     *
+     * Suspending, and off the main thread, because the hash is deliberately
+     * slow to derive - that slowness is the whole defence against someone
+     * walking a four-digit keyspace, and it must not be paid on a frame.
+     */
+    suspend fun setPin(pin: String): Boolean {
+        if (!SecurePrefs.isWellFormed(pin)) {
+            showMessage("PIN must be ${SecurePrefs.MIN_PIN_LENGTH}–${SecurePrefs.MAX_PIN_LENGTH} digits.")
+            return false
+        }
+        val ok = withContext(Dispatchers.Default) {
+            SecurePrefs.setPin(getApplication(), pin)
+        }
         if (ok) {
             _lockState.value = LockState.UNLOCKED
             showMessage("Privacy lock is on.")
         } else {
-            showMessage("PIN must be ${SecurePrefs.MIN_PIN_LENGTH}–${SecurePrefs.MAX_PIN_LENGTH} digits.")
+            showMessage("This phone wouldn't let Sukoon store the PIN securely.")
         }
         return ok
     }
 
-    fun verifyPin(pin: String): Boolean {
-        val ok = SecurePrefs.verifyPin(getApplication(), pin)
-        if (ok) _lockState.value = LockState.UNLOCKED
-        return ok
+    /**
+     * Checks a PIN and reports what happened.
+     *
+     * Returns the full result rather than a boolean so the lock screen can say
+     * how many tries are left, or how long the lockout has to run - both of
+     * which now live in secure storage rather than in the screen's own state,
+     * where force-stopping the app used to reset them.
+     */
+    suspend fun verifyPin(pin: String): PinResult {
+        val result = withContext(Dispatchers.Default) {
+            SecurePrefs.verifyPin(getApplication(), pin)
+        }
+        if (result is PinResult.Correct) _lockState.value = LockState.UNLOCKED
+        return result
     }
 
     fun onBiometricSuccess() {

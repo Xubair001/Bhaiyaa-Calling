@@ -1,6 +1,7 @@
 package com.codeaza.bhaiyaaa.service
 
 import android.app.Service
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -119,7 +120,7 @@ class AdhanService : Service() {
     }
 
     private suspend fun play(prayer: Prayer, settings: PrayerSettings) {
-        val uri = settings.adhan.soundUri?.let(Uri::parse) ?: defaultSound()
+        val uri = localSound(settings.adhan.soundUri) ?: defaultSound()
         if (uri == null) {
             Log.w(TAG, "No adhan sound available on this device")
             stopEverything()
@@ -189,6 +190,25 @@ class AdhanService : Service() {
         val audio = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
         runCatching { focusRequest?.let { audio.abandonAudioFocusRequest(it) } }
         focusRequest = null
+    }
+
+    /**
+     * The chosen sound, but only if it is genuinely on this device.
+     *
+     * `MediaPlayer.setDataSource` will happily stream an `http://` URI. This
+     * app promises that nothing it does reaches the network, and a preference
+     * holding a remote URI - set by a cloud document provider, an import, or a
+     * future bug - would quietly break that promise at prayer time, where
+     * nobody would see it happen. Restricting the scheme makes the promise
+     * structural rather than a matter of how the picker happened to behave.
+     */
+    private fun localSound(raw: String?): Uri? {
+        val uri = raw?.let(Uri::parse) ?: return null
+        return uri.takeIf {
+            it.scheme == ContentResolver.SCHEME_CONTENT ||
+                it.scheme == ContentResolver.SCHEME_FILE ||
+                it.scheme == ContentResolver.SCHEME_ANDROID_RESOURCE
+        }
     }
 
     /**

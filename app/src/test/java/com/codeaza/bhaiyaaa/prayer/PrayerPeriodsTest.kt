@@ -86,11 +86,4 @@ class PrayerPeriodsTest {
         // period is the one before it.
         assertThat(PrayerPeriods.current(muddled, at(17, 0))).isEqualTo(Prayer.DHUHR)
     }
-
-    @Test
-    fun `the period end is the next prayer's time`() {
-        assertThat(PrayerPeriods.currentPeriodEnd(anchors, at(13, 0))).isEqualTo(at(16, 15))
-        // Nothing left today: the next one is tomorrow's and is not in here.
-        assertThat(PrayerPeriods.currentPeriodEnd(anchors, at(23, 0))).isNull()
-    }
 }

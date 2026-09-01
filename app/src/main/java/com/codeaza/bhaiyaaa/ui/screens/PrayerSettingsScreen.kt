@@ -163,12 +163,15 @@ fun PrayerSettingsScreen(
      * `spacedBy` that is a visible band of dead space at the top of the
      * screen. An empty section is dropped rather than drawn empty.
      */
-    val hasWarnings = settings.enabled && (
-        !hasDnd ||
-            !hasExact ||
-            !BackgroundReliability.isIgnoringBatteryOptimizations(context) ||
+    //
+    // Remembered against grantVersion like the other two: both of these are
+    // binder calls into PowerManager, and reading them straight from the
+    // composition ran them on every single recomposition of the screen.
+    val backgroundRestricted = remember(grantVersion) {
+        !BackgroundReliability.isIgnoringBatteryOptimizations(context) ||
             BackgroundReliability.hasAggressiveBackgroundPolicy()
-        )
+    }
+    val hasWarnings = settings.enabled && (!hasDnd || !hasExact || backgroundRestricted)
 
     val sections = remember(focus, settings.enabled, settings.mode, hasWarnings) {
         QuietTimesLayout.order(
