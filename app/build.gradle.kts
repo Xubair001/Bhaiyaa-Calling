@@ -145,9 +145,15 @@ dependencies {
     testImplementation("androidx.room:room-testing:2.6.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("com.google.truth:truth:1.4.4")
-    // Compose UI tests run under Robolectric too. Kept on the JVM side because
-    // this project's CI has no emulator, and MIUI refuses to sideload the
-    // instrumentation APK - anything left in androidTest never actually runs.
+    // Compose UI tests run under Robolectric too, so `./gradlew test` covers
+    // them on CI, which has no emulator.
+    //
+    // The instrumented suite in androidTest does run on a real MIUI device,
+    // contrary to what this comment used to claim - but not via
+    // `connectedDebugAndroidTest`, which installs through ddmlib and is
+    // refused with INSTALL_FAILED_USER_RESTRICTED. Installing the two APKs
+    // with `adb install` directly works, and then:
+    //   adb shell am instrument -w com.codeaza.bhaiyaaa.test/androidx.test.runner.AndroidJUnitRunner
     testImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
     testImplementation("androidx.compose.ui:ui-test-junit4")
 

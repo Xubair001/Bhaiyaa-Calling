@@ -74,12 +74,24 @@ import java.util.Locale
  *    changing things, on the IO dispatcher, rather than after every keystroke
  *    of a slider.
  */
-class PrayerViewModel(
+class PrayerViewModel @JvmOverloads constructor(
     application: Application,
     /** Injectable so tests can run the derivation on a deterministic dispatcher. */
     private val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AndroidViewModel(application) {
+
+    /*
+     * @JvmOverloads is load-bearing, not tidiness.
+     *
+     * Kotlin default arguments do not produce a one-argument JVM constructor -
+     * they produce the full one plus a synthetic bridge. `AndroidViewModelFactory`
+     * looks up `<init>(Application)` by reflection, finds nothing, and throws.
+     * Adding the dispatchers without this crashed the app on launch, every
+     * time, and every unit test still passed: the tests build this directly
+     * through their own factory and never touch the reflective path the real
+     * app uses. ViewModelConstructionTest now covers that path.
+     */
 
     private companion object {
         const val TEST_SILENCE_MILLIS = 60_000L

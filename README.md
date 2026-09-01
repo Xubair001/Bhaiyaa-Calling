@@ -257,6 +257,17 @@ file's integrity and its no-repeat rotation, Room DAOs, sync idempotency, FTS
 index consistency, insight aggregation, and the v3→v4 and v7→v8 migrations
 against real databases of those versions.
 
+On a real device, `connectedDebugAndroidTest` fails on MIUI/HyperOS with
+`INSTALL_FAILED_USER_RESTRICTED` — that is ddmlib's installer being refused, not
+the tests. Installing both APKs with `adb install` and running the runner
+directly works, and the 13 instrumented tests pass:
+
+```bash
+adb install -r -t app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w com.codeaza.bhaiyaaa.test/androidx.test.runner.AndroidJUnitRunner
+```
+
 `./gradlew test` also runs the release variant, where `ReminderUiTest` fails:
 Robolectric cannot resolve the launcher activity in the minified build. That is
 a known limitation of running Compose UI tests against R8 output, not a product
