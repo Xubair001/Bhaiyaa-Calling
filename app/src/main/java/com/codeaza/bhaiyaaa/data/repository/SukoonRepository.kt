@@ -1,5 +1,6 @@
 package com.codeaza.bhaiyaaa.data.repository
 
+import androidx.room.withTransaction
 import android.content.Context
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
 import com.codeaza.bhaiyaaa.data.db.entity.CallRecordEntity
@@ -108,8 +109,20 @@ class SukoonRepository(
                 contactsAdded = contactDao.count() - before
                 // Refresh only device-owned columns; VIP tier, tags and notes
                 // the user set are never touched by a sync.
-                fromDevice.forEach {
-                    contactDao.refreshDeviceFields(it.phoneNumber, it.name, it.matchKey, timestamp)
+                //
+                // In one transaction. Without it this is a separate SQLite
+                // transaction - and an fsync - per contact, so a phone with
+                // two thousand contacts did two thousand of them on every
+                // periodic sync. Batched, it is one.
+                db.withTransaction {
+                    fromDevice.forEach {
+                        contactDao.refreshDeviceFields(
+                            it.phoneNumber,
+                            it.name,
+                            it.matchKey,
+                            timestamp
+                        )
+                    }
                 }
             }
         }

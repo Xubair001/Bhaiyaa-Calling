@@ -1,5 +1,6 @@
 package com.codeaza.bhaiyaaa.data.export
 
+import androidx.room.withTransaction
 import android.content.Context
 import android.net.Uri
 import com.codeaza.bhaiyaaa.data.db.AppDatabase
@@ -11,6 +12,7 @@ import com.codeaza.bhaiyaaa.data.db.entity.TagEntity
 import com.codeaza.bhaiyaaa.data.prefs.SettingsRepository
 import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 import com.codeaza.bhaiyaaa.domain.model.ThemeMode
+import com.codeaza.bhaiyaaa.domain.model.VipLevel
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -71,6 +73,7 @@ class DataTransfer(private val context: Context) {
                 "${db.memoryDao().allOnce().size} memories",
                 "${db.reminderDao().allOnce().size} reminders"
             )
+
             TransferResult.Success("Exported ${counts.joinToString(", ")}")
         } catch (e: Exception) {
             TransferResult.Failure(e.message ?: "Export failed")
@@ -84,10 +87,32 @@ class DataTransfer(private val context: Context) {
      * and only their Sukoon-owned fields are restored, so importing an old
      * backup can't delete contacts or wipe newer notes with blank ones.
      */
+    /**
+     * Reads at most [MAX_IMPORT_BYTES] of text, or null if the file is larger.
+     *
+     * An export of a very large phone is a few megabytes; the cap is generous
+     * for that and refuses anything that could not plausibly be one.
+     */
+    private fun java.io.InputStream.readBoundedText(): String? {
+        val buffer = ByteArray(IMPORT_BUFFER_BYTES)
+        val out = java.io.ByteArrayOutputStream()
+        while (true) {
+            val read = read(buffer)
+            if (read < 0) return out.toString(Charsets.UTF_8.name())
+            if (out.size() + read > MAX_IMPORT_BYTES) return null
+            out.write(buffer, 0, read)
+        }
+    }
+
     suspend fun import(uri: Uri): TransferResult = withContext(Dispatchers.IO) {
         try {
+            // Bounded. readBytes() would pull the whole file into memory
+            // whatever its size, so picking the wrong file - or a hostile one -
+            // was an out-of-memory kill rather than an error message.
             val text = context.contentResolver.openInputStream(uri)?.use { input ->
-                input.readBytes().toString(Charsets.UTF_8)
+                input.readBoundedText() ?: return@withContext TransferResult.Failure(
+                    "That file is too large to be a Sukoon export"
+                )
             } ?: return@withContext TransferResult.Failure("Couldn't open that file")
 
             val root = try {
@@ -111,6 +136,13 @@ class DataTransfer(private val context: Context) {
             var memoriesAdded = 0
             var remindersAdded = 0
 
+            // One transaction for the whole import, for two reasons. It is far
+            // faster - every insert was its own SQLite transaction, and an
+            // fsync, so a file with a thousand notes did a thousand of them.
+            // And it is atomic: a file that turns out to be malformed halfway
+            // through now leaves the database exactly as it was, rather than
+            // half-imported with no way to tell which half.
+            db.withTransaction {
             root.optJSONArray(KEY_CONTACTS)?.let { array ->
                 for (i in 0 until array.length()) {
                     val o = array.optJSONObject(i) ?: continue
@@ -124,10 +156,13 @@ class DataTransfer(private val context: Context) {
                         createdAt = now,
                         updatedAt = now
                     )).copy(
-                        vipLevel = o.optString("vipLevel", "NONE"),
+                        // Through the enum, so a file cannot put an unknown
+                        // string in the column that decides how loudly the
+                        // phone rings for someone.
+                        vipLevel = VipLevel.from(o.optString("vipLevel")).storageValue,
                         tag = o.optStringOrNull("tag"),
                         relationship = o.optStringOrNull("relationship"),
-                        importance = o.optInt("importance", 1),
+                        importance = o.optInt("importance", 1).coerceIn(1, 5),
                         notes = o.optStringOrNull("notes") ?: existing?.notes,
                         isSpam = o.optBoolean("isSpam", false),
                         notificationsEnabled = o.optBoolean("notificationsEnabled", true),
@@ -144,6 +179,10 @@ class DataTransfer(private val context: Context) {
                 val existing = db.memoryDao().allOnce()
                     .map { it.body.trim() to it.createdAt }
                     .toSet()
+                // Read once. This used to be a lookup per memory, so a file
+                // with a thousand notes ran a thousand queries to answer the
+                // same question a thousand times.
+                val knownNumbers = db.contactDao().allOnce().map { it.phoneNumber }.toSet()
                 for (i in 0 until array.length()) {
                     val o = array.optJSONObject(i) ?: continue
                     val body = o.optString("body").trim()
@@ -154,7 +193,7 @@ class DataTransfer(private val context: Context) {
                         MemoryEntity(
                             contactPhoneNumber = o.optStringOrNull("contactPhoneNumber")
                                 ?.let { PhoneNumbers.normalize(it) }
-                                ?.takeIf { n -> db.contactDao().findByPhoneNumber(n) != null },
+                                ?.takeIf { n -> n in knownNumbers },
                             title = o.optStringOrNull("title"),
                             body = body,
                             source = o.optString("source", "MANUAL"),
@@ -228,6 +267,13 @@ class DataTransfer(private val context: Context) {
                 }
             }
 
+            }
+
+            // Preferences are written after the transaction commits, not
+            // inside it. They live in DataStore, which a Room rollback cannot
+            // undo - holding a database transaction open across another
+            // store's suspending writes buys nothing and muddles what
+            // "atomic" means here.
             root.optJSONObject(KEY_SETTINGS)?.let { o ->
                 settings.setThemeMode(ThemeMode.from(o.optString("themeMode")))
                 settings.setPersonality(PersonalityMode.from(o.optString("personality")))
@@ -379,5 +425,15 @@ class DataTransfer(private val context: Context) {
         private const val KEY_RULES = "notificationRules"
         private const val KEY_SETTINGS = "settings"
         private const val KEY_CALLS = "callHistory"
+
+        /**
+         * Ceiling on an import.
+         *
+         * An export of a very large phone is a few megabytes. This is generous
+         * for that and refuses anything that could not plausibly be one, so a
+         * mis-picked file is an error message rather than an out-of-memory kill.
+         */
+        private const val MAX_IMPORT_BYTES = 32L * 1024 * 1024
+        private const val IMPORT_BUFFER_BYTES = 64 * 1024
     }
 }
