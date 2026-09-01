@@ -106,6 +106,22 @@ fun AboutScreen(onOpenLicences: () -> Unit) {
             )
         }
 
+        SettingsSectionHeader("The Hijri date and the qibla")
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Text(
+                "Both are worked out on this phone. The qibla is the great-circle " +
+                    "bearing to the Kaaba from your saved coordinates, corrected to true " +
+                    "north — a phone's compass points at the magnetic pole, which can be " +
+                    "over fifteen degrees off. The Hijri date uses the Umm al-Qura " +
+                    "calendar built into Android; where a country announces the month by " +
+                    "moon sighting it can differ by a day, and no offline calculation can " +
+                    "know that. During Ramadan the dashboard counts down to suhoor " +
+                    "and iftar, which are simply your Fajr and Maghrib times — not a " +
+                    "separate calculation that could disagree with them.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
         SettingsSectionHeader("The Hadith shown on your dashboard")
         Column(Modifier.padding(horizontal = 20.dp)) {
             Text(

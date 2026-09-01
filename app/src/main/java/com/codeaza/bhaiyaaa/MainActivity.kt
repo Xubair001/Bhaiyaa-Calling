@@ -1,5 +1,6 @@
 package com.codeaza.bhaiyaaa
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -7,6 +8,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -16,6 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.codeaza.bhaiyaaa.notifications.Notifier
 import com.codeaza.bhaiyaaa.ui.SukoonViewModel
 import com.codeaza.bhaiyaaa.ui.navigation.SukoonApp
 import com.codeaza.bhaiyaaa.ui.theme.SukoonTheme
@@ -29,10 +33,30 @@ import com.codeaza.bhaiyaaa.ui.theme.SukoonTheme
  */
 class MainActivity : FragmentActivity() {
 
+    /**
+     * A number whose latest call should be opened, from a call-note prompt.
+     *
+     * Held as state rather than read from the intent inside Compose: the
+     * activity is `singleTask`, so a second tap arrives at [onNewIntent] with
+     * the composition already running, and reading `intent` during composition
+     * would miss it entirely.
+     */
+    private var pendingNoteNumber by mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingNoteNumber = intent.noteNumber()
+    }
+
+    private fun Intent?.noteNumber(): String? =
+        this?.getStringExtra(Notifier.EXTRA_NOTE_FOR_NUMBER)?.takeIf { it.isNotBlank() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        pendingNoteNumber = intent.noteNumber()
 
         setContent {
             val viewModel: SukoonViewModel = viewModel()
@@ -57,7 +81,11 @@ class MainActivity : FragmentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SukoonApp(viewModel = viewModel)
+                    SukoonApp(
+                        viewModel = viewModel,
+                        pendingNoteNumber = pendingNoteNumber,
+                        onPendingNoteHandled = { pendingNoteNumber = null }
+                    )
                 }
             }
         }

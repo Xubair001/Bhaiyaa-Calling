@@ -43,14 +43,60 @@ class IncomingCallReceiver : BroadcastReceiver() {
             TelephonyManager.EXTRA_STATE_RINGING -> {
                 @Suppress("DEPRECATION")
                 val incoming = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+                CallSession.onRinging(appContext, incoming)
                 handleRinging(appContext, incoming)
             }
-            // Answered or ended: stop any flashing immediately so the torch is
-            // never left on after the call is dealt with.
-            TelephonyManager.EXTRA_STATE_OFFHOOK,
+            // Answered: stop any flashing immediately so the torch is never
+            // left on once the call is dealt with.
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                CallSession.onAnswered(appContext)
+                stopAlerts(appContext)
+            }
             TelephonyManager.EXTRA_STATE_IDLE -> {
-                CallAlertManager.cancelAlerts(appContext)
-                runCatching { appContext.startService(VipAlertService.stopIntent(appContext)) }
+                stopAlerts(appContext)
+                // Null unless this was an incoming call that was actually
+                // picked up - a missed call must not be offered a note about
+                // a conversation that never happened.
+                CallSession.onEnded(appContext)?.let { handleAnsweredCallEnded(appContext, it) }
+            }
+        }
+    }
+
+    private fun stopAlerts(context: Context) {
+        CallAlertManager.cancelAlerts(context)
+        runCatching { context.startService(VipAlertService.stopIntent(context)) }
+    }
+
+    /**
+     * Offers a note after a call with someone the user marked VIP.
+     *
+     * Only for VIPs, and only when the call was answered. The bar is
+     * deliberately the same one the missed-call nudge already uses: a prompt
+     * after every call would be the app talking far more than it earns.
+     */
+    private fun handleAnsweredCallEnded(context: Context, rawNumber: String) {
+        val matchKey = PhoneNumbers.matchKey(rawNumber)
+        if (matchKey.isBlank()) return
+
+        val pendingResult = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                withTimeoutOrNull(WORK_TIMEOUT_MS) {
+                    val settings = SettingsRepository(context).settings.first()
+                    if (!settings.postCallNotePrompt) return@withTimeoutOrNull
+
+                    val contact = AppDatabase.getInstance(context)
+                        .contactDao()
+                        .findByMatchKey(matchKey) ?: return@withTimeoutOrNull
+                    if (!VipLevel.from(contact.vipLevel).isVip) return@withTimeoutOrNull
+
+                    Notifier.notifyCallNotePrompt(context, contact.name, rawNumber)
+                }
+            } catch (e: Exception) {
+                // A broadcast receiver must never crash. A missed prompt is a
+                // missed convenience, nothing more.
+            } finally {
+                pendingResult.finish()
             }
         }
     }

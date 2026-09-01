@@ -83,6 +83,13 @@ fun NotificationSettingsScreen(viewModel: SukoonViewModel) {
             checked = settings.missedCallNudgeEnabled,
             onCheckedChange = { viewModel.setMissedCallNudge(it) }
         )
+        SettingsSwitchRow(
+            title = "Offer a note after a VIP call",
+            subtitle = "One tap to record or write something down while it's fresh. " +
+                "Silent, and only after a call you answered from a VIP.",
+            checked = settings.postCallNotePrompt,
+            onCheckedChange = { viewModel.setPostCallNotePrompt(it) }
+        )
 
         SettingsSectionHeader("Background")
         SettingsSwitchRow(

@@ -19,4 +19,13 @@
       violet primary so the shade looks like the app it came from.
     -->
     <color name="notification_accent">#6A3FBF</color>
+
+    <!--
+      Widget colours. A home-screen widget is drawn by the launcher's process,
+      which cannot see MaterialTheme - so these are the one part of the palette
+      that has to exist as platform resources, with a values-night/ twin.
+    -->
+    <color name="widget_background">#FFFFFF</color>
+    <color name="widget_text_primary">#1C1B1F</color>
+    <color name="widget_text_secondary">#5F5A6B</color>
 </resources>

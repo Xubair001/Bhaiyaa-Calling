@@ -12,6 +12,7 @@ import com.codeaza.bhaiyaaa.domain.model.Prayer
 import com.codeaza.bhaiyaaa.domain.model.SilenceSource
 import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.service.PrayerAlarmReceiver
+import com.codeaza.bhaiyaaa.widget.NextPrayerWidget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -142,6 +143,11 @@ object PrayerScheduler {
         if (active != null && !SilenceController.isSilenceActive(context)) {
             SilenceController.enterSilence(context, active.label, active.mode)
         }
+
+        // The home-screen widget shows the next window, so the moment the plan
+        // changes is exactly when it needs redrawing - and the only time it
+        // does. That is why the widget itself never polls.
+        NextPrayerWidget.refresh(context)
     }
 
     /**

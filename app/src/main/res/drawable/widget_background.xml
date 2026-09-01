@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The widget's surface. A shape drawable rather than a nine-patch or a bitmap:
+  it scales to any widget size, costs a few bytes, and picks up the light or
+  dark colour from values/ and values-night/ without a second asset.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="24dp" />
+    <solid android:color="@color/widget_background" />
+</shape>

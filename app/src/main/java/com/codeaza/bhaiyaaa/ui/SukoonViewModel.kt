@@ -394,6 +394,8 @@ class SukoonViewModel(application: Application) : AndroidViewModel(application) 
     fun setNotificationsEnabled(v: Boolean) = viewModelScope.launch { settingsRepo.setNotificationsEnabled(v) }
     fun setFlashlightEnabled(v: Boolean) = viewModelScope.launch { settingsRepo.setFlashlightEnabled(v) }
     fun setMissedCallNudge(v: Boolean) = viewModelScope.launch { settingsRepo.setMissedCallNudge(v) }
+    fun setPostCallNotePrompt(v: Boolean) =
+        viewModelScope.launch { settingsRepo.setPostCallNotePrompt(v) }
     fun setAutoSync(v: Boolean) = viewModelScope.launch { settingsRepo.setAutoSync(v) }
     fun setOnboardingComplete() = viewModelScope.launch { settingsRepo.setOnboardingComplete(true) }
 
@@ -510,6 +512,20 @@ class SukoonViewModel(application: Application) : AndroidViewModel(application) 
 
     fun showMessage(text: String) {
         _message.value = UserMessage(System.currentTimeMillis(), text)
+    }
+
+    /**
+     * The most recent call with a number, once the system has logged it.
+     *
+     * A call-note prompt is posted the moment the call ends, but the platform
+     * writes the call-log row a beat later - so the notification carries the
+     * number and this resolves it to a call when the user actually taps
+     * through, by which point the row exists.
+     */
+    suspend fun latestCallIdFor(rawNumber: String): Long? {
+        val matchKey = com.codeaza.bhaiyaaa.util.PhoneNumbers.matchKey(rawNumber)
+        if (matchKey.isBlank()) return null
+        return db.callRecordDao().latestIdForMatchKey(matchKey)
     }
 
     fun consumeMessage() {

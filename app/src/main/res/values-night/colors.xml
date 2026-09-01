@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The dark twin of the widget palette in values/colors.xml. The launcher
+      picks whichever matches the system theme, so the widget follows the phone
+      rather than the app's own theme setting - which is the right behaviour:
+      it lives on someone else's surface.
+    -->
+    <color name="widget_background">#1E1B24</color>
+    <color name="widget_text_primary">#E7E0EC</color>
+    <color name="widget_text_secondary">#CAC4D0</color>
+</resources>

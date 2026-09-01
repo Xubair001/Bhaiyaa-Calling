@@ -26,6 +26,17 @@ interface CallRecordDao {
     @Query("SELECT * FROM call_records WHERE id = :id LIMIT 1")
     suspend fun findById(id: Long): CallRecordEntity?
 
+    /**
+     * The most recent call with one person.
+     *
+     * Used to turn "add a note about your call with Ali" into the actual call
+     * row, once the system has written it to the log - which it does a moment
+     * after the call ends, not before. Served by the existing
+     * (matchKey, timestamp) index, so it costs nothing new.
+     */
+    @Query("SELECT id FROM call_records WHERE matchKey = :matchKey ORDER BY timestamp DESC LIMIT 1")
+    suspend fun latestIdForMatchKey(matchKey: String): Long?
+
     /** Observable form, so a detail screen reflects its own edits immediately. */
     @Query("SELECT * FROM call_records WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<CallRecordEntity?>

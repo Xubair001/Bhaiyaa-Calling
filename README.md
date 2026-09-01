@@ -100,6 +100,38 @@ the adhan on or off. Answers carry their sources, a failed turn offers a retry,
 and the thread survives the process being killed. When it can't parse a question
 it says so rather than guessing.
 
+**Qibla** — the great-circle bearing to the Kaaba from your saved coordinates,
+corrected from magnetic to true north with `GeomagneticField` so it is right in
+places where a raw compass is fifteen degrees out. Drawn with Compose Canvas, so
+it adds nothing to the APK. Says so plainly when the phone has no compass, and
+still gives the bearing as a number.
+
+**Hijri date** — on the dashboard, from `java.time.chrono.HijrahDate`. No
+library, no network, no data file.
+
+**Ramadan** — during Ramadan only, a card counting down to suhoor or iftar.
+Those are Fajr and Maghrib *as the app already computed them* — `RamadanTimes`
+names two existing instants rather than calculating a third, so there is no
+second source of truth to drift. Counts down on a one-minute tick, not a
+one-second one.
+
+**Home-screen widget** — the next quiet window, in plain `RemoteViews` rather
+than Glance: four TextViews and a shape drawable, no new dependency, a few KB.
+`updatePeriodMillis` is **0** — the platform's widget refresh has a half-hour
+floor and wakes the device, which for something that changes five times a day is
+almost all waste. It is redrawn from `PrayerScheduler.reschedule` instead, so it
+is exact and costs no wake-ups of its own.
+
+**Been a while** — the VIPs you have not spoken to, graded by tier (21 days for
+Emergency, 30 for Super VIP, 60 for VIP) so the list stays short enough to read.
+Built from state the dashboard already collects: no new query, no new index.
+
+**Call notes** — after a call you answered from a VIP, one silent notification
+offers to record or write something down while it is fresh, and taps through to
+that call. Only for answered incoming calls: `PHONE_STATE` gives the number on
+the ringing broadcast alone, so an outgoing call cannot be attributed to a person
+without reading the call log, which lags. Switchable in Settings → Alerts.
+
 **Prayer times** — calculated from coordinates or typed in, per prayer. Each
 prayer can only hold a time in its own half of the clock: Fajr is AM, everything
 after it is PM. That is enforced in the picker (which has no meridiem toggle to

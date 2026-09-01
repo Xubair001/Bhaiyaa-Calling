@@ -49,6 +49,15 @@ object NotificationChannels {
      */
     const val PRAYER = "prayer_times"
 
+    /**
+     * The "want to note that down?" nudge after a call with a VIP.
+     *
+     * Its own channel, and low importance, so it never takes over the screen
+     * and can be turned off in system settings without also silencing
+     * reminders - which is what reusing the reminders channel would have cost.
+     */
+    const val CALL_NOTES = "call_notes"
+
     /** Superseded ids, deleted on launch so they stop cluttering system settings. */
     private val LEGACY_CHANNEL_IDS = listOf("vip_calls", "super_vip_calls", "emergency_calls")
 
@@ -155,6 +164,7 @@ object NotificationChannels {
         create(context, manager, REMINDERS, R.string.channel_reminders_name, R.string.channel_reminders_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
         create(context, manager, MISSED, R.string.channel_missed_name, R.string.channel_missed_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId)
         create(context, manager, PRAYER, R.string.channel_prayer_name, R.string.channel_prayer_desc, NotificationManager.IMPORTANCE_DEFAULT, bypassByChannelId, silent = true)
+        create(context, manager, CALL_NOTES, R.string.channel_call_notes_name, R.string.channel_call_notes_desc, NotificationManager.IMPORTANCE_LOW, bypassByChannelId, silent = true)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

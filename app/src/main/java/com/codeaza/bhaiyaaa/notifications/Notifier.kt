@@ -42,6 +42,7 @@ object Notifier {
     private const val MISSED_NOTIFICATION_ID = 3001
     private const val TEST_NOTIFICATION_ID = 4001
     private const val PRAYER_NOTIFICATION_ID = 5002
+    private const val CALL_NOTE_NOTIFICATION_ID = 6001
 
     /**
      * Grouping key for reminders.
@@ -140,6 +141,57 @@ object Notifier {
             )
         post(context, MISSED_NOTIFICATION_ID, builder.build())
     }
+
+    /**
+     * Offers to record a note straight after a call with a VIP.
+     *
+     * The whole point is that it is reachable in one tap while the call is
+     * still in mind - the alternative is finding the call in the list later,
+     * which is exactly the friction that means nobody does it.
+     *
+     * Low importance and silent by channel: this is an offer, not an alert.
+     */
+    fun notifyCallNotePrompt(context: Context, contactName: String, rawNumber: String) {
+        if (!canPost(context)) return
+        val text = "Want to note anything down while it's fresh?"
+        val builder = base(context, NotificationChannels.CALL_NOTES)
+            .setSmallIcon(R.drawable.ic_notification_reminder)
+            .setContentTitle("Call with $contactName")
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setSubText("Call note")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(openCallNote(context, rawNumber))
+            // Goes on its own if it is not acted on. A note prompt that is
+            // still sitting there tomorrow is clutter, not a reminder.
+            .setTimeoutAfter(CALL_NOTE_TIMEOUT_MILLIS)
+            .private(
+                context,
+                channelId = NotificationChannels.CALL_NOTES,
+                publicTitle = "Add a note to a call",
+                publicText = "Open Sukoon"
+            )
+        post(context, CALL_NOTE_NOTIFICATION_ID, builder.build())
+    }
+
+    private const val CALL_NOTE_TIMEOUT_MILLIS = 2 * 60 * 60 * 1000L
+
+    /** Opens the app pointed at the most recent call with this number. */
+    private fun openCallNote(context: Context, rawNumber: String): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_NOTE_FOR_NUMBER, rawNumber)
+        }
+        return PendingIntent.getActivity(
+            context,
+            CALL_NOTE_NOTIFICATION_ID,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /** Extra carrying the number whose latest call should be opened. */
+    const val EXTRA_NOTE_FOR_NUMBER = "com.codeaza.bhaiyaaa.extra.NOTE_FOR_NUMBER"
 
     // -------------------------------------------------------------- reminders
 

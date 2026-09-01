@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  updatePeriodMillis is 0 on purpose.
+
+  The platform's own widget refresh has a 30-minute floor and wakes the device
+  to run, which for a clock that changes five times a day is almost entirely
+  wasted. Sukoon already arms an exact alarm for every prayer window, so the
+  widget is refreshed from those - it is correct to the second and costs no
+  wake-ups of its own.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:minWidth="180dp"
+    android:minHeight="70dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
+    tools:targetApi="s"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_next_prayer"
+    android:previewLayout="@layout/widget_next_prayer"
+    android:resizeMode="horizontal|vertical"
+    android:description="@string/widget_description"
+    android:widgetCategory="home_screen" />

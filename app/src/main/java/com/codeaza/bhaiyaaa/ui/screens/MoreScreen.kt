@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Security
@@ -28,6 +29,7 @@ import com.codeaza.bhaiyaaa.util.Formatting
 @Composable
 fun MoreScreen(
     viewModel: SukoonViewModel,
+    onOpenQibla: () -> Unit,
     onOpenVip: () -> Unit,
     onOpenMemory: () -> Unit,
     onOpenReminders: () -> Unit,
@@ -44,6 +46,14 @@ fun MoreScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
+        SettingsSectionHeader("Prayer")
+        SettingsLinkRow(
+            title = "Qibla",
+            subtitle = "Which way to face, worked out on this phone",
+            icon = Icons.Filled.Explore,
+            onClick = onOpenQibla
+        )
+
         SettingsSectionHeader("Your people and notes")
         SettingsLinkRow(
             title = "VIP contacts",

@@ -39,6 +39,7 @@ class SettingsRepository(private val context: Context) {
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val FLASHLIGHT_ENABLED = booleanPreferencesKey("flashlight_enabled")
         val MISSED_NUDGE = booleanPreferencesKey("missed_call_nudge")
+        val POST_CALL_NOTE = booleanPreferencesKey("post_call_note_prompt")
         val AUTO_SYNC = booleanPreferencesKey("auto_sync_enabled")
         val PRIVATE_HIDDEN = booleanPreferencesKey("private_memories_hidden")
         val LAST_SYNC_AT = longPreferencesKey("last_sync_at")
@@ -71,6 +72,11 @@ class SettingsRepository(private val context: Context) {
                 notificationsEnabled = p[Keys.NOTIFICATIONS_ENABLED] ?: true,
                 flashlightEnabled = p[Keys.FLASHLIGHT_ENABLED] ?: true,
                 missedCallNudgeEnabled = p[Keys.MISSED_NUDGE] ?: true,
+                // On by default, but only ever fires for someone the user
+                // deliberately marked VIP - the same bar the missed-call nudge
+                // already uses, so an upgrade brings no new noise about
+                // people the user never singled out.
+                postCallNotePrompt = p[Keys.POST_CALL_NOTE] ?: true,
                 autoSyncEnabled = p[Keys.AUTO_SYNC] ?: true,
                 privateMemoriesHidden = p[Keys.PRIVATE_HIDDEN] ?: true,
                 lastSyncAt = p[Keys.LAST_SYNC_AT] ?: 0L,
@@ -104,6 +110,7 @@ class SettingsRepository(private val context: Context) {
     suspend fun setNotificationsEnabled(value: Boolean) = put(Keys.NOTIFICATIONS_ENABLED, value)
     suspend fun setFlashlightEnabled(value: Boolean) = put(Keys.FLASHLIGHT_ENABLED, value)
     suspend fun setMissedCallNudge(value: Boolean) = put(Keys.MISSED_NUDGE, value)
+    suspend fun setPostCallNotePrompt(value: Boolean) = put(Keys.POST_CALL_NOTE, value)
     suspend fun setAutoSync(value: Boolean) = put(Keys.AUTO_SYNC, value)
     suspend fun setPrivateMemoriesHidden(value: Boolean) = put(Keys.PRIVATE_HIDDEN, value)
     suspend fun setLastSyncAt(value: Long) = put(Keys.LAST_SYNC_AT, value)

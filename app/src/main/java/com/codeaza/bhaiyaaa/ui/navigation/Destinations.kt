@@ -40,6 +40,7 @@ object Routes {
     const val INSIGHTS = "insights"
     const val SEARCH = "search"
     const val REMINDERS = "reminders"
+    const val QIBLA = "qibla"
 
     const val SETTINGS = "settings"
     const val SETTINGS_NOTIFICATIONS = "settings/notifications"

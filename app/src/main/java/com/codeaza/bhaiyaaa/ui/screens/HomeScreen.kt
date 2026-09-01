@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,7 +31,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +48,9 @@ import com.codeaza.bhaiyaaa.domain.model.PersonalityMode
 import com.codeaza.bhaiyaaa.domain.model.PrayerMode
 import com.codeaza.bhaiyaaa.domain.model.SilenceWindow
 import com.codeaza.bhaiyaaa.domain.model.VipLevel
+import com.codeaza.bhaiyaaa.prayer.RamadanDay
+import com.codeaza.bhaiyaaa.prayer.RamadanState
+import com.codeaza.bhaiyaaa.prayer.RamadanTimes
 import com.codeaza.bhaiyaaa.prayer.SilencePlan
 import com.codeaza.bhaiyaaa.ui.prayer.PrayerViewModel
 import com.codeaza.bhaiyaaa.ui.theme.CardShape
@@ -55,10 +63,14 @@ import com.codeaza.bhaiyaaa.ui.components.InfoBanner
 import com.codeaza.bhaiyaaa.ui.components.SectionCard
 import com.codeaza.bhaiyaaa.ui.components.StatTile
 import com.codeaza.bhaiyaaa.ui.components.VipBadge
+import com.codeaza.bhaiyaaa.domain.usecase.ReconnectSuggestion
+import com.codeaza.bhaiyaaa.domain.usecase.ReconnectSuggestions
 import com.codeaza.bhaiyaaa.util.Formatting
+import com.codeaza.bhaiyaaa.util.HijriDate
 import com.codeaza.bhaiyaaa.util.PhoneNumbers
 import com.codeaza.bhaiyaaa.util.Permissions
 import com.codeaza.bhaiyaaa.util.TimeRanges
+import kotlinx.coroutines.delay
 import java.util.Calendar
 
 /**
@@ -71,6 +83,7 @@ fun HomeScreen(
     viewModel: SukoonViewModel,
     prayerViewModel: PrayerViewModel,
     onOpenPrayer: () -> Unit,
+    onOpenQibla: () -> Unit,
     onOpenCalls: () -> Unit,
     onOpenVip: () -> Unit,
     onOpenInsights: () -> Unit,
@@ -91,6 +104,24 @@ fun HomeScreen(
     val prayerSettings by prayerViewModel.settings.collectAsStateWithLifecycle()
     val prayerWindows by prayerViewModel.todayWindows.collectAsStateWithLifecycle()
     val prayerAnchors by prayerViewModel.prayerAnchors.collectAsStateWithLifecycle()
+    val callStats by viewModel.callStats.collectAsStateWithLifecycle()
+
+    // Computed from state the dashboard already collects, so this card costs a
+    // list walk rather than a query.
+    val reconnect = remember(vips, callStats) {
+        ReconnectSuggestions.forVips(vips, callStats, System.currentTimeMillis())
+    }
+
+    // The Hijri date is a platform conversion with no I/O, but it only changes
+    // once a day, so it is remembered rather than recomputed every frame.
+    val hijri = remember(settings.personality) { HijriDate.today() }
+    val isRamadan = remember(hijri) { HijriDate.isRamadan() }
+
+    // Named off the prayer times rather than computed again - suhoor ends when
+    // Fajr comes in and iftar is Maghrib, both of which the app already knows.
+    val ramadanDay = remember(prayerAnchors, isRamadan) {
+        if (isRamadan) RamadanTimes.forDay(prayerAnchors) else null
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -125,7 +156,9 @@ fun HomeScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Your people. Your quiet.",
+                        // The Hijri date when the platform can give one, the
+                        // tagline when it cannot - the line never goes empty.
+                        text = hijri ?: "Your people. Your quiet.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -188,8 +221,27 @@ fun HomeScreen(
                 needsLocation = prayerSettings.mode == PrayerMode.AUTOMATIC &&
                     !prayerSettings.hasLocation,
                 windows = prayerWindows,
-                onOpen = onOpenPrayer
+                onOpen = onOpenPrayer,
+                onOpenQibla = onOpenQibla.takeIf { prayerSettings.hasLocation }
             )
+        }
+
+        // Only during Ramadan, and only once the times it needs are known.
+        // For eleven months of the year this item does not exist.
+        if (ramadanDay != null) {
+            item { RamadanCard(day = ramadanDay) }
+        }
+
+        // The other half of "your people, your quiet". Only appears when
+        // there is genuinely someone to call, so it is a nudge rather than
+        // a permanent fixture.
+        if (reconnect.isNotEmpty()) {
+            item {
+                ReconnectCard(
+                    suggestions = reconnect,
+                    onOpenContact = onOpenContact
+                )
+            }
         }
 
         // Directly under the prayer card, because it is about the prayer
@@ -398,7 +450,9 @@ private fun PrayerCard(
     enabled: Boolean,
     needsLocation: Boolean,
     windows: List<SilenceWindow>,
-    onOpen: () -> Unit
+    onOpen: () -> Unit,
+    /** Null hides the qibla link, which is meaningless without a location. */
+    onOpenQibla: (() -> Unit)? = null
 ) {
     val now = System.currentTimeMillis()
     val active = remember(windows, now) { SilencePlan.activeWindow(windows, now) }
@@ -472,6 +526,18 @@ private fun PrayerCard(
                     Spacer(Modifier.height(12.dp))
                     Button(onClick = onOpen) { Text("Set prayer times") }
                 }
+                if (onOpenQibla != null) {
+                    Spacer(Modifier.height(4.dp))
+                    TextButton(
+                        onClick = onOpenQibla,
+                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            "Find the qibla",
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
             }
             if (enabled && windows.isNotEmpty() && !needsLocation) {
                 Icon(
@@ -482,6 +548,141 @@ private fun PrayerCard(
             }
         }
     }
+}
+
+/**
+ * Suhoor and iftar, during Ramadan only.
+ *
+ * Counts down on a one-minute tick, not a one-second one. The last hour before
+ * iftar is exactly when the phone is most likely to be sitting on a table with
+ * the screen on, and a per-second countdown would recompose sixty times a
+ * minute to redraw a line that only ever shows minutes.
+ */
+@Composable
+private fun RamadanCard(day: RamadanDay) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(day) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(RAMADAN_TICK_MILLIS)
+        }
+    }
+
+    val state = remember(day, now) { RamadanTimes.stateAt(day, now) }
+
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = CardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Text(
+                text = "RAMADAN",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = when (state) {
+                    is RamadanState.BeforeSuhoorEnds ->
+                        "Suhoor ends in ${describeRemaining(state.millisRemaining)}"
+                    is RamadanState.Fasting ->
+                        "Iftar in ${describeRemaining(state.millisUntilIftar)}"
+                    is RamadanState.Complete -> "Fast complete"
+                },
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = when (state) {
+                    is RamadanState.Complete ->
+                        "Iftar was at ${Formatting.time(day.iftarAt)}"
+                    else ->
+                        "Suhoor until ${Formatting.time(day.suhoorEndsAt)} · " +
+                            "iftar at ${Formatting.time(day.iftarAt)}"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+            )
+        }
+    }
+}
+
+/** "4h 12m", or "9 minutes" once it is close enough to count in minutes. */
+private fun describeRemaining(millis: Long): String {
+    val totalMinutes = (millis / 60_000L).coerceAtLeast(0L)
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return if (hours > 0) "${hours}h ${minutes}m"
+    else Formatting.plural(minutes.toInt(), "minute")
+}
+
+private const val RAMADAN_TICK_MILLIS = 60_000L
+
+/**
+ * People you have not spoken to in a while.
+ *
+ * The counterweight to everything else on this dashboard, which is about calls
+ * that already happened. This one is about a call that has not.
+ *
+ * Deliberately worded as an observation, not an instruction - "it has been
+ * three months" rather than "you should call". The app does not know why, and
+ * a guilt-trip about a relationship it cannot see would be a bad guess.
+ */
+@Composable
+private fun ReconnectCard(
+    suggestions: List<ReconnectSuggestion>,
+    onOpenContact: (String) -> Unit
+) {
+    SectionCard(title = "Been a while") {
+        suggestions.forEach { suggestion ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenContact(suggestion.contact.phoneNumber) }
+                    .heightIn(min = 48.dp)
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ContactAvatar(suggestion.contact.name, size = 34)
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        suggestion.contact.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = when (val days = suggestion.daysSince) {
+                            null -> "No calls on record yet"
+                            else -> "Last spoke ${describeGap(days)}"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                VipBadge(suggestion.level)
+            }
+        }
+    }
+}
+
+/**
+ * "3 months ago" rather than "94 days ago".
+ *
+ * Nobody counts in days past a fortnight, and a precise number invites the
+ * reader to do arithmetic instead of picking up the phone.
+ */
+private fun describeGap(days: Long): String = when {
+    days < 14 -> Formatting.plural(days.toInt(), "day") + " ago"
+    days < 60 -> "${days / 7} weeks ago"
+    days < 365 -> "${days / 30} months ago"
+    else -> "over a year ago"
 }
 
 /** Greeting text for the current hour, in the user's chosen tone. */

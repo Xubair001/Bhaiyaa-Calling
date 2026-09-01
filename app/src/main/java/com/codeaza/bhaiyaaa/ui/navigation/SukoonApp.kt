@@ -67,6 +67,7 @@ import com.codeaza.bhaiyaaa.ui.prayer.QuietTimesFocus
 import com.codeaza.bhaiyaaa.ui.recordings.VoiceRecordingViewModel
 import com.codeaza.bhaiyaaa.ui.screens.PrayerSettingsScreen
 import com.codeaza.bhaiyaaa.ui.screens.PrivacyCenterScreen
+import com.codeaza.bhaiyaaa.ui.screens.QiblaScreen
 import com.codeaza.bhaiyaaa.ui.screens.PrivacyLockScreen
 import com.codeaza.bhaiyaaa.ui.screens.RemindersScreen
 import com.codeaza.bhaiyaaa.ui.screens.SearchScreen
@@ -88,7 +89,10 @@ fun SukoonApp(
     assistantViewModel: AssistantViewModel = viewModel(),
     modelViewModel: ModelManagerViewModel = viewModel(),
     prayerViewModel: PrayerViewModel = viewModel(),
-    recordingViewModel: VoiceRecordingViewModel = viewModel()
+    recordingViewModel: VoiceRecordingViewModel = viewModel(),
+    /** Set when a call-note prompt was tapped; opens that call once resolved. */
+    pendingNoteNumber: String? = null,
+    onPendingNoteHandled: () -> Unit = {}
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val lockState by viewModel.lockState.collectAsStateWithLifecycle()
@@ -117,7 +121,15 @@ fun SukoonApp(
         return
     }
 
-    MainScaffold(viewModel, assistantViewModel, modelViewModel, prayerViewModel, recordingViewModel)
+    MainScaffold(
+        viewModel,
+        assistantViewModel,
+        modelViewModel,
+        prayerViewModel,
+        recordingViewModel,
+        pendingNoteNumber,
+        onPendingNoteHandled
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,7 +139,9 @@ private fun MainScaffold(
     assistantViewModel: AssistantViewModel,
     modelViewModel: ModelManagerViewModel,
     prayerViewModel: PrayerViewModel,
-    recordingViewModel: VoiceRecordingViewModel
+    recordingViewModel: VoiceRecordingViewModel,
+    pendingNoteNumber: String?,
+    onPendingNoteHandled: () -> Unit
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -161,6 +175,20 @@ private fun MainScaffold(
             snackbarHostState.showSnackbar(it)
             modelViewModel.consumeMessage()
         }
+    }
+
+    /**
+     * Follows a tapped call-note prompt through to the call itself.
+     *
+     * Resolved here rather than in the notification because the call-log row
+     * does not exist yet when the prompt is posted. If it still cannot be
+     * found - the log was cleared, or the permission is not granted - the tap
+     * simply opens the app, which is a better outcome than an error.
+     */
+    LaunchedEffect(pendingNoteNumber) {
+        val number = pendingNoteNumber ?: return@LaunchedEffect
+        viewModel.latestCallIdFor(number)?.let { navController.navigate(Routes.callDetail(it)) }
+        onPendingNoteHandled()
     }
 
     val isTopLevel = currentRoute in BottomDestination.routes
@@ -326,6 +354,7 @@ private fun SukoonNavHost(
                 onOpenPrayer = {
                     navController.navigate(Routes.prayerSettings(QuietTimesFocus.PRAYER_TIMES))
                 },
+                onOpenQibla = { navController.navigate(Routes.QIBLA) },
                 onOpenCalls = { navController.navigate(Routes.CALLS) },
                 onOpenVip = { navController.navigate(Routes.VIP) },
                 onOpenInsights = { navController.navigate(Routes.INSIGHTS) },
@@ -352,6 +381,7 @@ private fun SukoonNavHost(
         composable(Routes.MORE) {
             MoreScreen(
                 viewModel = viewModel,
+                onOpenQibla = { navController.navigate(Routes.QIBLA) },
                 onOpenVip = { navController.navigate(Routes.VIP) },
                 onOpenMemory = { navController.navigate(Routes.MEMORY) },
                 onOpenReminders = { navController.navigate(Routes.REMINDERS) },
@@ -374,6 +404,15 @@ private fun SukoonNavHost(
         composable(Routes.REMINDERS) { RemindersScreen(viewModel) }
 
         composable(Routes.INSIGHTS) { InsightsScreen(viewModel) }
+
+        composable(Routes.QIBLA) {
+            QiblaScreen(
+                viewModel = prayerViewModel,
+                onOpenPrayerSettings = {
+                    navController.navigate(Routes.prayerSettings(QuietTimesFocus.PRAYER_TIMES))
+                }
+            )
+        }
 
         composable(Routes.SEARCH) {
             SearchScreen(
@@ -478,6 +517,7 @@ private fun titleFor(route: String?): String = when {
     route == Routes.VIP -> "VIP contacts"
     route == Routes.MEMORY -> "Memory"
     route == Routes.REMINDERS -> "Reminders"
+    route == Routes.QIBLA -> "Qibla"
     route == Routes.INSIGHTS -> "Insights"
     route == Routes.SEARCH -> "Search"
     route == Routes.PRIVACY_CENTER -> "Privacy Center"

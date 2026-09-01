@@ -32,6 +32,15 @@ data class AppSettings(
     val notificationsEnabled: Boolean = true,
     val flashlightEnabled: Boolean = true,
     val missedCallNudgeEnabled: Boolean = true,
+    /**
+     * Offer to record a note after a call with a VIP.
+     *
+     * Only ever fires for an *answered incoming* call from someone marked VIP.
+     * That is a platform limit rather than a preference: PHONE_STATE gives the
+     * number on the ringing broadcast only, so an outgoing call cannot be
+     * attributed to a person without reading the call log, which lags.
+     */
+    val postCallNotePrompt: Boolean = true,
     val autoSyncEnabled: Boolean = true,
     val privateMemoriesHidden: Boolean = true,
     val lastSyncAt: Long = 0L,
